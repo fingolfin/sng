@@ -1,4 +1,4 @@
-# This is a synthetic SNG test file
+#SNG: This is a synthetic SNG test file
 
 # Our first test is a paletted (type 3) image.
 IHDR: {

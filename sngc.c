@@ -1495,10 +1495,22 @@ int sngc(FILE *fin, char *name, FILE *fout)
 {
     int	prevchunk, errtype, i;
     float gamma;
+    char buf[BUFSIZ];
 
     yyin = fin;
     file = name;
     linenum = 0;
+
+    if (fgets(buf, sizeof(buf), fin) == NULL)
+    {
+	fputs("sng: no data in file\n", stderr);
+	exit(1);
+    }
+    else if (strncmp("#SNG", buf, 3))
+    {
+	fputs("sng: this is not an sng file\n", stderr);
+	exit(1);
+    }
 
     /* Create and initialize the png_struct with the desired error handler
      * functions.  If you want to use the default stderr and longjump method,

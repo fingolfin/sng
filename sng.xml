@@ -67,6 +67,10 @@ digits (0123456789abcdef).  Whitespace embedded in base64 and hex data
 literals is ignored.  A ';' ends a data literal (unless it occurs
 inside the string syntax).
 
+Every SNG file must begin with the string "#SNG", followed by optional
+SNG version information, followed by a colon (`:', ASCII 58)
+character.  The remainder of the first line is ignored by SNG.
+
 Comments in the syntax diagram describe intended semantics.
 .nf
 IHDR {
@@ -209,6 +213,8 @@ private <string> {                    # Private chunk declaration
    <data>
 }
 .fi
+
+
 .SH BUGS
 The -i option doesn't work yet, and won't until libpng's ability to
 suppress special handling of IDATs is working.  See the
