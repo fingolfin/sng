@@ -557,17 +557,45 @@ static void compile_IMAGE(void)
      * (b) Bit depth is 4 or less.
      * These cover a lot of common cases.
      */
-    bool pixperchar =
-	((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
-	 			&& info_ptr->num_palette <= 62)
-	|| (info_ptr->bit_depth <= 4);
+    bool	sample_per_char;
     int		nbits;
     char	*bits;
+    int 	sample_size;
+
+    /* input sample size in bits */
+    switch (info_ptr->color_type)
+    {
+    case PNG_COLOR_TYPE_GRAY:
+	sample_size = info_ptr->bit_depth;
+	break;
+
+    case PNG_COLOR_TYPE_PALETTE:
+	sample_size = 8;
+	break;
+
+    case PNG_COLOR_TYPE_RGB:
+	sample_size = info_ptr->bit_depth * 3;
+	break;
+
+    case PNG_COLOR_TYPE_RGB_ALPHA:
+	sample_size = info_ptr->bit_depth * 4;
+	break;
+
+    case PNG_COLOR_TYPE_GRAY_ALPHA:
+	sample_size = info_ptr->bit_depth * 2;
+	break;
+    }
+
+    /* can we fit a sample in one base-62 character? */
+    sample_per_char =
+	sample_size <= 5
+	|| ((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
+	 			&& info_ptr->num_palette <= 62);
 
     /* collect the data */
-    collect_data(pixperchar, &nbits, &bits);
+    collect_data(sample_per_char, &nbits, &bits);
 
-    if (nbits != info_ptr->width * info_ptr->height)
+    if (nbits != info_ptr->width * info_ptr->height * (sample_size / 8))
 	fatal("size of IMAGE doesn't match height * width in IHDR");
 
     /* FIXME: perhaps this should be optional? */
