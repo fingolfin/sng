@@ -1248,24 +1248,23 @@ static void compile_sCAL(void)
 /* parse sCAL specification and emit corresponding bits */
 {
     char	unit[PNG_STRING_MAX_LENGTH+1];
-    char	width[PNG_STRING_MAX_LENGTH+1];
-    char	height[PNG_STRING_MAX_LENGTH+1];
-    int 	nunit, nwidth, nheight;
+    double	width, height;
+    int 	nunit;
 
     while (get_inner_token())
 	if (token_equals("unit"))
 	    nunit = string_validate(get_token(), unit);
 	else if (token_equals("width"))
-	    nwidth = string_validate(get_token(), width);
+	    height = double_numeric(get_token());
 	else if (token_equals("height"))
-	    nheight = string_validate(get_token(), height);
+	    width = double_numeric(get_token());
 	else
 	    fatal("invalid token `%s' in pCAL specification", token_buffer);
 
-    if (!nunit || !nwidth || !nheight)
+    if (!nunit || !width || !height)
 	fatal("incomplete sCAL specification");
 
-    /* FIXME: add library call to set sCAL */
+    png_set_sCAL(png_ptr, info_ptr, unit, width, height);
 }
 
 static void compile_IMAGE(void)
