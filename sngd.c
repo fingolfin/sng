@@ -30,7 +30,7 @@ static char *rendering_intent[] = {
 static char *current_file;
 static png_structp png_ptr;
 static png_infop info_ptr;
-static int fakedepth;
+static int true_depth, true_channels;
 
 char *safeprint(const char *buf)
 /* visibilize a given string -- inverse of sngc.c:escapes() */
@@ -158,7 +158,19 @@ static void multi_dump(FILE *fpout, char *leader,
 		    fprintf(fpout, "\n");
 	    }
 	    for (cp = data[i]; cp < data[i] + width; cp++)
+	    {
 		fprintf(fpout, "%02x", *cp & 0xff);
+
+		/* only insert spacers for 8-bit images if > 1 channel */
+		if (true_depth == 8 && true_channels > 1)
+		{
+		    if (((cp - data[i]) % true_channels) == true_channels - 1)
+			fputc(' ', fpout);
+		}
+		else if (true_depth == 16)
+		    if (((cp - data[i]) % (true_channels*2)) == true_channels*2-1)
+			fputc(' ', fpout);
+	    }
 	    if (height == 1)
 		fprintf(fpout, ";\n");
 	    else
@@ -212,7 +224,7 @@ static void dump_IHDR(FILE *fpout)
     case 4:
 	if (ityp == 2 || ityp == 4 || ityp == 6) {/* RGB or GA or RGBA */
 	    printerr(1, "invalid IHDR bit depth (%d) for %s image",
-		     fakedepth, image_type[ityp]);
+		     true_depth, image_type[ityp]);
 	}
 	break;
     case 8:
@@ -220,7 +232,7 @@ static void dump_IHDR(FILE *fpout)
     case 16:
 	if (ityp == 3) { /* palette */
 	    printerr(1, "invalid IHDR bit depth (%d) for %s image",
-		     fakedepth, image_type[ityp]);
+		     true_depth, image_type[ityp]);
 	}
 	break;
     default:
@@ -230,7 +242,7 @@ static void dump_IHDR(FILE *fpout)
 
     fprintf(fpout, "IHDR {\n");
     fprintf(fpout, "    width: %ld; height: %ld; bitdepth: %d;\n", 
-	    info_ptr->width, info_ptr->height, fakedepth);
+	    info_ptr->width, info_ptr->height, true_depth);
     fprintf(fpout, "    using");
     if (ityp & PNG_COLOR_MASK_COLOR)
 	fprintf(fpout, " color");
@@ -819,11 +831,14 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
-   fakedepth = bit_depth;
+   /* need to gather some statistics before transformation */ 
+   true_channels = png_get_channels(png_ptr, info_ptr);
+   true_depth = bit_depth;
+
    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
    {
        png_set_packing(png_ptr);
-       fakedepth = bit_depth;
+       true_depth = bit_depth;
    }
    png_read_update_info(png_ptr, info_ptr);
 
