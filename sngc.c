@@ -589,6 +589,8 @@ static void compile_PLTE(void)
     {
 	if (!token_equals("("))
 	    fatal("bad syntax in PLTE description");
+	else if (ncolors >= 256)
+	    fatal("too many palette entries in PLTE specification");
 	palette[ncolors].red = byte_numeric(get_token());
 	/* comma */
 	palette[ncolors].green = byte_numeric(get_token());
@@ -867,6 +869,71 @@ static void compile_pHYs(void)
 	fatal("illegal or missing resolutions in pHYs specification");
 
     png_set_pHYs(png_ptr, info_ptr, res_x, res_y, unit);
+}
+
+/* these definitions belong in png.h */
+typedef struct png_palette_16_struct
+{
+   png_uint_16 red;
+   png_uint_16 green;
+   png_uint_16 blue;
+   png_uint_16 alpha;
+   png_uint_16 frequency;
+} png_palette_16;
+typedef png_palette_16 FAR * png_palette_16p;
+typedef png_palette_16 FAR * FAR * png_palette_16pp;
+
+static void compile_sPLT(void)
+/* compile sPLT chunk */
+{
+    char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
+    int		nkeyword = 0;
+    png_byte	depth = 0;
+    png_palette_16	spalette[256];
+    int		nentries;
+
+    while (get_inner_token())
+	if (token_equals("name"))
+	    nkeyword = keyword_validate(get_token(), keyword);
+        else if (token_equals("depth"))
+	{
+	    depth = byte_numeric(get_token());
+	    if (depth != 8 && depth != 16)
+		fatal("invalid sample depth in sPLT");
+	}
+        else 
+	    while (get_inner_token())
+	    {
+		if (!token_equals("("))
+		    fatal("bad syntax in sPLT description");
+		else if (nentries >= 256)
+		    fatal("too many palette entries in sPLT specification");
+		spalette[nentries].red = short_numeric(get_token());
+		if (depth == 8 && spalette[nentries].red > 255)
+		    fatal("red value too large for sample depth");
+		/* comma */
+		spalette[nentries].green = short_numeric(get_token());
+		if (depth == 8 && spalette[nentries].green > 255)
+		    fatal("green value too large for sample depth");
+		/* comma */
+		spalette[nentries].blue = short_numeric(get_token());
+		if (depth == 8 && spalette[nentries].blue > 255)
+		    fatal("blue value too large for sample depth");
+		/* comma */
+		spalette[nentries].alpha = short_numeric(get_token());
+		if (depth == 8 && spalette[nentries].alpha > 255)
+		    fatal("alpha value too large for sample depth");
+		require_or_die(")");
+		/* comma */
+		spalette[nentries].frequency = short_numeric(get_token());
+		nentries++;
+	    }
+
+    if (!nkeyword || !depth)
+	fatal("incomplete sPLT specification");
+
+    /* FIXME: make this call work */
+    /* png_write_sPLT(png_ptr, keyword, depth, spalette, nentries); */
 }
 
 static void compile_tEXt(void)
@@ -1261,7 +1328,7 @@ int sngc(FILE *fin, FILE *fout)
 	case sPLT:
 	    if (properties[IDAT].count)
 		fatal("sPLT chunk must come before IDAT");
-	    fatal("sPLT chunk type is not handled yet in libpng 1.0.5");
+	    compile_sPLT();
 	    break;
 
 	case tIME:
