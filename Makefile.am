@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 bin_PROGRAMS = sng
-bin_SCRIPTS = sng_regress
+#bin_SCRIPTS = sng_regress
 sng_SOURCES = main.c sngc.c sngd.c sng.h
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
@@ -23,14 +23,10 @@ sng.1: sng.xml
 
 # Make RPMs.  You need to be root to make this work
 RPMROOT=/usr/src/redhat
-RPM = rpmbuild
-RPMFLAGS = -ba
-rpm: sng-@VERSION@.tar.gz
-	cp sng-@VERSION@.tar.gz $(RPMROOT)/SOURCES;
-	cp sng.spec $(RPMROOT)/SPECS
-	cd $(RPMROOT)/SPECS; $(RPM) $(RPMFLAGS) sng.spec	
-	cp $(RPMROOT)/RPMS/`arch|sed 's/i[4-9]86/i386/'`/sng*-@VERSION@*.rpm $(srcdir)
-	cp $(RPMROOT)/SRPMS/sng*-@VERSION@*.src.rpm $(srcdir)
+rpm: dist
+	rpmbuild --define 'myversion @VERSION@' -ta sng-@VERSION@.tar.gz
+	cp $(RPMROOT)/RPMS/*/sng-@VERSION@*.rpm .
+	cp $(RPMROOT)/SRPMS/sng-@VERSION@*.src.rpm .
 
 zip: $(DISTFILES)
 	zip @PACKAGE@-@VERSION@.zip $(DISTFILES)
