@@ -818,10 +818,15 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
+#ifdef 0
+   if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+	png_set_gray_1_2_4_to_8(png_ptr);
+#endif
+
 #ifdef __UNUSED__
    /*
-    * If idat is off, it's time to read the asctual image data.
-    * (If idat is on, the 
+    * If idat is off, it's time to read the actual image data.
+    * (If idat is on, it has been treated as unknown chunks.)
     */
    if (!idat)		/* read and dump as a sequence of IDATs */
    {
