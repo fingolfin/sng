@@ -77,7 +77,7 @@ PLTE {
 }
 
 IDAT {
-   base64|hex <data>
+   <data>
 }
 
 gAMA {<float>}
