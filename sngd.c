@@ -30,6 +30,7 @@ static char *rendering_intent[] = {
 static char *current_file;
 static png_structp png_ptr;
 static png_infop info_ptr;
+static int fakedepth;
 
 char *safeprint(const char *buf)
 /* visibilize a given string -- inverse of sngc.c:escapes() */
@@ -211,7 +212,7 @@ static void dump_IHDR(FILE *fpout)
     case 4:
 	if (ityp == 2 || ityp == 4 || ityp == 6) {/* RGB or GA or RGBA */
 	    printerr(1, "invalid IHDR bit depth (%d) for %s image",
-		     info_ptr->bit_depth, image_type[ityp]);
+		     fakedepth, image_type[ityp]);
 	}
 	break;
     case 8:
@@ -219,7 +220,7 @@ static void dump_IHDR(FILE *fpout)
     case 16:
 	if (ityp == 3) { /* palette */
 	    printerr(1, "invalid IHDR bit depth (%d) for %s image",
-		     info_ptr->bit_depth, image_type[ityp]);
+		     fakedepth, image_type[ityp]);
 	}
 	break;
     default:
@@ -229,7 +230,7 @@ static void dump_IHDR(FILE *fpout)
 
     fprintf(fpout, "IHDR {\n");
     fprintf(fpout, "    width: %ld; height: %ld; bitdepth: %d;\n", 
-	    info_ptr->width, info_ptr->height, info_ptr->bit_depth);
+	    info_ptr->width, info_ptr->height, fakedepth);
     fprintf(fpout, "    using");
     if (ityp & PNG_COLOR_MASK_COLOR)
 	fprintf(fpout, " color");
@@ -816,12 +817,15 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
-#ifdef __UNUSED__
-   /* use this only if your want the library to do the expansion */
+   fakedepth = bit_depth;
    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-	png_set_gray_1_2_4_to_8(png_ptr);
+   {
+       png_set_packing(png_ptr);
+       fakedepth = bit_depth;
+   }
    png_read_update_info(png_ptr, info_ptr);
 
+#ifdef __UNUSED__
    /*
     * If idat is off, it's time to read the actual image data.
     * (If idat is on, it has been treated as unknown chunks.)
