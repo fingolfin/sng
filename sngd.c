@@ -309,23 +309,42 @@ static void dump_PLTE(FILE *fpout)
     if (info_ptr->color_type & PNG_COLOR_MASK_PALETTE)
     {
 	fprintf(fpout, "PLTE {\n");
+#ifndef MNG_INTERFACE
 	for (i = 0;  i < info_ptr->num_palette;  i++)
+#else
+	for (i = 0;  i < info_ptr->palette.size;  i++)
+#endif /* GUG */
 	{
 	    char	*name = NULL;
 
 	    fprintf(fpout, 
 		    "    (%3u,%3u,%3u)     # rgb = (0x%02x,0x%02x,0x%02x)",
+#ifndef MNG_INTERFACE
 		    info_ptr->palette[i].red,
 		    info_ptr->palette[i].green,
 		    info_ptr->palette[i].blue,
 		    info_ptr->palette[i].red,
 		    info_ptr->palette[i].green,
 		    info_ptr->palette[i].blue);
+#else
+		    info_ptr->palette.colors[i].red,
+		    info_ptr->palette.colors[i].green,
+		    info_ptr->palette.colors[i].blue,
+		    info_ptr->palette.colors[i].red,
+		    info_ptr->palette.colors[i].green,
+		    info_ptr->palette.colors[i].blue);
+#endif /* GUG */
 
 	    if (rgb_initialized)
+#ifndef MNG_INTERFACE
 		name = find_by_rgb(info_ptr->palette[i].red,
 				   info_ptr->palette[i].green,
 				   info_ptr->palette[i].blue);
+#else
+		name = find_by_rgb(info_ptr->palette.colors[i].red,
+				   info_ptr->palette.colors[i].green,
+				   info_ptr->palette.colors[i].blue);
+#endif /* GUG */
 	    if (name)
 		fprintf(fpout, " %s", name);
 	    fputc('\n', fpout);
@@ -483,8 +502,13 @@ static void dump_hIST(FILE *fpout)
 
 	fprintf(fpout, "hIST {\n");
 	fprintf(fpout, "   ");
+#ifndef MNG_INTERFACE
 	for (j = 0; j < info_ptr->num_palette;  j++)
 	    fprintf(fpout, " %3u", info_ptr->hist[j]);
+#else
+	for (j = 0; j < info_ptr->palette.size;  j++)
+	    fprintf(fpout, " %3u", info_ptr->hist.frequencies[j]);
+#endif /* GUG */
 	fprintf(fpout, ";\n}\n");
     }
 }
@@ -722,7 +746,11 @@ static void dump_sCAL(FILE *fpout)
     }
 }
 
+#ifndef MNG_INTERFACE
 static void dump_sPLT(png_spalette *ep, FILE *fpout)
+#else
+static void dump_sPLT(png_sPLT_tp ep, FILE *fpout)
+#endif /* GUG */
 {
     long i;
 

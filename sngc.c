@@ -988,8 +988,13 @@ static void compile_hIST(void)
 	/* comma */
 	hist[nhist++] = short_numeric(TRUE);
 
+#ifndef MNG_INTERFACE
     if (nhist != info_ptr->num_palette)
 	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, info_ptr->num_palette);
+#else
+    if (nhist != info_ptr->palette.size)
+	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, info_ptr->palette.size);
+#endif /* GUG */
 
     png_set_hIST(png_ptr, info_ptr, hist);
 }
@@ -1070,8 +1075,13 @@ static void compile_sPLT(void)
 {
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
     int		nentries = 0, nkeyword = 0;
+#ifndef MNG_INTERFACE
     png_spalette new_palette;
     png_spalette_entry	entries[256];
+#else
+    png_sPLT_t new_palette;
+    png_sPLT_entry	entries[256];
+#endif /* GUG */
 
     initialize_hash(hash_by_cname, cname_hashbuckets, &cname_initialized);
 
