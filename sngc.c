@@ -131,7 +131,7 @@ static FILE *yyin;
  *
  ************************************************************************/
 
-void fatal(const char *fmt, ... )
+static void fatal(const char *fmt, ... )
 /* throw an error distinguishable from PNG library errors */
 {
     char buf[BUFSIZ];
@@ -156,7 +156,7 @@ void fatal(const char *fmt, ... )
 	exit(2);
 }
 
-void *xalloc(unsigned long s)
+static void *xalloc(unsigned long s)
 {
     void *p=malloc((size_t)s);
 
@@ -167,7 +167,7 @@ void *xalloc(unsigned long s)
     return p;
 }
 
-void *xrealloc(void *p, unsigned long s)
+static void *xrealloc(void *p, unsigned long s)
 {
     p=realloc(p,(size_t)s);
 
