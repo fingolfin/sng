@@ -28,6 +28,8 @@ static char *rendering_intent[] = {
 };
 
 static char *current_file;
+static png_structp png_ptr;
+static png_infop info_ptr;
 
 char *safeprint(const char *buf)
 /* visibilize a given string -- inverse of sngc.c:escapes() */
@@ -190,7 +192,7 @@ static void printerr(int err, const char *fmt, ... )
     sng_error = err;
 }
 
-static void dump_IHDR(png_infop info_ptr, FILE *fpout)
+static void dump_IHDR(FILE *fpout)
 {
     int ityp;
 
@@ -243,7 +245,7 @@ static void dump_IHDR(png_infop info_ptr, FILE *fpout)
     fprintf(fpout, "}\n");
 }
 
-static void dump_PLTE(png_infop info_ptr, FILE *fpout)
+static void dump_PLTE(FILE *fpout)
 {
     int i;
 
@@ -264,9 +266,7 @@ static void dump_PLTE(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_image(png_structp png_ptr, 
-		       png_infop info_ptr,
-		       png_bytepp rows, FILE *fpout)
+static void dump_image(png_bytepp rows, FILE *fpout)
 {
 #ifdef __UNUSED__
     if (idat)
@@ -290,7 +290,7 @@ static void dump_image(png_structp png_ptr,
     }
 }
 
-static void dump_bKGD(png_infop info_ptr, FILE *fpout)
+static void dump_bKGD(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_bKGD)
     {
@@ -317,7 +317,7 @@ static void dump_bKGD(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_cHRM(png_infop info_ptr, FILE *fpout)
+static void dump_cHRM(FILE *fpout)
 {
     double wx, wy, rx, ry, gx, gy, bx, by;
 
@@ -350,14 +350,14 @@ static void dump_cHRM(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_gAMA(png_infop info_ptr, FILE *fpout)
+static void dump_gAMA(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_gAMA) {
         fprintf(fpout, "gAMA {%#0.5g}\n", info_ptr->gamma);
     }
 }
 
-static void dump_hIST(png_infop info_ptr, FILE *fpout)
+static void dump_hIST(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_hIST) {
 	int	j;
@@ -370,7 +370,7 @@ static void dump_hIST(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_iCCP(png_infop info_ptr, FILE *fpout)
+static void dump_iCCP(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_iCCP) {
 	fprintf(fpout, "iCCP {\n");
@@ -381,7 +381,7 @@ static void dump_iCCP(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_oFFs(png_infop info_ptr, FILE *fpout)
+static void dump_oFFs(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_oFFs) {
         fprintf(fpout, "oFFs {xoffset: %ld; yoffset: %ld;",
@@ -393,7 +393,7 @@ static void dump_oFFs(png_infop info_ptr, FILE *fpout)
 	fprintf(fpout, ";}\n");
     }
 }
-static void dump_pHYs(png_infop info_ptr, FILE *fpout)
+static void dump_pHYs(FILE *fpout)
 {
     if (info_ptr->phys_unit_type > 1)
         printerr(1, "invalid pHYs unit");
@@ -411,7 +411,7 @@ static void dump_pHYs(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_sBIT(png_infop info_ptr, FILE *fpout)
+static void dump_sBIT(FILE *fpout)
 {
     int maxbits = (info_ptr->color_type == 3)? 8 : info_ptr->bit_depth;
 
@@ -479,7 +479,7 @@ static void dump_sBIT(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_pCAL(png_infop info_ptr, FILE *fpout)
+static void dump_pCAL(FILE *fpout)
 {
     static char *mapping_type[] = {
 	"linear", "euler", "exponential", "hyperbolic"
@@ -508,7 +508,7 @@ static void dump_pCAL(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_sCAL(png_infop info_ptr, FILE *fpout)
+static void dump_sCAL(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_sCAL) {
 	fprintf(fpout, "sCAL {\n");
@@ -556,7 +556,7 @@ static void dump_sPLT(png_spalette *ep, FILE *fpout)
     fprintf(fpout, "}\n");
 }
 
-static void dump_tRNS(png_infop info_ptr, FILE *fpout)
+static void dump_tRNS(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_tRNS) {
 	int	i;
@@ -583,7 +583,7 @@ static void dump_tRNS(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_sRGB(png_infop info_ptr, FILE *fpout)
+static void dump_sRGB(FILE *fpout)
 {
     if (info_ptr->srgb_intent) {
         printerr(1, "sRGB invalid rendering intent");
@@ -595,7 +595,7 @@ static void dump_sRGB(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_tIME(png_infop info_ptr, FILE *fpout)
+static void dump_tIME(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_tIME) {
 	static char *months[] =
@@ -626,7 +626,7 @@ static void dump_tIME(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_text(png_infop info_ptr, FILE *fpout)
+static void dump_text(FILE *fpout)
 {
     int	i;
 
@@ -664,7 +664,7 @@ static void dump_text(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_unknown_chunks(png_infop info_ptr, 
+static void dump_unknown_chunks(
 				int after_idat, FILE *fpout)
 {
     int	i;
@@ -705,30 +705,29 @@ static void dump_unknown_chunks(png_infop info_ptr,
     }
 }
 
-void sngdump(png_structp png_ptr, png_infop info_ptr, 
-	     png_byte *row_pointers[], FILE *fpout)
+void sngdump(png_byte *row_pointers[], FILE *fpout)
 /* dump a canonicalized SNG form of a PNG file */
 {
     int	i;
 
-    dump_IHDR(info_ptr, fpout);			/* first critical chunk */
+    dump_IHDR(fpout);			/* first critical chunk */
 
-    dump_cHRM(info_ptr, fpout);
-    dump_gAMA(info_ptr, fpout);
-    dump_iCCP(info_ptr, fpout);
-    dump_sBIT(info_ptr, fpout);
-    dump_sRGB(info_ptr, fpout);
+    dump_cHRM(fpout);
+    dump_gAMA(fpout);
+    dump_iCCP(fpout);
+    dump_sBIT(fpout);
+    dump_sRGB(fpout);
 
-    dump_PLTE(info_ptr, fpout);			/* second critical chunk */
+    dump_PLTE(fpout);			/* second critical chunk */
 
-    dump_bKGD(info_ptr, fpout);
-    dump_hIST(info_ptr, fpout);
-    dump_tRNS(info_ptr, fpout);
-    dump_pHYs(info_ptr, fpout);
+    dump_bKGD(fpout);
+    dump_hIST(fpout);
+    dump_tRNS(fpout);
+    dump_pHYs(fpout);
     for (i = 0; i < info_ptr->splt_palettes_num; i++)
 	dump_sPLT(info_ptr->splt_palettes + i, fpout);
 
-    dump_unknown_chunks(info_ptr, FALSE, fpout);
+    dump_unknown_chunks(FALSE, fpout);
 
     /*
      * This is the earliest point at which we could write the image data;
@@ -737,20 +736,17 @@ void sngdump(png_structp png_ptr, png_infop info_ptr,
      * a look at all the ancillary.
      */
 
-    dump_tIME(info_ptr, fpout);
-    dump_text(info_ptr, fpout);
+    dump_tIME(fpout);
+    dump_text(fpout);
 
-    dump_image(png_ptr, info_ptr, 
-	       row_pointers, fpout);	/* third critical chunk */
+    dump_image(row_pointers, fpout);	/* third critical chunk */
 
-    dump_unknown_chunks(info_ptr, TRUE, fpout);
+    dump_unknown_chunks(TRUE, fpout);
 }
 
 int sngd(FILE *fp, char *name, FILE *fpout)
 /* read and decompile an SNG image presented on stdin */
 {
-   png_structp png_ptr;
-   png_infop info_ptr;
    png_uint_32 width, height;
    int bit_depth, color_type, interlace_type, row;
    png_bytepp row_pointers;
@@ -820,13 +816,12 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
-#ifdef __CORE_DUMP__
-   /* causes a core dump when reading basi0g01.png */
+#ifdef __UNUSED__
+   /* use this only if your want the library to do the expansion */
    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
 	png_set_gray_1_2_4_to_8(png_ptr);
-#endif
+   png_read_update_info(png_ptr, info_ptr);
 
-#ifdef __UNUSED__
    /*
     * If idat is off, it's time to read the actual image data.
     * (If idat is on, it has been treated as unknown chunks.)
@@ -847,7 +842,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    png_read_end(png_ptr, info_ptr);
 
    /* dump the image */
-   sngdump(png_ptr, info_ptr, row_pointers, fpout);
+   sngdump(row_pointers, fpout);
 
    /* clean up after the read, and free any memory allocated - REQUIRED */
    png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
