@@ -475,8 +475,13 @@ static void collect_data(int *pnbits, char **pbits)
     {
 	if (feof(yyin))
 	    fatal("unexpected EOF in data segment");
-	else if (c == '}')
+	else if (c == ';')
 	    break;
+	else if (c == '}')
+	{
+	    ungetc('}', yyin);
+	    break;
+	}
 	else if (isspace(c))
 	    continue;
 	else 
@@ -489,7 +494,7 @@ static void collect_data(int *pnbits, char **pbits)
 	    if (pixperchar)
 	    {
 		if (!isalpha(c) && !isdigit(c))
-		    fatal("bad character %02x in IDAT block", c);
+		    fatal("bad character %02x in data block", c);
 		else if (isdigit(c))
 		    value = c - '0';
 		else if (isupper(c))
@@ -611,6 +616,7 @@ static void compile_IDAT(void)
      * Collect raw hex data and write it out as a chunk.
      */
     collect_data(&nbits, &bits);
+    require_or_die("}");
     png_write_chunk(png_ptr, "IDAT", bits, nbits);
     free(bits);
 }
@@ -682,10 +688,7 @@ static void compile_iCCP(void)
 	if (token_equals("name"))
 	    nname = keyword_validate(get_token(), name);
 	else if (token_equals("profile"))
-	{
 	    collect_data(&data_len, &data);
-	    break;	/* already ate } */
-	}
 
     if (!nname || !data_len)
 	fatal("incomplete iCCP specification");
@@ -1307,6 +1310,7 @@ static void compile_IMAGE(void)
 
     /* collect the data */
     collect_data(&nbits, &bits);
+    require_or_die("}");
 
     /* compute input sample size in bits */
     switch (info_ptr->color_type)

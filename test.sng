@@ -1,21 +1,21 @@
 # This is a synthetic SNG test file
 
 IHDR: {
-	width: 16
-	height: 19
-	bitdepth: 8
-	using color: palette 
-	with interlace
+	width: 16;
+	height: 19;
+	bitdepth: 8;
+	using color: palette; 
+	with interlace;
 }
 
 gAMA: {0.45}
 
 # The parameters are the standard values in the Specification section 4.2.2.3.
 cHRM {
-   white: (0.31270, 0.32900)
-   red:   (0.6400,  0.3300)
-   green: (0.3000,  0.6000)
-   blue:  (0.1500,  0.600)
+   white: (0.31270, 0.32900);
+   red:   (0.6400,  0.3300);
+   green: (0.3000,  0.6000);
+   blue:  (0.1500,  0.600);
 }
 
 # This cannot coexist with the iCCP chunk.
@@ -23,16 +23,16 @@ cHRM {
 
 # This cannot coexist with the sRGB chunk.
 iCCP {
-   name "dummy profile" 
-   profile hex 01 02 03 04 05
+   name "dummy profile"; 
+   profile hex 01 02 03 04 05;
 }
 
 sBIT: {
-  red: 8
-  green: 8
-  blue: 8
-  # gray: 8	# for non-color images
-  # alpha: 8	# for images with alpha
+  red: 8;
+  green: 8;
+  blue: 8;
+  # gray: 8;	# for non-color images
+  # alpha: 8;	# for images with alpha
 }
 
 PLTE: {
@@ -42,33 +42,33 @@ PLTE: {
 }
 
 bKGD: {
-  # red: 127
-  # green: 127
-  # blue: 127
-  # gray: 127	# for non-color images
-  index: 0	# for paletted images
+  # red: 127;
+  # green: 127;
+  # blue: 127;
+  # gray: 127;	# for non-color images
+  index: 0;	# for paletted images
 }
 
 hIST: {23, 55, 10}
 
 tRNS: {
-  255
-   # red: 70 
-   # green: 70
-   # blue: 70
+  255;
+   # red: 70;
+   # green: 70;
+   # blue: 70;
 }
 
 pHYs: {
-   resolution (500, 400) per meter
+   resolution (500, 400) per meter;
 }
 
 tIME {
-   year: 1999
-   month: 11
-   day: 22
-   hour: 16
-   minute: 23
-   second: 17
+   year: 1999;
+   month: 11;
+   day: 22;
+   hour: 16;
+   minute: 23;
+   second: 17;
 }
 
 oFFs {
@@ -76,18 +76,18 @@ oFFs {
 }
 
 pCAL {
-   name: "dummy physical calibration data"
-   x0: 1234
-   x1: 5678
-   linear mapping
-   unit: "BTU"
-   parameters: 55 99
+   name: "dummy physical calibration data";
+   x0: 1234;
+   x1: 5678;
+   linear mapping;
+   unit: "BTU";
+   parameters: 55 99;
 }
 
 sCAL {
-   unit: meter
-   width: 0.002
-   height: 0.001
+   unit: meter;
+   width: 0.002;
+   height: 0.001;
 }
 
 IMAGE: {
@@ -114,31 +114,31 @@ IMAGE: {
 }
 
 tEXt: {				# Ordinary text chunk
-  keyword: "Title"
-  text: "Sample SNG script"
+  keyword: "Title";
+  text: "Sample SNG script";
 }
 
 zTXt: {				# Compressed text chunk
-  keyword: "Author"
-  text: "Eric S. Raymond"
+  keyword: "Author";
+  text: "Eric S. Raymond";
 }
 
 iTXt: {				# International UTF-8 keyword
-  language: "en"
-  keyword: "Description"
-  text: "SNG demo, illustrating the language syntax"
+  language: "en";
+  keyword: "Description";
+  text: "SNG demo, illustrating the language syntax";
 }
 
 gIFg {				# GIF Graphic Extension chunk
-   disposal: 23
-   input: 17
-   delay: 55
+   disposal: 23;
+   input: 17;
+   delay: 55;
 }
 
 gIFx {				# GIF Application Extension chunk
-   identifier: "SNGCOMPI"
-   code: "SNG"
-   data: "Dummy application data"
+   identifier: "SNGCOMPI";
+   code: "SNG";
+   data: "Dummy application data";
 }
 
 # No sPLT chunk.
