@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include "sng.h"
 
@@ -5,28 +6,6 @@
 
 int verbose;
 int sng_error;
-
-static void process_file_pointer(FILE *fpin, char *name, FILE *fpout)
-/* compile or decompile, depending on whether 1st char is printable */
-{
-    int	c = getchar();
-
-    ungetc(c, stdin);
-
-    if (isprint(c))
-	sngc(fpin, name, fpout);
-    else
-	sngd(fpin, name, fpout);
-}
-
-static void usage(void)
-/* issue usage/help message */
-{
-    fprintf(stderr, "SNG, version %s\n", VERSION);
-    fprintf(stderr, "   by Eric S. Raymond.\n");
-    fprintf(stderr,"Compile SNG files to PNG/MNG or decompile PNG to SNG\n\n");
-    fprintf(stderr, "Usage:  sng [-v] [file...]\n");
-}
 
 int main(int argc, char *argv[])
 {
@@ -37,7 +16,8 @@ int main(int argc, char *argv[])
     _wildcard(&argc, &argv);   /* Unix-like globbing for OS/2 and DOS */
 #endif
 
-    while(argc > 1 && argv[1][0] == '-') {
+    while(argc > 1 && argv[1][0] == '-')
+    {
 	switch(argv[1][i]) {
 	case '\0':
 	    argc--;
@@ -50,8 +30,7 @@ int main(int argc, char *argv[])
 	    break;
 	case 'h':
 	default:
-	    fprintf(stderr, "unknown option %c\n", argv[1][i]);
-	    usage();
+	    fprintf(stderr, "sng: unknown option %c\n", argv[1][i]);
 	    exit(1);
 	}
     }
@@ -59,23 +38,74 @@ int main(int argc, char *argv[])
     if (argc == 1)
     {
 	if (isatty(0))
-	{ /* if stdin not redirected, give the user help */
-	    usage();
-	} else {
-	    process_file_pointer(stdin, "stdin", stdout);
+	    fprintf(stderr, "sng: usage sng [-v] [file...]\n");
+	else
+	{
+	    int	c = getchar();
+
+	    ungetc(c, stdin);
+
+	    if (isprint(c))
+		sngc(stdin, "stdin", stdout);
+	    else
+		sngd(stdin, "stdin", stdout);
 	}
-    } else {
-	for(i = 1; i < argc; i++) {
-	    /* This is somewhat ugly.  It sets the file pointer to stdin if the
-	     * filename is "-", otherwise it tries to open the given filename.
-	     */
-	    if ((fp = strcmp(argv[1],"-") == 0 ? stdin:fopen(argv[i],"rb")) == NULL) {
-		perror(argv[i]);
-		sng_error = 2;
-	    } else {
-		process_file_pointer(fp, fp == stdin? "stdin":argv[i], stdout);
-		fclose(fp);
+    } 
+    else
+    {
+	for (i = 1; i < argc; i++)
+	{
+	    int sng2png, dot = strlen(argv[i]) - 4;
+	    char outfile[BUFSIZ];
+	    FILE	*fpin, *fpout;
+
+	    if (argv[i][dot] != '.')
+	    {
+		fprintf(stderr, "sng: %s is neither SNG nor PNG\n", argv[i]);
+		continue;
 	    }
+	    else if (strcmp(argv[i] + dot, ".sng") == 0)
+	    {
+		sng2png = TRUE;
+		strncpy(outfile, argv[i], dot);
+		outfile[dot] = '\0';
+		strcat(outfile, ".png");
+	    }
+	    else if (strcmp(argv[i] + dot, ".png") == 0)
+	    {
+		sng2png = FALSE;
+		strncpy(outfile, argv[i], dot);
+		outfile[dot] = '\0';
+		strcat(outfile, ".sng");
+	    }
+	    else
+	    {
+		fprintf(stderr, "sng: %s is neither SNG nor PNG\n", argv[i]);
+		continue;
+	    }
+
+	    if (verbose)
+		printf("sng: converting %s to %s\n", argv[i], outfile);
+
+	    if ((fpin = fopen(argv[i], "r")) == NULL)
+	    {
+		fprintf(stderr,
+			"sng: couldn't open %s for input (%d)\n",
+			argv[i], errno);
+		continue;
+	    }
+	    if ((fpout = fopen(outfile, "r")) == NULL)
+	    {
+		fprintf(stderr,
+			"sng: couldn't open for output %s (%d)\n",
+			argv[i], errno);
+		continue;
+	    }
+
+	    if (sng2png)
+		sngc(fpin, argv[i], fpout);
+	    else
+		sngd(fpin, argv[i], fpout);
 	}
     }
 

@@ -75,7 +75,7 @@ static void multi_dump(FILE *fpout, char *leader,
 		    fprintf(fpout, "\n");
 	    }
 	    for (cp = data[i]; cp < data[i] + width; cp++)
-		fputc("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$"[*cp], fpout);
+		fputc(BASE64[*cp], fpout);
 	    if (height == 1)
 		fprintf(fpout, ";\n");
 	    else
@@ -115,11 +115,7 @@ static void printerr(int err, const char *fmt, ... )
     char buf[BUFSIZ];
     va_list ap;
 
-    /* error message format can be stepped through by Emacs */
-    if (verbose)
-	sprintf(buf, "%s ", current_file);
-    else
-	buf[0] = '\0';
+    sprintf(buf, "sng: in %s, ", current_file);
 
     va_start(ap, fmt);
     vsprintf(buf + strlen(buf), fmt, ap);

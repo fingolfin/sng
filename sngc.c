@@ -449,8 +449,8 @@ static void collect_data(int *pnbits, char **pbits)
      *    An ASCII string.
      *
      * base64: 
-     *   One character per byte; values are
-     * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$
+     *   One character per byte; values are as per RFC2045 base64:
+     * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/
      *
      * hex: 
      *   Two hex digits per byte.
@@ -512,9 +512,13 @@ static void collect_data(int *pnbits, char **pbits)
 		else if (isdigit(c))
 		    value = c - '0';
 		else if (isupper(c))
-		    value = (c - 'A') + 36;
-		else 
-		    value = (c - 'a') + 10;
+		    value = (c - 'A') + 10;
+		else if (islower(c))
+		    value = (c - 'a') + 36;
+		else if (c == '+')
+		    value = 62;
+		else /* if (c == '/') */
+		    value = 63;
 		bits[nbits++] = value;
 	    }
 	    else
