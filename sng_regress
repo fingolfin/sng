@@ -10,23 +10,31 @@ do
     case $file in
     *.png)
         # echo "Regression-testing against PNG file \`$file'"
-        if [ sng <${file} >/tmp/decompiled$$.sng ]
+        if sng <${file} >/tmp/decompiled$$.sng
         then
+	    :
+	else
             echo "$file: decompilation of the test PNG failed.";
             exit 1
         fi
-        if [ sng </tmp/decompiled$$.sng >/tmp/decompiled$$.png ]
+        if sng </tmp/decompiled$$.sng >/tmp/decompiled$$.png
         then
+	    :
+	else
             echo "$file: recompilation of the decompiled form failed.";
             exit 1
         fi
-        if [ sng </tmp/decompiled$$.png >/tmp/canonicalized$$.sng ]
+        if sng </tmp/decompiled$$.png >/tmp/canonicalized$$.sng
         then
+	    :
+	else
             echo "$file: generation of the canonicalized form failed.";
             exit 1
         fi
-        if [ sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png ]
+        if sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
         then
+	    :
+	else
             echo "$file: recompilation of the canonicalized form failed.";
             exit 1
         fi
@@ -43,23 +51,31 @@ do
         # Make a canonicalized version of the test file
         # Regenerate canonicalized version from its PNG
         # Diff the two
-        if [ sng <${file} >/tmp/test$$.png ]
+        if sng <${file} >/tmp/test$$.png
         then
+	    :
+	else
             echo "$file: compilation of the test SNG failed.";
             exit 1
         fi
-        if [ sng </tmp/test$$.png >/tmp/canonicalized$$.sng ]
+        if sng </tmp/test$$.png >/tmp/canonicalized$$.sng
         then
+	    :
+	else
             echo "$file: generation of the canonicalized form failed.";
             exit 1
         fi
-        if [ sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png ]
+        if sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
         then
+	    :
+	else
             echo "$file: recompilation of the canonicalized form failed.";
             exit 1
         fi
-        if [ sng </tmp/canonicalized$$.png >/tmp/decompiled$$.sng ]
+        if sng </tmp/canonicalized$$.png >/tmp/decompiled$$.sng
         then
+	    :
+	else
             echo "$file: decompilation of the canonicalized form failed.";
             exit 1
         fi
