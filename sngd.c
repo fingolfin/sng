@@ -868,8 +868,9 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
 int sngd(FILE *fp, char *name, FILE *fpout)
 /* read and decompile an SNG image presented on stdin */
 {
-   png_uint_32 width, height, row;
+#ifndef PNG_INFO_IMAGE_SUPPORTED
    png_bytepp row_pointers;
+#endif
 
    current_file = name;
    sng_error = 0;
@@ -932,7 +933,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_PACKING, NULL);
 
    /* dump the image */
-   sngdump(info_ptr->rowpointers, fpout);
+   sngdump(info_ptr->row_pointers, fpout);
 #else
    png_set_packing(png_ptr);
 
