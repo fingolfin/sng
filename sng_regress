@@ -2,6 +2,8 @@
 #
 # sng_regress -- regression test harness for sng
 #
+#viewer="xv -cmap"
+viewer=display
 
 stop_on_error=0
 eyeball_test=0
@@ -25,7 +27,7 @@ do
 	if [ "$eyeball_test" = "1" ]
 	then
 	    echo $file.
-	    sng <$file | sng >/tmp/recompiled$$.png && xv -cmap $file /tmp/recompiled$$.png
+	    sng <$file | sng >/tmp/recompiled$$.png && $viewer $file /tmp/recompiled$$.png
 	fi
 
         # echo "Regression-testing against PNG file \`$file'"
