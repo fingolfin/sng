@@ -322,7 +322,7 @@ static void dump_sBIT(png_infop info_ptr, FILE *fpout)
 	    }
 	    break;
 	case PNG_COLOR_TYPE_RGB:
-	case PNG_COLOR_TYPE_RGB_ALPHA:
+	case PNG_COLOR_TYPE_PALETTE:
 	    if (info_ptr->sig_bit.red == 0 || info_ptr->sig_bit.red > maxbits) {
 		printerr(1, "%d sBIT red bits not valid for %dbit/sample image",
 			 info_ptr->sig_bit.red, maxbits);
@@ -565,7 +565,32 @@ void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
 
     dump_text(info_ptr, fpout);
 
-    /* FIXME: dump gIFg, gIFx, and private chunks */
+    for (i = 0; i < info_ptr->unknown_chunks_num; i++)
+    {
+	png_unknown_chunk	*up = info_ptr->unknown_chunks + i;
+
+/* macros to extract big-endian short and long ints */
+#define SH(p) ((unsigned short)((p)[1]) | (((p)[0]) << 8))
+#define LG(p) ((unsigned long)(SH((p)+2)) | ((ulg)(SH(p)) << 16))
+
+	fprintf(fpout, "%s {\n", up->name);
+	if (!strcmp(up->name, "gIFg"))
+	{
+	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n}\n",
+		    up->data[0], up->data[1], (float)(.01 * SH(up->data+2)));
+	}
+	else if (!strcmp(up->name, "gIFx"))
+	{
+	    fprintf(fpout, "    identifier: \"%.*s\"; code: \"%c%c%c\"\n",
+		    8, up->data, up->data[8], up->data[9], up->data[10]);
+	    dump_data(fpout, "    data: ", up->size - 11, up->data + 11, 0);
+	}
+	else
+	    dump_data(fpout, "   data: ", up->size, up->data, 0);
+	fprintf(fpout, "}\n");
+#undef SH
+#undef LG
+    }
 }
 
 int sngd(FILE *fp, char *name, FILE *fpout)
@@ -614,6 +639,9 @@ int sngd(FILE *fp, char *name, FILE *fpout)
       /* If we get here, we had a problem reading the file */
       return(FAIL);
    }
+
+   /* keep all unknown chunks, we'll dump them later */
+   png_set_keep_unknown_chunks(png_ptr, 2, NULL, 0);
 
    /* Set up the input control if you are using standard C streams */
    png_init_io(png_ptr, fp);
