@@ -61,7 +61,7 @@ static void multi_dump(FILE *fpout, char *leader,
 	    str[width] = '\0';
 	    if (i == 0)
 	    {
-		fprintf(fpout, "%sstring ", leader);
+		fprintf(fpout, "%s ", leader);
 		if (height == 1 && width < SHORT_DATA)
 		    fprintf(fpout, " ");
 		else

@@ -162,11 +162,11 @@ gIFg {				# GIF Graphic Extension chunk
 gIFx {				# GIF Application Extension chunk
    identifier: "SNGCOMPI";
    code: "SNG";
-   data: string "Dummy application data";
+   data: "Dummy application data";
 }
 
 private prIv {
-   string "Test data for the private chunk";
+   "Test data for the private chunk";
 }
 
 # Test file ends here

@@ -51,8 +51,8 @@ is, a string of no more than 79 printable Latin-1 characters or
 spaces, with no leading and no traling and no consecutive spaces.
 
 A <data> literal consists of a sequence of byte specifications in one
-of three formats, signaled by the token `string', `base64', or `hex'.
-String format is a doublequote-delimited printable ASCII string.
+of three formats. String format is a doublequote-delimited printable
+ASCII string.  The other two formats are signaled by the token `base64', or `hex'.
 Base64 format can be used if the image either has total (color plus
 alpha) bit depth of four or less, or it is a paletted image with 64 or
 fewer colors; values of the chars are 0-9, followed by A-Z for 10-35,

@@ -194,6 +194,10 @@ static char *xstrdup(char *s)
  ************************************************************************/
 
 static char token_buffer[BUFSIZ];
+static int token_class;
+#define STRING_TOKEN	1
+#define PUNCT_TOKEN	2
+#define WORD_TOKEN	3
 static bool pushed;
 
 static int get_token(void)
@@ -266,8 +270,12 @@ static int get_token(void)
 	    else
 		*tp++ = c;
 	}
+	token_class = STRING_TOKEN;
     }
-    else if (!ispunct(w))
+    else if (ispunct(w))
+	token_class = PUNCT_TOKEN;
+    else
+    {
 	for (;;)
 	{
 	    c = fgetc(yyin);
@@ -289,6 +297,8 @@ static int get_token(void)
 	    else
 		*tp++ = c;
 	}
+	token_class = WORD_TOKEN;
+    }
 
     *tp = '\0';
     if (verbose > 1)
@@ -446,7 +456,7 @@ static void collect_data(int *pnbits, char **pbits)
      * There are presently three formats:
      *
      * string:
-     *    An ASCII string.
+     *    An ASCII string, doublequote-delimited.
      *
      * base64: 
      *   One character per byte; values are as per RFC2045 base64:
@@ -466,10 +476,8 @@ static void collect_data(int *pnbits, char **pbits)
 
     if (!get_inner_token())
 	fatal("missing format type in data segment");
-    else if (token_equals("string"))
+    else if (token_class == STRING_TOKEN)
     {
-	if (!get_token())
-	    fatal("Unexpected EOF in data element");
 	*pbits = xstrdup(token_buffer);
 	*pnbits = strlen(*pbits);
 	return;
