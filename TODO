@@ -46,9 +46,9 @@ The following is a plausible XML syntax.  Would it be an improvement?
    blue=({float},{float})
 />
 
-<sRGB intent={byte}/>            # Colorimetry intent, range 0-3
+<sRGB intent={byte}/>           # Colorimetry intent, range 0-3
 
-<iCCP name={keyword}>            # International Color Consortium profile
+<iCCP name={keyword}>           # International Color Consortium profile
    {data}               
 </iCCP>
 
