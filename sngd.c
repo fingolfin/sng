@@ -835,7 +835,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    true_channels = png_get_channels(png_ptr, info_ptr);
    true_depth = bit_depth;
 
-   if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+   if (bit_depth < 8)
    {
        png_set_packing(png_ptr);
        true_depth = bit_depth;

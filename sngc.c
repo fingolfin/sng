@@ -1448,7 +1448,7 @@ static void compile_IMAGE(void)
 	      nbits, info_ptr->width, info_ptr->height);
 
     /* make image pack as small as possible */
-    if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8)
+    if (info_ptr->bit_depth < 8)
 	png_set_packing(png_ptr);
 
     /* got the bits; now write them out */
