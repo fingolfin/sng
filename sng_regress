@@ -5,9 +5,13 @@
 
 trap "rm -f /tmp/*$$.[ps]ng" 0 1 2 15 
 
+stop_on_error=0
 for file in $*
 do
     case $file in
+    -s)
+	stop_on_error=1
+    ;;
     *.png)
         # echo "Regression-testing against PNG file \`$file'"
         if sng <${file} >/tmp/decompiled$$.sng
@@ -15,35 +19,35 @@ do
 	    :
 	else
             echo "$file: decompilation of the test PNG failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if sng </tmp/decompiled$$.sng >/tmp/decompiled$$.png
         then
 	    :
 	else
             echo "$file: recompilation of the decompiled form failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if sng </tmp/decompiled$$.png >/tmp/canonicalized$$.sng
         then
 	    :
 	else
             echo "$file: generation of the canonicalized form failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
         then
 	    :
 	else
             echo "$file: recompilation of the canonicalized form failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if cmp -s /tmp/decompiled$$.png /tmp/canonicalized$$.png
         then
 	    echo "$file: regression test passed."
 	else
             echo "$file: decompiled and canonicalized versions differ.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
     ;;
     *.sng)
@@ -56,35 +60,35 @@ do
 	    :
 	else
             echo "$file: compilation of the test SNG failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if sng </tmp/test$$.png >/tmp/canonicalized$$.sng
         then
 	    :
 	else
             echo "$file: generation of the canonicalized form failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
         then
 	    :
 	else
             echo "$file: recompilation of the canonicalized form failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if sng </tmp/canonicalized$$.png >/tmp/decompiled$$.sng
         then
 	    :
 	else
             echo "$file: decompilation of the canonicalized form failed.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
         if diff -c /tmp/canonicalized$$.sng /tmp/decompiled$$.sng
         then
 	    echo "$file: regression test passed."
 	else
             echo "$file: decompiled and canonicalized versions differ.";
-            exit 1
+            case $stop_on_error in 1) exit 1;; esac
         fi
     ;;
     *)
