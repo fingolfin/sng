@@ -1563,7 +1563,7 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     png_byte	**row_pointers;
-    int		i, nbytes, bytes_per_sample, nsamples;
+    int		i, nbytes, bytes_per_sample, nsamples, input_width;
     char	*bytes;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
@@ -1627,6 +1627,7 @@ static void compile_IMAGE(void)
     /*
      * Compute the actual size of the image in samples.
      */
+    input_width = nbytes / info_ptr->height;
     if (info_ptr->bit_depth >= 8)
 	nsamples = nbytes / bytes_per_sample;
     else
@@ -1634,6 +1635,7 @@ static void compile_IMAGE(void)
 	int samples_per_byte = (8 / info_ptr->bit_depth);
 
 	nsamples = nbytes * samples_per_byte;
+
 	/*
 	 * Images of bit depth less than 8 will have excess data in the
 	 * byte corresponding to the last pixel(s) in a row when the
@@ -1651,22 +1653,35 @@ static void compile_IMAGE(void)
 	fatal("sample count (%d) doesn't match width*height (%d*%d) in IHDR",
 	      nsamples, info_ptr->width, info_ptr->height);
 
-#ifndef PNG_INFO_IMAGE_SUPPORTED
-    /* make image pack as small as possible */
-    if (info_ptr->bit_depth < 8)
-	png_set_packing(png_ptr);
+#ifdef PNG_DEBUG
+#if (PNG_DEBUG >= 6)
+    /* dump the data as a check */
+    {
+	int	n;
 
+	fprintf(stderr, "image data:\n");
+	for (n = 0; n < nbytes; n++)
+	{
+	    fprintf(stderr, "%02x ", bytes[n] & 0xff);
+	    if ((n+1) % input_width == 0)
+		fputc('\n', stderr);
+	}
+    }
+#endif
+#endif
+
+#ifndef PNG_INFO_IMAGE_SUPPORTED
     /* got the bits; now write them out */
     row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	row_pointers[i] = &bytes[i * info_ptr->width * bytes_per_sample];
+	row_pointers[i] = &bytes[i * input_width];
     png_write_image(png_ptr, row_pointers);
     free(bytes);
 #else
     /* got the bits; attach them to the info structure */
     info_ptr->row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	info_ptr->row_pointers[i] = &bytes[i * info_ptr->width * bytes_per_sample];
+	info_ptr->row_pointers[i] = &bytes[i * input_width];
     info_ptr->valid |= PNG_INFO_IDAT;
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
@@ -1957,9 +1972,6 @@ int sngc(FILE *fin, char *name, FILE *fout)
     /* It is REQUIRED to call this to finish writing the rest of the file */
     png_write_end(png_ptr, info_ptr);
 #else
-    /* write out the info data, including the image */
-    if (!write_transform_options && info_ptr->bit_depth < 8)
-	write_transform_options |= PNG_TRANSFORM_PACKING;
     png_write_png(png_ptr, info_ptr, write_transform_options, NULL);
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 
