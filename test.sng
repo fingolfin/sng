@@ -91,7 +91,7 @@ pCAL {
    name: "dummy physical calibration data";
    x0: 1234;
    x1: 5678;
-   linear mapping;
+   mapping: linear;
    unit: "BTU";
    parameters: 55 99;
 }

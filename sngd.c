@@ -183,7 +183,7 @@ static void dump_IHDR(png_infop info_ptr, FILE *fpout)
 	fprintf(fpout, ";    # image type: %s\n", image_type[ityp]);
     }
     if (info_ptr->interlace_type)
-	fprintf(fpout, "    using interlace;        # type adam7 assumed\n");
+	fprintf(fpout, "    with interlace;        # type adam7 assumed\n");
     fprintf(fpout, "}\n");
 }
 
@@ -434,7 +434,7 @@ static void dump_pCAL(png_infop info_ptr, FILE *fpout)
 	fprintf(fpout, "    name: \"%s\";\n", safeprint(info_ptr->pcal_purpose));
 	fprintf(fpout, "    x0: %ld;\n", info_ptr->pcal_X0);
 	fprintf(fpout, "    x1: %ld;\n", info_ptr->pcal_X1);
-	fprintf(fpout, "    %s mapping;         # equation type %d\n", 
+	fprintf(fpout, "    mapping: %s;        # equation type %d\n", 
 	       mapping_type[info_ptr->pcal_type], info_ptr->pcal_type);
 	fprintf(fpout, "    unit: \"%s\"\n", safeprint(info_ptr->pcal_units));
 	if (info_ptr->pcal_nparams)

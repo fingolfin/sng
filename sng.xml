@@ -118,10 +118,10 @@ hIST {
 
 tRNS {
    [gray <short>]               # Grayscale images only
-   [<byte>]*                    # Paletted images only
    [red <short>]                # True-color images only
    [green <short>]              # True-color images only
    [blue <short>]               # True-color images only
+   [<byte>]*                    # Paletted images only
 }
 
 pHYs {
@@ -170,7 +170,7 @@ pCAL {
    name <keyword>
    x0 <slong>
    x1 <slong>
-   linear|euler|exponential|hyperbolic mapping
+   mapping linear|euler|exponential|hyperbolic
    unit <string>
    [parameters <string>*] 
 }
