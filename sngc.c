@@ -296,7 +296,7 @@ static void require_or_die(const char *str)
     if (!get_token())
 	fatal("unexpected EOF");
     else if (!token_equals(str))
-	fatal("unexpected token %s", token_buffer);
+	fatal("unexpected token `%s'", token_buffer);
 }
 
 static png_uint_32 long_numeric(bool token_ok)
@@ -309,7 +309,7 @@ static png_uint_32 long_numeric(bool token_ok)
 	fatal("EOF while expecting long-integer constant");
     result = strtoul(token_buffer, &vp, 0);
     if (*vp || result == 2147483647L)
-	fatal("invalid or out of range long constant");
+	fatal("invalid or out of range long constant `%s'", token_buffer);
     return(result);
 }
 
@@ -323,7 +323,7 @@ static png_uint_16 short_numeric(bool token_ok)
 	fatal("EOF while expecting short-integer constant");
     result = strtoul(token_buffer, &vp, 0);
     if (*vp || result == 65536)
-	fatal("invalid or out of range short constant");
+	fatal("invalid or out of range short constant `%s'", token_buffer);
     return(result);
 }
 
@@ -337,7 +337,7 @@ static png_byte byte_numeric(bool token_ok)
 	fatal("EOF while expecting byte constant");
     result = strtoul(token_buffer, &vp, 0);
     if (*vp || result > 255)
-	fatal("invalid or out of range byte constant");
+	fatal("invalid or out of range byte constant `%s'", token_buffer);
     return(result);
 }
 
@@ -351,7 +351,7 @@ static double double_numeric(bool token_ok)
 	fatal("EOF while expecting double-precision constant");
     result = strtod(token_buffer, &vp);
     if (*vp || result < 0)
-	fatal("invalid or out of range double-precision constant");
+	fatal("invalid or out of range double-precision constant `%s'", token_buffer);
     return(result);
 }
 
@@ -362,7 +362,7 @@ static char *string_validate(bool token_ok)
     char *vp;
 
     if (!token_ok)
-	fatal("EOF while expecting double-precision constant");
+	fatal("EOF while expecting string constant");
     return(token_buffer);
 }
 
@@ -407,7 +407,7 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
 	    if (pixperchar)
 	    {
 		if (!isalpha(c) && !isdigit(c))
-		    fatal("bad character in IDAT block");
+		    fatal("bad character %02x in IDAT block", c);
 		else if (isdigit(c))
 		    value = c - '0';
 		else if (isupper(c))
@@ -419,7 +419,7 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
 	    else
 	    {
 		if (!isxdigit(c))
-		    fatal("bad character in IDAT block");
+		    fatal("bad character %02x in IDAT block", c);
 		else if (isdigit(c))
 		    value = c - '0';
 		else if (isupper(c))
@@ -555,7 +555,7 @@ static void compile_cHRM(void)
 	    cmask |= 0x08;
 	}
 	else
-	    fatal("invalid color name in cHRM specification");
+	    fatal("invalid color `%s' name in cHRM specification",token_buffer);
 
 	require_or_die("(");
 	*cvx = double_numeric(get_inner_token());
@@ -627,7 +627,8 @@ static void compile_sBIT(void)
 	    sigbits.alpha = byte_numeric(get_token());
 	}
 	else 
-	    fatal("invalid channel name in sBIT specification");
+	    fatal("invalid channel name `%s' in sBIT specification",
+		  token_buffer);
 
     png_set_sBIT(png_ptr, info_ptr, &sigbits);
 }
@@ -776,7 +777,7 @@ static void compile_IMAGE(void)
 	sample_size = info_ptr->bit_depth * 2;
 	break;
 
-    default:
+    default:	/* should never happen */
 	fatal("unknown color type");
     }
 
@@ -854,7 +855,7 @@ int sngc(FILE *fin, FILE *fout)
 		 pp++)
 	    if (token_equals(pp->name))
 		goto ok;
-	fatal("unknown chunk type");
+	fatal("unknown chunk type `%s'", token_buffer);
 
     ok:
 	if (!get_token())
