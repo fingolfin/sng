@@ -430,7 +430,7 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
  ************************************************************************/
 
 static void compile_IHDR(void)
-/* parse IHDR specification and emit corresponding bits */
+/* parse IHDR specification, set corresponding bits in info_ptr */
 {
     int chunktype;
 
@@ -468,7 +468,7 @@ static void compile_IHDR(void)
 }
 
 static void compile_PLTE(void)
-/* parse PLTE specification and emit corresponding bits */
+/* parse PLTE specification, set corresponding bits in info_ptr */
 {
     png_color	palette[256];
     int ncolors;
@@ -508,7 +508,7 @@ static void compile_IDAT(void)
 }
 
 static void compile_cHRM(void)
-/* parse cHRM specification and emit corresponding bits */
+/* parse cHRM specification, set corresponding bits in info_ptr */
 {
     char	cmask = 0;
 
@@ -556,70 +556,6 @@ static void compile_cHRM(void)
 	info_ptr->valid |= cHRM;
 }
 
-static void compile_IMAGE(void)
-/* parse IMAGE specification and emit corresponding bits */
-{
-    png_byte	**rowpointers;
-    int	i;
-
-    /*
-     * We know we can use format 1 if
-     * (a) The image is paletted and the palette has 62 or fewer values.
-     * (b) Bit depth is 4 or less.
-     * These cover a lot of common cases.
-     */
-    bool	sample_per_char;
-    int		nbits;
-    char	*bits;
-    int 	sample_size;
-
-    /* input sample size in bits */
-    switch (info_ptr->color_type)
-    {
-    case PNG_COLOR_TYPE_GRAY:
-	sample_size = info_ptr->bit_depth;
-	break;
-
-    case PNG_COLOR_TYPE_PALETTE:
-	sample_size = 8;
-	break;
-
-    case PNG_COLOR_TYPE_RGB:
-	sample_size = info_ptr->bit_depth * 3;
-	break;
-
-    case PNG_COLOR_TYPE_RGB_ALPHA:
-	sample_size = info_ptr->bit_depth * 4;
-	break;
-
-    case PNG_COLOR_TYPE_GRAY_ALPHA:
-	sample_size = info_ptr->bit_depth * 2;
-	break;
-    }
-
-    /* can we fit a sample in one base-62 character? */
-    sample_per_char =
-	sample_size <= 5
-	|| ((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
-	 			&& info_ptr->num_palette <= 62);
-
-    /* collect the data */
-    collect_data(sample_per_char, &nbits, &bits);
-
-    if (nbits != info_ptr->width * info_ptr->height * (sample_size / 8))
-	fatal("size of IMAGE doesn't match height * width in IHDR");
-
-    /* FIXME: perhaps this should be optional? */
-    png_set_packing(png_ptr);
-
-    /* got the bits; now write them out */
-    rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
-    for (i = 0; i < info_ptr->height; i++)
-	rowpointers[i] = &bits[i * info_ptr->width];
-    png_write_image(png_ptr, rowpointers);
-    free(bits);
-}
-
 static void compile_iCCP(void)
 /* compile and emit an iCCP chunk */
 {
@@ -634,9 +570,50 @@ static void compile_iCCP(void)
     *cp++ = 0;		/* null separator */
     *cp++ = 0;		/* compression method */
     if (!get_token() || !token_equals("}"))
-	fatal("bad token in iCCP specification");
+	fatal("bad token `%s' in iCCP specification", token_buffer);
 
     /* FIXME: actually emit the chunk */
+}
+
+static void compile_sBIT(void)
+/* compile an sBIT chunk, set corresponding bits in info_ptr */
+{
+    png_color_8	sigbits;
+    bool		color = (info_ptr->color_type & (PNG_COLOR_MASK_PALETTE | PNG_COLOR_MASK_COLOR));
+
+    while (get_inner_token())
+	if (token_equals("red"))
+	{
+	    if (!color)
+		fatal("No color channels in this image type");
+	    sigbits.red = byte_numeric(get_token());
+	}
+	else if (token_equals("blue"))
+	{
+	    if (!color)
+		fatal("No color channels in this image type");
+	    sigbits.green = byte_numeric(get_token());
+	}
+	else if (token_equals("green"))
+	{
+	    if (!color)
+		fatal("No color channels in this image type");
+	    sigbits.blue = byte_numeric(get_token());
+	}
+	else if (token_equals("gray"))
+	{
+	    if (color)
+		fatal("No gray channel in this image type");
+	    sigbits.gray = byte_numeric(get_token());
+	}
+	else if (token_equals("alpha"))
+	{
+	    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
+		fatal("No alpha channel in this image type");
+	    sigbits.alpha = byte_numeric(get_token());
+	}
+
+    png_set_sBIT(png_ptr, info_ptr, &sigbits);
 }
 
 static void compile_tEXt(void)
@@ -698,6 +675,73 @@ static void compile_iTXt(void)
 	fatal("keyword or text is mising");
 
     /* FIXME: actually emit the chunk */
+}
+
+static void compile_IMAGE(void)
+/* parse IMAGE specification and emit corresponding bits */
+{
+    png_byte	**rowpointers;
+    int	i;
+
+    /*
+     * We know we can use format 1 if
+     * (a) The image is paletted and the palette has 62 or fewer values.
+     * (b) Bit depth is 4 or less.
+     * These cover a lot of common cases.
+     */
+    bool	sample_per_char;
+    int		nbits;
+    char	*bits;
+    int 	sample_size;
+
+    /* input sample size in bits */
+    switch (info_ptr->color_type)
+    {
+    case PNG_COLOR_TYPE_GRAY:
+	sample_size = info_ptr->bit_depth;
+	break;
+
+    case PNG_COLOR_TYPE_PALETTE:
+	sample_size = 8;
+	break;
+
+    case PNG_COLOR_TYPE_RGB:
+	sample_size = info_ptr->bit_depth * 3;
+	break;
+
+    case PNG_COLOR_TYPE_RGB_ALPHA:
+	sample_size = info_ptr->bit_depth * 4;
+	break;
+
+    case PNG_COLOR_TYPE_GRAY_ALPHA:
+	sample_size = info_ptr->bit_depth * 2;
+	break;
+
+    default:
+	fatal("unknown color type");
+    }
+
+    /* can we fit a sample in one base-62 character? */
+    sample_per_char =
+	sample_size <= 5
+	|| ((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
+	 			&& info_ptr->num_palette <= 62);
+
+    /* collect the data */
+    collect_data(sample_per_char, &nbits, &bits);
+
+    if (nbits != info_ptr->width * info_ptr->height * (sample_size / 8))
+	fatal("size of IMAGE doesn't match height * width in IHDR");
+
+    /* FIXME: perhaps this should be optional? */
+    png_set_packing(png_ptr);
+
+    /* got the bits; now write them out */
+    rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
+    for (i = 0; i < info_ptr->height; i++)
+	rowpointers[i] = &bits[i * info_ptr->width];
+    png_write_image(png_ptr, rowpointers);
+    free(bits);
 }
 
 int sngc(FILE *fin, FILE *fout)
@@ -803,7 +847,7 @@ int sngc(FILE *fin, FILE *fout)
 		fatal("gAMA chunk must come before PLTE and IDAT");
 	    png_set_gAMA(png_ptr, info_ptr, double_numeric(get_token()));
 	    if (!get_token() || !token_equals("}"))
-		fatal("bad token in gAMA specification");
+		fatal("bad token `%s' in gAMA specification", token_buffer);
 	    break;
 
 	case iCCP:
@@ -815,7 +859,7 @@ int sngc(FILE *fin, FILE *fout)
 	case sBIT:
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("sBIT chunk must come before PLTE and IDAT");
-	    fatal("FIXME: sBIT chunk type is not handled yet");
+	    compile_sBIT();
 	    break;
 
 	case sRGB:
@@ -824,7 +868,7 @@ int sngc(FILE *fin, FILE *fout)
 	    png_set_sRGB_gAMA_and_cHRM(png_ptr, info_ptr,
 				       byte_numeric(get_token()));
 	    if (!get_token() || !token_equals("}"))
-		fatal("bad token in sRGB specification");
+		fatal("bad token `%s' in sRGB specification", token_buffer);
 	    break;
 
 	case bKGD:
@@ -835,7 +879,7 @@ int sngc(FILE *fin, FILE *fout)
 
 	case hIST:
 	    if (!properties[PLTE].count || properties[IDAT].count)
-		fatal("bKGD chunk must come between PLTE and IDAT");
+		fatal("hIST chunk must come between PLTE and IDAT");
 	    fatal("FIXME: hIST chunk type is not handled yet");
 	    break;
 

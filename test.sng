@@ -25,6 +25,14 @@ gAMA {4.5}
 # This cannot coexist with the sRGB chunk.
 iCCP {"dummy profile"}
 
+sBIT {
+  red 8
+  green 8
+  blue 8
+  # gray 8	# for non-color images
+  # alpha 8	# for images with alpha
+}
+
 PLTE {
    (0,   0, 255)
    (255, 0,   0)

@@ -67,6 +67,14 @@ sRGB {<byte>}			# Colorimetry intent, range 0-3
 
 iCCP {<string>}			# International Color Consortium profile name
 
+sBIT {
+   red <byte>			# Color images only
+   blue <byte>			# Color images only
+   green <byte>			# Color images only
+   gray <byte>			# Grayscale images only
+   alpha <byte>			# Images with alpha only
+}
+
 tEXt {				# Ordinary text chunk
   keyword <string>
   text <string>
