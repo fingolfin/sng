@@ -34,6 +34,11 @@ typedef struct {
 /* chunk types */
 static chunkprops properties[] = 
 {
+/*
+ * The PNG 1.0 chunks, listed in order of the summary table in section 4.3.
+ * Neither IHDR nor IEND are listed here because neither chunk has to appear
+ * in the file.
+ */
 #define PLTE	0
     {"PLTE",		FALSE,	0},
 #define IDAT	1
@@ -66,6 +71,28 @@ static chunkprops properties[] =
     {"tEXt",		TRUE,	0},
 #define zTXt	15
     {"zTXt",		TRUE,	0},
+/*
+ * Special-purpose chunks in PNG 1.2 specification.
+ */
+#define oFFs	16
+    {"pHYs",		FALSE,	0},
+#define pCAL	17
+    {"pHYs",		FALSE,	0},
+#define sCAL	18
+    {"pHYs",		FALSE,	0},
+#define gIFg	19
+    {"pHYs",		FALSE,	0},
+#define gIFt	20
+    {"pHYs",		FALSE,	0},
+#define gIFx	21
+    {"pHYs",		FALSE,	0},
+#define fRAc	22
+    {"pHYs",		FALSE,	0},
+/*
+ * Private chunks
+ */
+#define PRIVATE	23
+    {"private",		TRUE,	0},
 };
 
 static png_struct *png_ptr;
@@ -260,6 +287,20 @@ static png_byte byte_numeric(bool token_ok)
     return(result);
 }
 
+static double double_numeric(bool token_ok)
+/* validate current token as a double-precision value */
+{
+    double result;
+    char *vp;
+
+    if (!token_ok)
+	fatal("EOF while expecting double-precision constant");
+    result = strtod(token_buffer, &vp);
+    if (*vp || result < 0)
+	fatal("invalid or out of range double-precision constant");
+    return(result);
+}
+
 /*************************************************************************
  *
  * The compiler itself
@@ -380,6 +421,7 @@ static int pngc(FILE *fin, FILE *fout)
 /* compile PPNG on fin to PNG on fout */
 {
     int	chunktype, prevchunk, errtype;
+    float gamma;
 
     yyin = fin;
 
@@ -458,7 +500,7 @@ static int pngc(FILE *fin, FILE *fout)
 	case gAMA:
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("gAMA chunk must come before PLTE and IDAT");
-	    fatal("FIXME: gAMA chunk type is not handled yet");
+	    png_set_gAMA(png_ptr, info_ptr, double_numeric(get_token()));
 	    break;
 
 	case iCCP:
@@ -523,6 +565,44 @@ static int pngc(FILE *fin, FILE *fout)
 
 	case zTXt:
 	    fatal("FIXME: zTXt chunk type is not handled yet");
+	    break;
+
+	case oFFs:
+	    if (properties[IDAT].count)
+		fatal("oFFs chunk must come before IDAT");
+	    fatal("FIXME: oFFs chunk type is not handled yet");
+	    break;
+
+	case pCAL:
+	    if (properties[IDAT].count)
+		fatal("pCAL chunk must come before IDAT");
+	    fatal("FIXME: pCAL chunk type is not handled yet");
+	    break;
+
+	case sCAL:
+	    if (properties[IDAT].count)
+		fatal("sCAL chunk must come before IDAT");
+	    fatal("FIXME: sCAL chunk type is not handled yet");
+	    break;
+
+	case gIFg:
+	    fatal("FIXME: gIFg chunk type is not handled yet");
+	    break;
+
+	case gIFt:
+	    fatal("FIXME: gIFt chunk type is not handled yet");
+	    break;
+
+	case gIFx:
+	    fatal("FIXME: gIFx chunk type is not handled yet");
+	    break;
+
+	case fRAc:
+	    fatal("FIXME: fRAc chunk type is not handled yet");
+	    break;
+
+	case PRIVATE:
+	    fatal("FIXME: private chunk types are not handled yet");
 	    break;
 	}
 
