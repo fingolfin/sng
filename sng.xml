@@ -125,7 +125,8 @@ tRNS {
 }
 
 pHYs {
-   resolution (<long>, <long>)
+   xpixels <long>
+   ypixels <long>
    [per meter]
 }
 

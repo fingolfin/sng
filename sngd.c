@@ -334,20 +334,21 @@ static void dump_oFFs(png_infop info_ptr, FILE *fpout)
 	fprintf(fpout, ";\n}\n");
     }
 }
-
 static void dump_pHYs(png_infop info_ptr, FILE *fpout)
 {
     if (info_ptr->phys_unit_type > 1)
         printerr(1, "invalid pHYs unit");
     else if (info_ptr->valid & PNG_INFO_pHYs) {
-	fprintf(fpout, "pHYs {\n");
-        fprintf(fpout, "    resolution: (%ld, %ld)", 
+	fprintf(fpout, "");
+        fprintf(fpout, "pHYs {xpixels: %ld; ypixels: %ld;",
 	       info_ptr->x_pixels_per_unit, info_ptr->y_pixels_per_unit);
 	if (info_ptr->phys_unit_type == PNG_RESOLUTION_METER)
-	    fprintf(fpout, " per meter;");
+	    fprintf(fpout, " per: meter;");
+        fprintf(fpout, "}");
         if (info_ptr->phys_unit_type == 1 && info_ptr->x_pixels_per_unit == info_ptr->y_pixels_per_unit)
-	    fprintf(fpout, "  # (%ld dpi)", (long)(info_ptr->x_pixels_per_unit*0.0254 + 0.5));
-        fprintf(fpout, "\n}\n");
+	    fprintf(fpout, "  # (%ld dpi)\n", (long)(info_ptr->x_pixels_per_unit*0.0254 + 0.5));
+	else
+	    fputc('\n', fpout);
     }
 }
 

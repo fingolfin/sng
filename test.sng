@@ -68,7 +68,9 @@ hIST: {23, 55, 10}
 
 # Test the pHYs chunk; this data isn't really meaningful for the image
 pHYs: {
-   resolution (500, 400) per meter;
+   xpixels: 500;
+   ypixels: 400;
+   per meter;
 }
 
 # Dummy timestamp

@@ -900,14 +900,10 @@ static void compile_pHYs(void)
     png_uint_32	res_x, res_y;
 
     while (get_inner_token())
-	if (token_equals("resolution"))
-	{
-	    require_or_die("(");
+	if (token_equals("xpixels"))
 	    res_x = long_numeric(get_token());
-	    /* comma */
+	else if (token_equals("ypixels"))
 	    res_y = long_numeric(get_token());
-	    require_or_die(")");
-	}
 	else if (token_equals("per"))
 	    continue;
 	else if (token_equals("meter"))
