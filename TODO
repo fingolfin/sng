@@ -163,10 +163,19 @@ or
    {data}
 </private>
 
-In data, remember you have to escape any '<' or  '&' characters. Or use a
+In data, remember we have to escape any '<' or  '&' characters. Or use a
 CDATA marked section, then you only have to escape ]]> which is unlikely
 (but possible) to occur.
 
 An XML parser is required to halt on well formedness errors, deal with
 entities, and so on.
 
+Another possibility for palettes would be to use the same color
+identifiers as used in HTML, and register attributes c0 through c255
+(only those used would need to be present; this example is of one of
+those bloated PLTEs that we have been discussing lately):
+
+   <PLTE>
+      c0="#000000" c1="#300000" ... c215="#ffffff" c216=#000000 ...
+      c254="#000000" c255="#000000">
+   </PLTE>
