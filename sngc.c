@@ -639,6 +639,7 @@ static void compile_cHRM(void)
 /* parse cHRM specification, set corresponding bits in info_ptr */
 {
     char	cmask = 0;
+    float wx, wy, rx, ry, gx, gy, bx, by;
 
     while (get_inner_token())
     {
@@ -646,42 +647,50 @@ static void compile_cHRM(void)
 
 	if (token_equals("white"))
 	{
-	    cvx = &info_ptr->x_white;
-	    cvy = &info_ptr->y_white;
+	    require_or_die("(");
+	    wx = double_numeric(get_inner_token());
+	    /* comma */
+	    wy = double_numeric(get_inner_token());
+	    require_or_die(")");
 	    cmask |= 0x01;
 	}
 	else if (token_equals("red"))
 	{
-	    cvx = &info_ptr->x_red;
-	    cvy = &info_ptr->y_red;
+	    require_or_die("(");
+	    rx = double_numeric(get_inner_token());
+	    /* comma */
+	    ry = double_numeric(get_inner_token());
+	    require_or_die(")");
 	    cmask |= 0x02;
 	}
 	else if (token_equals("green"))
 	{
-	    cvx = &info_ptr->x_green;
-	    cvy = &info_ptr->y_green;
+	    require_or_die("(");
+	    gx = double_numeric(get_inner_token());
+	    /* comma */
+	    gy = double_numeric(get_inner_token());
+	    require_or_die(")");
 	    cmask |= 0x04;
 	}
 	else if (token_equals("blue"))
 	{
-	    cvx = &info_ptr->x_blue;
-	    cvy = &info_ptr->y_blue;
+	    require_or_die("(");
+	    bx = double_numeric(get_inner_token());
+	    /* comma */
+	    by = double_numeric(get_inner_token());
+	    require_or_die(")");
 	    cmask |= 0x08;
 	}
 	else
 	    fatal("invalid color `%s' name in cHRM specification",token_buffer);
 
-	require_or_die("(");
-	*cvx = double_numeric(get_inner_token());
-	/* comma */
-	*cvy = double_numeric(get_inner_token());
-	require_or_die(")");
     }
 
     if (cmask != 0x0f)
 	fatal("cHRM specification is not complete");
     else
-	info_ptr->valid |= cHRM;
+	png_set_cHRM(png_ptr, info_ptr,
+		     wx, wy, rx, ry, gx, gy, bx, by);
 }
 
 static void compile_gAMA(void)
