@@ -1,10 +1,8 @@
 /*****************************************************************************
 
 NAME
-   sngc.c -- compile SNG to PNG/MNG.
+   sng.c -- compile SNG to PNG/MNG.
 
-TODO
-  * Test compilation of non-palette image files.
 *****************************************************************************/
 #include <stdio.h>
 #include <string.h>
@@ -667,6 +665,14 @@ static void compile_cHRM(void)
 	fatal("cHRM specification is not complete");
     else
 	info_ptr->valid |= cHRM;
+}
+
+static void compile_gAMA(void)
+/* compile and emit an gAMA chunk */
+{
+    png_set_gAMA(png_ptr, info_ptr, double_numeric(get_token()));
+    if (!get_token() || !token_equals("}"))
+	fatal("bad token `%s' in gAMA specification", token_buffer);
 }
 
 static void compile_iCCP(void)
@@ -1424,9 +1430,7 @@ int sngc(FILE *fin, FILE *fout)
 	case gAMA:
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("gAMA chunk must come before PLTE and IDAT");
-	    png_set_gAMA(png_ptr, info_ptr, double_numeric(get_token()));
-	    if (!get_token() || !token_equals("}"))
-		fatal("bad token `%s' in gAMA specification", token_buffer);
+	    compile_gAMA();
 	    break;
 
 	case iCCP:
