@@ -28,8 +28,7 @@ static char *safeprint(char *str)
     return(str);
 }
 
-static void dump_data(FILE *fpout, 
-		      char *leader, int size, unsigned char *data, int rowsize)
+static void dump_data(FILE *fpout, char *leader, int size, unsigned char *data)
 /* dump data in a recompilable form */
 {
     unsigned char *cp;
@@ -60,11 +59,7 @@ static void dump_data(FILE *fpout,
 	else
 	    fprintf(fpout, "\n    ");
 	for (cp = data; cp < data + size; cp++)
-	{
-	    if (rowsize && (cp - data) && ((cp - data) % rowsize))
-		fprintf(fpout, "\n    ");
 	    fputc("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$"[*cp], fpout);
-	}
 	fprintf(fpout, ";\n");
     }
     else
@@ -75,11 +70,7 @@ static void dump_data(FILE *fpout,
 	else
 	    fprintf(fpout, "\n    ");
 	for (cp = data; cp < data + size; cp++)
-	{
-	    if (rowsize && (cp - data) && ((cp - data) % rowsize))
-		fprintf(fpout, "\n    ");
 	    fprintf(fpout, "%02x", *cp);
-	}
 	fprintf(fpout, ";\n");
     }
 }
@@ -183,7 +174,8 @@ static void dump_PLTE(png_infop info_ptr, FILE *fpout)
 
 static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
 {
-    /* FIXME: dump image */
+    fprintf(fpout, "IMAGE {\n");
+    fprintf(fpout, "}\n");
 }
 
 static void dump_bKGD(png_infop info_ptr, FILE *fpout)
@@ -272,7 +264,7 @@ static void dump_iCCP(png_infop info_ptr, FILE *fpout)
 	fprintf(fpout, "iCCP {\n");
 	fprintf(fpout, "    name: \"%s\"\n", safeprint(info_ptr->iccp_name));
 	dump_data(fpout, "    profile: ", 
-		  info_ptr->iccp_proflen, info_ptr->iccp_profile, 0);
+		  info_ptr->iccp_proflen, info_ptr->iccp_profile);
 	fprintf(fpout, "}\n");
     }
 }
@@ -587,10 +579,10 @@ static void dump_unknown_chunks(png_infop info_ptr,
 	{
 	    fprintf(fpout, "    identifier: \"%.*s\"; code: \"%c%c%c\"\n",
 		    8, up->data, up->data[8], up->data[9], up->data[10]);
-	    dump_data(fpout, "    data: ", up->size - 11, up->data + 11, 0);
+	    dump_data(fpout, "    data: ", up->size - 11, up->data + 11);
 	}
 	else
-	    dump_data(fpout, "   data: ", up->size, up->data, 0);
+	    dump_data(fpout, "   data: ", up->size, up->data);
 	fprintf(fpout, "}\n");
 #undef SH
 #undef LG
@@ -724,4 +716,4 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    return(SUCCEED);
 }
 
-
+/* sngd.c ends here */
