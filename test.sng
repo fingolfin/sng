@@ -34,8 +34,9 @@ sBIT {
 }
 
 PLTE {
-   (0,   0, 255)
-   (255, 0,   0)
+   (0,     0, 255)
+   (255,   0,   0)
+   ( 70,  70,  70)
 }
 
 bKGD {
@@ -46,7 +47,14 @@ bKGD {
   index 0	# for paletted images
 }
 
-hIST { 23, 55 }
+hIST {23, 55, 0}
+
+tRNS {
+   2
+   # red 70 
+   # green 70
+   # blue 70
+}
 
 IMAGE {
 0000001111100000

@@ -79,7 +79,7 @@ static chunkprops properties[] =
 #define zTXt	16
     {"zTXt",		TRUE,	0},
 /*
- * Special-purpose chunks in PNG 1.2 specification.
+ * Special-purpose chunks in PNG Extensions 1.2.0 specification.
  */
 #define oFFs	17
     {"pHYs",		FALSE,	0},
@@ -694,6 +694,53 @@ static void compile_hIST(void)
     png_set_hIST(png_ptr, info_ptr, hist);
 }
 
+static void compile_tRNS(void)
+/* compile a tRNS chunk, put data in info structure */
+{
+    png_byte	trans[256];
+    int		ntrans = 0;
+    png_color_16	tRNSbits;
+
+    /* input sample size in bits */
+    switch (info_ptr->color_type)
+    {
+    case PNG_COLOR_TYPE_GRAY:
+	require_or_die("gray");
+	tRNSbits.gray = short_numeric(get_token());
+	break;
+
+    case PNG_COLOR_TYPE_PALETTE:
+	while (get_inner_token())
+	    if (token_equals(","))
+		continue;
+	    else
+		trans[ntrans++] = byte_numeric(TRUE);
+	break;
+
+    case PNG_COLOR_TYPE_RGB:
+	while (get_inner_token())
+	    if (token_equals("red"))
+		tRNSbits.red = byte_numeric(get_token());
+	    else if (token_equals("green"))
+		tRNSbits.green = short_numeric(get_token());
+	    else if (token_equals("blue"))
+		tRNSbits.blue = short_numeric(get_token());
+	    else 
+		fatal("invalid channel name `%s' in tRNS specification", 
+		      token_buffer);
+	break;
+
+    case PNG_COLOR_TYPE_RGB_ALPHA:
+    case PNG_COLOR_TYPE_GRAY_ALPHA:
+	fatal("tRNS chunk not permitted with this image type");
+
+    default:	/* should never happen */
+	fatal("unknown color type");
+    }
+
+    png_set_tRNS(png_ptr, info_ptr, trans, ntrans, &tRNSbits);
+}
+
 static void compile_tEXt(void)
 /* compile and emit an tEXt chunk */
 {
@@ -964,7 +1011,7 @@ int sngc(FILE *fin, FILE *fout)
 	case tRNS:
 	    if (properties[IDAT].count)
 		fatal("tRNS chunk must come between PLTE (if any) and IDAT");
-	    fatal("FIXME: tRNS chunk type is not handled yet");
+	    compile_tRNS();
 	    break;
 
 	case pHYs:
