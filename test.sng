@@ -118,7 +118,7 @@ sPLT {
 
 # The viewer will actually use this...
 IMAGE: {
-   base64
+   pixels base64
 2222222222222222
 2222222222222222
 0000001111100000
