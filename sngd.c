@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
+#define PNG_INTERNAL
 #include "png.h"
 #include "sng.h"
 
@@ -537,37 +538,18 @@ static void dump_text(png_infop info_ptr, FILE *fpout)
     }
 }
 
-void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
-/* dump a canonicalized SNG form of a PNG file */
+static void dump_unknown_chunks(png_infop info_ptr, 
+				int after_idat, FILE *fpout)
 {
     int	i;
-
-    dump_IHDR(info_ptr, fpout);		/* first critical chunk */
-
-    dump_cHRM(info_ptr, fpout);
-    dump_gAMA(info_ptr, fpout);
-    dump_iCCP(info_ptr, fpout);
-    dump_sBIT(info_ptr, fpout);
-    dump_sRGB(info_ptr, fpout);
-
-    dump_PLTE(info_ptr, fpout);		/* second critical chunk */
-
-    dump_bKGD(info_ptr, fpout);
-    dump_hIST(info_ptr, fpout);
-    dump_tRNS(info_ptr, fpout);
-    dump_pHYs(info_ptr, fpout);
-    for (i = 0; i < info_ptr->splt_palettes_num; i++)
-	dump_sPLT(info_ptr->splt_palettes + i, fpout);
-
-    dump_image(info_ptr, row_pointers, fpout);
-
-    dump_tIME(info_ptr, fpout);
-
-    dump_text(info_ptr, fpout);
 
     for (i = 0; i < info_ptr->unknown_chunks_num; i++)
     {
 	png_unknown_chunk	*up = info_ptr->unknown_chunks + i;
+
+	/* are we before or after the IDAT part? */
+	if (after_idat != !!(up->location & PNG_HAVE_IDAT))
+	    continue;
 
 /* macros to extract big-endian short and long ints */
 #define SH(p) ((unsigned short)((p)[1]) | (((p)[0]) << 8))
@@ -576,7 +558,7 @@ void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
 	fprintf(fpout, "%s {\n", up->name);
 	if (!strcmp(up->name, "gIFg"))
 	{
-	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n}\n",
+	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n",
 		    up->data[0], up->data[1], (float)(.01 * SH(up->data+2)));
 	}
 	else if (!strcmp(up->name, "gIFx"))
@@ -591,6 +573,45 @@ void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
 #undef SH
 #undef LG
     }
+}
+
+void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
+/* dump a canonicalized SNG form of a PNG file */
+{
+    int	i;
+
+    dump_IHDR(info_ptr, fpout);			/* first critical chunk */
+
+    dump_cHRM(info_ptr, fpout);
+    dump_gAMA(info_ptr, fpout);
+    dump_iCCP(info_ptr, fpout);
+    dump_sBIT(info_ptr, fpout);
+    dump_sRGB(info_ptr, fpout);
+
+    dump_PLTE(info_ptr, fpout);			/* second critical chunk */
+
+    dump_bKGD(info_ptr, fpout);
+    dump_hIST(info_ptr, fpout);
+    dump_tRNS(info_ptr, fpout);
+    dump_pHYs(info_ptr, fpout);
+    for (i = 0; i < info_ptr->splt_palettes_num; i++)
+	dump_sPLT(info_ptr->splt_palettes + i, fpout);
+
+    dump_unknown_chunks(info_ptr, FALSE, fpout);
+
+    /*
+     * This is the earliest point at which we could write the image data;
+     * the ancillary chunks after this point have no order contraints.
+     * We choose to write the image last so that viewers/editors can get
+     * a look at all the ancillary.
+     */
+
+    dump_tIME(info_ptr, fpout);
+    dump_text(info_ptr, fpout);
+
+    dump_image(info_ptr, row_pointers, fpout);	/* third critical chunk */
+
+    dump_unknown_chunks(info_ptr, TRUE, fpout);
 }
 
 int sngd(FILE *fp, char *name, FILE *fpout)
