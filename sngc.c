@@ -741,6 +741,34 @@ static void compile_tRNS(void)
     png_set_tRNS(png_ptr, info_ptr, trans, ntrans, &tRNSbits);
 }
 
+static void compile_pHYs(void)
+/* compile a pHYs chunk, put data in info structure */
+{
+    png_byte	unit = 0;
+    png_uint_32	res_x, res_y;
+
+    while (get_inner_token())
+	if (token_equals("resolution"))
+	{
+	    require_or_die("(");
+	    res_x = long_numeric(get_token());
+	    require_or_die(",");
+	    res_y = long_numeric(get_token());
+	    require_or_die(")");
+	}
+	else if (token_equals("per"))
+	    continue;
+	else if (token_equals("meter"))
+	    unit = 1;
+	else
+	    fatal("invalid token `%s' in pHYs", token_buffer);
+
+    if (!res_x || !res_y)
+	fatal("illegal or missing resolutions in pHYS specification");
+
+    png_set_pHYs(png_ptr, info_ptr, res_x, res_y, unit);
+}
+
 static void compile_tEXt(void)
 /* compile and emit an tEXt chunk */
 {
@@ -1017,7 +1045,7 @@ int sngc(FILE *fin, FILE *fout)
 	case pHYs:
 	    if (properties[IDAT].count)
 		fatal("pHYs chunk must come before IDAT");
-	    fatal("FIXME: pHYs chunk type is not handled yet");
+	    compile_pHYs();
 	    break;
 
 	case sPLT:
