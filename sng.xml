@@ -73,7 +73,10 @@ cHRM {
 
 sRGB {<byte>}			# Colorimetry intent, range 0-3
 
-iCCP {<keyword>}		# International Color Consortium profile name
+iCCP {				# International Color Consortium profile
+   name <keyword>
+   profile <data>
+}
 
 sBIT {
    red <byte>			# Color images only
@@ -131,6 +134,7 @@ iTXt {				# International UTF-8 keyword
   language <keyword>
   keyword <keyword>
   text <string>
+  [compressed]
 }
 
 sOFFs {

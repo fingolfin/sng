@@ -23,7 +23,10 @@ gAMA: {4.5}
 # sRGB {1}	# This value conveys `relative colorimetric' intent.
 
 # This cannot coexist with the sRGB chunk.
-iCCP {"dummy profile"}
+iCCP {
+   name "dummy profile" 
+   profile hex 01 02 03 04 05
+}
 
 sBIT: {
   red: 8
@@ -49,12 +52,13 @@ bKGD: {
 
 hIST: {23, 55, 10}
 
-tRNS: {
-   255
+# Library generates a CRC error on this guy.
+#tRNS: {
+#  255
    # red: 70 
    # green: 70
    # blue 70
-}
+#}
 
 pHYs: {
    resolution (500, 400) per meter

@@ -4,7 +4,6 @@ NAME
    sngc.c -- compile SNG to PNG/MNG.
 
 TODO
-  * Test hex-mode data collection
   * Test compilation of non-palette image files.
 *****************************************************************************/
 #include <stdio.h>
@@ -477,6 +476,7 @@ static void collect_data(int *pnbits, char **pbits)
 	fatal("unknown data format");
 
     while ((c = fgetc(yyin)))
+    {
 	if (feof(yyin))
 	    fatal("unexpected EOF in data segment");
 	else if (c == '}')
@@ -513,11 +513,12 @@ static void collect_data(int *pnbits, char **pbits)
 		else 
 		    value = (c - 'a') + 10;
 		if (ocount++ % 2)
-		    bits[nbits] = value * 16;
-		else
 		    bits[nbits++] |= value;
+		else
+		    bits[nbits] = value * 16;
 	    }
 	}
+    }
 
     *pnbits = nbits;
     *pbits = bits;
@@ -670,17 +671,24 @@ static void compile_cHRM(void)
 static void compile_iCCP(void)
 /* compile and emit an iCCP chunk */
 {
-    int slen;
-    char *cp, name[PNG_KEYWORD_MAX_LENGTH+1];
+    int nname, data_len;
+    char *cp, name[PNG_KEYWORD_MAX_LENGTH+1], *data;
 
-    slen = keyword_validate(get_token(), name);
-    cp = token_buffer + strlen(token_buffer);
-    *cp++ = 0;		/* null separator */
-    *cp++ = 0;		/* compression method */
-    if (!get_token() || !token_equals("}"))
-	fatal("bad token `%s' in iCCP specification", token_buffer);
+    while (get_inner_token())
+	if (token_equals("name"))
+	    nname = keyword_validate(get_token(), name);
+	else if (token_equals("profile"))
+	{
+	    collect_data(&data_len, &data);
+	    break;	/* already ate } */
+	}
 
-    /* FIXME: actually emit the chunk (can't be done with 1.0.5) */
+    if (!nname || !data_len)
+	fatal("incomplete iCCP specification");
+
+    png_set_iCCP(png_ptr, info_ptr, name, PNG_TEXT_COMPRESSION_NONE, 
+		 data, data_len);
+    free(data);
 }
 
 static void compile_sBIT(void)
@@ -871,25 +879,13 @@ static void compile_pHYs(void)
     png_set_pHYs(png_ptr, info_ptr, res_x, res_y, unit);
 }
 
-/* these definitions belong in png.h */
-typedef struct png_palette_16_struct
-{
-   png_uint_16 red;
-   png_uint_16 green;
-   png_uint_16 blue;
-   png_uint_16 alpha;
-   png_uint_16 frequency;
-} png_palette_16;
-typedef png_palette_16 FAR * png_palette_16p;
-typedef png_palette_16 FAR * FAR * png_palette_16pp;
-
 static void compile_sPLT(void)
 /* compile sPLT chunk */
 {
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
     int		nkeyword = 0;
     png_byte	depth = 0;
-    png_palette_16	spalette[256];
+    png_spalette_entry	entries[256];
     int		nentries;
 
     while (get_inner_token())
@@ -908,24 +904,24 @@ static void compile_sPLT(void)
 		    fatal("bad syntax in sPLT description");
 		else if (nentries >= 256)
 		    fatal("too many palette entries in sPLT specification");
-		spalette[nentries].red = short_numeric(get_token());
-		if (depth == 8 && spalette[nentries].red > 255)
+		entries[nentries].red = short_numeric(get_token());
+		if (depth == 8 && entries[nentries].red > 255)
 		    fatal("red value too large for sample depth");
 		/* comma */
-		spalette[nentries].green = short_numeric(get_token());
-		if (depth == 8 && spalette[nentries].green > 255)
+		entries[nentries].green = short_numeric(get_token());
+		if (depth == 8 && entries[nentries].green > 255)
 		    fatal("green value too large for sample depth");
 		/* comma */
-		spalette[nentries].blue = short_numeric(get_token());
-		if (depth == 8 && spalette[nentries].blue > 255)
+		entries[nentries].blue = short_numeric(get_token());
+		if (depth == 8 && entries[nentries].blue > 255)
 		    fatal("blue value too large for sample depth");
 		/* comma */
-		spalette[nentries].alpha = short_numeric(get_token());
-		if (depth == 8 && spalette[nentries].alpha > 255)
+		entries[nentries].alpha = short_numeric(get_token());
+		if (depth == 8 && entries[nentries].alpha > 255)
 		    fatal("alpha value too large for sample depth");
 		require_or_die(")");
 		/* comma */
-		spalette[nentries].frequency = short_numeric(get_token());
+		entries[nentries].frequency = short_numeric(get_token());
 		nentries++;
 	    }
 
@@ -956,7 +952,7 @@ static void compile_tEXt(void)
 
     /*
      * If we've already written an IDAT chunk, then png_write_info()
-     * has already ben called, so emit the text chunk directly.
+     * has already been called, so emit the text chunk directly.
      * Otherwise, queue it up for processing when png_write_info()
      * gets called.
      */
@@ -966,10 +962,12 @@ static void compile_tEXt(void)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
     {
+	ptp->lang = (char *)NULL;
 	ptp->key = xstrdup(keyword);
 	ptp->text = xstrdup(text);
 	ptp->text_length = strlen(text);
 	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
+	ptp++;
     }
 }
 
@@ -1003,10 +1001,12 @@ static void compile_zTXt(void)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
     {
+	ptp->lang = (char *)NULL;
 	ptp->key = xstrdup(keyword);
 	ptp->text = xstrdup(text);
 	ptp->text_length = strlen(text);
 	ptp->compression = PNG_TEXT_COMPRESSION_zTXt;
+	ptp++;
     }
 }
 
@@ -1017,6 +1017,7 @@ static void compile_iTXt(void)
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1]; 
     char	text[PNG_STRING_MAX_LENGTH+1];
     int		nlanguage = 0, nkeyword = 0, ntext = 0;
+    int		compression = PNG_TEXT_COMPRESSION_NONE;
 
     while (get_inner_token())
 	if (token_equals("language"))
@@ -1025,13 +1026,34 @@ static void compile_iTXt(void)
 	    nkeyword = keyword_validate(get_token(), keyword);
 	else if (token_equals("text"))
 	    ntext = string_validate(get_token(), text);
+	else if (token_equals("compressed"))
+	    compression = PNG_TEXT_COMPRESSION_zTXt;
 	else
 	    fatal("bad token `%s' in iTXt specification", token_buffer);
 
     if (!language || !keyword || !text)
 	fatal("keyword or text is missing");
 
-    /* FIXME: actually emit the chunk (can't be done with 1.0.5) */
+    /*
+     * If we've already written an IDAT chunk, then png_write_info()
+     * has already ben called, so emit the text chunk directly.
+     * Otherwise, queue it up for processing when png_write_info()
+     * gets called.
+     */
+    if (properties[IDAT].count)
+	png_write_iTXt(png_ptr, compression, 
+		       language, keyword, text, strlen(text));
+    else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
+	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
+    else
+    {
+	ptp->lang = xstrdup(language);
+	ptp->key = xstrdup(keyword);
+	ptp->text = xstrdup(text);
+	ptp->text_length = strlen(text);
+	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
+	ptp++;
+    }
 }
 
 static void compile_tIME(void)
@@ -1423,6 +1445,8 @@ int sngc(FILE *fin, FILE *fout)
     /* if we xstrdup()ed storage for any text chunks, free it now */
     for (i = 0; i < ptp - text_chunks; i++)
     {
+	if (text_chunks[i].lang)
+	    free(text_chunks[i].lang);
 	free(text_chunks[i].key);
 	free(text_chunks[i].text);
     }
