@@ -29,9 +29,49 @@ static char *rendering_intent[] = {
 
 static char *current_file;
 
-static char *safeprint(char *str)
+char *safeprint(const char *buf)
+/* visibilize a given string -- inverse of sngc.c:escapes() */
 {
-    return(str);
+    static char vbuf[PNG_STRING_MAX_LENGTH*4+1];
+    char *tp = vbuf;
+
+    while (*buf)
+    {
+	if (*buf == '"')
+	{
+	    *tp++ = '\\'; *tp++ = '"';
+	    buf++;
+	}
+	else if (isprint(*buf) || *buf == ' ')
+	    *tp++ = *buf++;
+	else if (*buf == '\n')
+	{
+	    *tp++ = '\\'; *tp++ = 'n';
+	    buf++;
+	}
+	else if (*buf == '\r')
+	{
+	    *tp++ = '\\'; *tp++ = 'r';
+	    buf++;
+	}
+	else if (*buf == '\b')
+	{
+	    *tp++ = '\\'; *tp++ = 'b';
+	    buf++;
+	}
+	else if (*buf < ' ')
+	{
+	    *tp++ = '\\'; *tp++ = '^'; *tp++ = '@' + *buf;
+	    buf++;
+	}
+	else
+	{
+	    (void) sprintf(tp, "\\0x%02x", *buf++);
+	    tp += strlen(tp);
+	}
+    }
+    *tp++ = '\0';
+    return(vbuf);
 }
 
 static void multi_dump(FILE *fpout, char *leader,

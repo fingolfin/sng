@@ -1,22 +1,164 @@
 			To-do list:
 
-Author's tasked:
+Author's tasks:
 
 1. Multiline strings in SNG.
-2. Real safeprint, and string escape handling.
-3. Clean up and regularize the syntax.
-4. Make the -i option work.
-5. Find out why tRNS causes a CRC error
+2. Make the -i option work.
+3. Find out why tRNS causes a CRC error
 
 Suitable tasks for someone other than the author:
 
-6. Add netpbm as a supported data literal format, in addition to the
+A. Add netpbm as a supported data literal format, in addition to the
    current string and base64 hex.
 
-7. At the moment, the code assumes that double and float fields 
+B. At the moment, the code assumes that double and float fields 
    in the info structure have the PNG_FLOATING_POINT_SUPPORTED
    representation.  Conditionalize the code suitably.  Also add properly
    conditionalized code so that everything still work with only
    fixed-point (PNG_FIXED_POINT_SUPPORTED) enabled.
+
+Blue-sky stuff:
+
+The following is a plausible XML syntax.  Would it be an improvement?
+
+<IHDR
+   height={long}
+   width={long}
+   bitdepth={byte} 
+   [using=color+palette+alpha]	# PNG color type information
+   [interlace]			# Adam7 assumed if interlacing on
+/>
+
+<PLTE>
+   [({byte},{byte},{byte})]*	# Any number of RGB triples
+</PLTE>
+
+<IDAT>
+   {data}
+</IDAT>
+
+<gAMA gamma={float}/>
+
+<cHRM
+   white=({float},{float})      # White point x and y
+   red=({float},{float})
+   green=({float},{float})
+   blue=({float},{float})
+/>
+
+<sRGB intent={byte}/>            # Colorimetry intent, range 0-3
+
+<iCCP name={keyword}>            # International Color Consortium profile
+   {data}               
+</iCCP>
+
+<sBIT
+   red={byte}                   # Color images only
+   blue={byte}                  # Color images only
+   green={byte}                 # Color images only
+   gray={byte}                  # Grayscale images only
+   alpha={byte}                 # Images with alpha only
+/>
+
+<bKGD
+   red={short}                  # Color images only
+   blue={short}                 # Color images only
+   green={short}                # Color images only
+   gray={short}                 # Grayscale images only
+   index={byte}                 # Paletted images only
+/>
+
+<hIST>
+   {short} [, {short}]*         # Count must match palette size
+</hIST>
+
+<tRNS
+   [gray={short}]               # Grayscale images only
+   [red={short}]                # True-color images only
+   [green={short}]              # True-color images only
+   [blue={short}]               # True-color images only
+/>
+
+or
+
+<tRNS>
+   [{byte}]*                    # Paletted images only
+</tRNS>
+
+<pHYs
+   xpixels={long}
+   ypixels={long}
+   [per meter]
+/>
+
+<tIME
+   year={short}
+   month={byte}
+   day={byte}
+   hour={byte}
+   minute={byte}
+   second={byte}
+/>
+
+<tEXt keyword={keyword}>        # Ordinary text chunk
+  {data}
+</tEXt>
+
+<zTXt keyword={keyword}>        # Compressed text chunk
+  {data}
+</zTXt>
+
+<iTXt                           # International UTF-8 keywo
+  language={keyword}
+  keyword={keyword}
+  translated={keyword}          # Translation of the keyword
+  [compressed]
+>{data}</iTXt>
+
+
+<oFFs
+  xoffset={slong}
+  yoffset={slong} 
+  [unit=pixels|micrometers]*
+/>
+
+<sPLT name={keyword} depth={byte}>
+   [({short}, {short}, {short}, {short}, {short})]*
+</sPLT>
+
+<pCAL
+   name={keyword}
+   x0={slong}
+   x1={slong}
+   mapping linear|euler|exponential|hyperbolic
+   unit={string}
+   [parameters={string}] 
+>
+
+<sCAL
+   unit=meter|radian
+   width={string}
+   height={string}
+/>
+
+<IMAGE>
+   {data}
+</IMAGE>
+
+<gIFg
+   disposal={byte}
+   input={byte}
+   delay={short}
+/>
+
+<gIFx
+   identifier={string}                # Must be 8 characters
+   code={string}>                     # Must be 3 characters
+>{data}</gIFx>
+
+<private name={string}>               # Private chunk declaration
+   {data}
+</private>
+
 
 

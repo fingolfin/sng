@@ -33,14 +33,6 @@ typedef struct {
 #define PNG_KEYWORD_MAX_LENGTH	79
 #endif /* PNG_KEYWORD_MAX_LENGTH */
 
-/*
- * Maximum string size -- the size of an IDAT buffer minus the minimum overhead
- * of a string chunk (that is, the overhead of a minimal tEXt chunk).  
- * That overhead: four characters of chunk name, plus zero characters of 
- * keyword, plus one character of NUL separator.
- */
-#define PNG_STRING_MAX_LENGTH	(PNG_ZBUF_SIZE - 5)
-
 #define MEMORY_QUANTUM	1024
 #define MAX_PARAMS	16
 #define PNG_MAX_LONG	2147483647L	/* 2^31 */
@@ -200,6 +192,51 @@ static int token_class;
 #define WORD_TOKEN	3
 static bool pushed;
 
+static void escapes(cp, tp)
+/* process standard C-style escape sequences in a string */
+const char	*cp;	/* source string with escapes */
+char		*tp;	/* target buffer for digested string */
+{
+    while (*cp)
+    {
+	int	cval = 0;
+
+	if (*cp == '\\' && strchr("0123456789xX", cp[1]))
+	{
+	    char *dp;
+	    const char *hex = "00112233445566778899aAbBcCdDeEfF";
+	    int dcount = 0;
+
+	    if (*++cp == 'x' || *cp == 'X')
+		for (++cp; (dp = strchr(hex, *cp)) && (dcount++ < 2); cp++)
+		    cval = (cval * 16) + (dp - hex) / 2;
+	    else if (*cp == '0')
+		while (strchr("01234567",*cp) != (char*)NULL && (dcount++ < 3))
+		    cval = (cval * 8) + (*cp++ - '0');
+	    else
+		while ((strchr("0123456789",*cp)!=(char*)NULL)&&(dcount++ < 3))
+		    cval = (cval * 10) + (*cp++ - '0');
+	}
+	else if (*cp == '\\')		/* C-style character escapes */
+	{
+	    switch (*++cp)
+	    {
+	    case '\\': cval = '\\'; break;
+	    case 'n': cval = '\n'; break;
+	    case 't': cval = '\t'; break;
+	    case 'b': cval = '\b'; break;
+	    case 'r': cval = '\r'; break;
+	    default: cval = *cp;
+	    }
+	    cp++;
+	}
+	else
+	    cval = *cp++;
+	*tp++ = cval;
+    }
+    *tp = '\0';
+}
+
 static int get_token(void)
 /* grab a token from yyin */
 {
@@ -270,6 +307,7 @@ static int get_token(void)
 	    else
 		*tp++ = c;
 	}
+	escapes(token_buffer, token_buffer);
 	token_class = STRING_TOKEN;
     }
     else if (ispunct(w))
