@@ -1,0 +1,77 @@
+.TH pngc 1 "" "Open Source"
+.SH NAME
+ppng -- compile Printable PNG to PNG
+.SH SYNOPSIS
+pngc
+.SH DESCRIPTION
+The ppng program compiles Printable PNG, a printable and editable 
+minilanguage for describing PNG files.  The output of the program
+is a PNG file.
+
+A PPNG description consists of a series of chunk specifications in a
+simple editable text format.  These generally correspond one-for-one
+to PNG.  There are two exceptions. The IMAGE chunk specification, which PPNG
+automatically translates into an IDAT chunk (doing appropriate
+interlacing, compression, etcetera).  The PRIVATE chunk expresses
+nonstandard chunks as raw data.
+.SH LANGUAGE SYNTAX
+In general, the language is token-oriented with tokens separated
+by whitespace.  
+
+In the syntax descriptions below, lines between {} may occur in any
+order. Elements bracketed in [] are optional; a sequence bracketed by
+[]* may be repeated any number of times.  Elements separated by plus
+signs are an attribute set; any sequence of one or more of those
+element tokens is valid.  
+
+The elements <byte>, <long>, <float>, <string> are byte numeric,
+long-integer numeric, float numeric, and doublequote-delimited
+strings respectively.  All numerics use C conventions; that is, they
+are decimal unless led by 0x (hex) or 0 (octal).
+
+A <data> literal consists of a sequence of byte specifications in one
+of two formats.  Char-per-pixel format can be used if the image either
+has total (color plus alpha) bit depth of four or less, or it is a
+paletted image with 62 or fewer colors; values of the chars are 0-9,
+followed by a-z for 10-35, followed by A-Z for 36-62.  Otherwise, each
+byte is specified by two hex digits (0123456789abcdef).  Whitespace
+embedded in data literals is ignored.
+
+Comments in the syntax diagram describe intended semantics.
+.nf
+IHDR {
+   height <long>
+   width <long>
+   bitdepth <byte> 
+   [using color+palette+alpha]	# PNG color type information
+   [with interlace]		# Adam7 assumed if interlacing on
+}
+
+PLTE {
+   [(<byte>,<byte>,<byte>)]*	# Any number of RGB triples
+}
+
+IDAT {<data>}
+
+gAMA {<float>}
+
+cHRM {
+   white (<float>,<float>)	# White point x and y
+   red (<float>,<float>)
+   green (<float>,<float>)
+   blue (<float>,<float>)
+}
+
+IMAGE {<data>}
+.fi
+
+.SH BUGS
+Certain chunks that could theoretically occur before IDAT (such as
+text chunks) are not accepted in PPNG.  This reflects a limitation of
+libpng, which is designed to aggregate most non-text chunks in an
+image structure and write them out before writing out the image.
+.SH AUTHOR
+Eric S. Raymond <esr@snark.thyrsus.com> November 1990 (home page at
+http://www.tuxedo.org/~esr/).
+
+
