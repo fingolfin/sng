@@ -44,7 +44,7 @@ href="sng-${version}.zip">source ZIP
 archive</a>.  RPMs are not yet available, but will be after the next
 major libpng release.<P>
 
-Note: To use sng, you will need to install libpng-1.0.5m or later.
+Note: To use sng, you will need to install libpng-1.1.0f or later.
 You can download it <a
 href="ftp://swrinde.nde.swri.edu/pub/png-group/src">here</a>).<p>
 
