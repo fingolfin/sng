@@ -5,7 +5,7 @@ sng_SOURCES = main.c sngc.c sngd.c sng.h
 sng_LDFLAGS = -static
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
-EXTRA_DIST = Makefile sng.spec.in sng.spec sng.1 sng_regress indexgen.sh lsmgen.sh
+EXTRA_DIST = Makefile sng.spec.in sng.spec sng.1 sng_regress indexgen.sh lsmgen.sh test.sng
 
 # This is necessary because as of version 1.4, automake generates a dist 
 # production that runs a broken automake command
