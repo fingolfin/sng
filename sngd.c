@@ -229,17 +229,16 @@ static void dump_IHDR(png_infop info_ptr, FILE *fpout)
     fprintf(fpout, "IHDR {\n");
     fprintf(fpout, "    width: %ld; height: %ld; bitdepth: %d;\n", 
 	    info_ptr->width, info_ptr->height, info_ptr->bit_depth);
-    if (ityp & (PNG_COLOR_MASK_COLOR|PNG_COLOR_MASK_ALPHA|PNG_COLOR_MASK_PALETTE))
-    {
-	fprintf(fpout, "    using");
-	if (ityp & PNG_COLOR_MASK_COLOR)
-	    fprintf(fpout, " color");
-	if (ityp & PNG_COLOR_MASK_PALETTE)
-	    fprintf(fpout, " palette");
-	if (ityp & PNG_COLOR_MASK_ALPHA)
-	    fprintf(fpout, " alpha");
-	fprintf(fpout, ";    # image type: %s\n", image_type[ityp]);
-    }
+    fprintf(fpout, "    using");
+    if (ityp & PNG_COLOR_MASK_COLOR)
+	fprintf(fpout, " color");
+    else
+	fprintf(fpout, " grayscale");
+    if (ityp & PNG_COLOR_MASK_PALETTE)
+	fprintf(fpout, " palette");
+    if (ityp & PNG_COLOR_MASK_ALPHA)
+	fprintf(fpout, " alpha");
+    fprintf(fpout, ";\n");
     if (info_ptr->interlace_type)
 	fprintf(fpout, "    with interlace;        # type adam7 assumed\n");
     fprintf(fpout, "}\n");
@@ -818,7 +817,8 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
-#ifdef 0
+#ifdef __CORE_DUMP__
+   /* causes a core dump when reading basi0g01.png */
    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
 	png_set_gray_1_2_4_to_8(png_ptr);
 #endif

@@ -73,8 +73,8 @@ IHDR {
    height <long>
    width <long>
    bitdepth <byte> 
-   [using color+palette+alpha]	# PNG color type information
-   [with interlace]		# Adam7 assumed if interlacing on
+   [using grayscale+color+palette+alpha]
+   [with interlace]			# Adam7 assumed if interlacing on
 }
 
 PLTE {

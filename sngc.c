@@ -626,6 +626,8 @@ static void compile_IHDR(void)
 	    d = byte_numeric(get_token());
         else if (token_equals("using"))
 	    continue;			/* `uses' is just syntactic sugar */
+        else if (token_equals("grayscale"))
+	    continue;			/* so is grayscale */
         else if (token_equals("palette"))
 	    info_ptr->color_type |= PNG_COLOR_MASK_PALETTE;
         else if (token_equals("color"))
