@@ -192,7 +192,15 @@ static int get_token(void)
 	return(TRUE);
     }
 
-    /* skip leading whitespace */
+    /*
+     * Skip leading whitespace.
+     *
+     * Treat commas, colons, and semicolons as whitespace -- this is
+     * a mildly sleazy way to ensure that the compiler has
+     * *really* tolerant syntax...in case we ever decide to change
+     * this, there are comments reading "comma" at every point
+     * where we might actually want same.
+     */
     for (;;)
     {
 	w = fgetc(yyin);
@@ -200,7 +208,7 @@ static int get_token(void)
 	    linenum++;
 	if (feof(yyin))
 	    return(FALSE);
-	else if (isspace(w))		/* whitespace */
+	else if (isspace(w) || w == ',' || w == ';' || w == ':')
 	    continue;
 	else if (w == '#')		/* comment */
 	{
@@ -545,9 +553,9 @@ static void compile_PLTE(void)
 	if (!token_equals("("))
 	    fatal("bad syntax in PLTE description");
 	palette[ncolors].red = byte_numeric(get_token());
-	require_or_die(",");
+	/* comma */
 	palette[ncolors].green = byte_numeric(get_token());
-	require_or_die(",");
+	/* comma */
 	palette[ncolors].blue = byte_numeric(get_token());
 	require_or_die(")");
 	ncolors++;
@@ -609,7 +617,7 @@ static void compile_cHRM(void)
 
 	require_or_die("(");
 	*cvx = double_numeric(get_inner_token());
-	require_or_die(",");
+	/* comma */
 	*cvy = double_numeric(get_inner_token());
 	require_or_die(")");
     }
@@ -633,7 +641,7 @@ static void compile_iCCP(void)
     if (!get_token() || !token_equals("}"))
 	fatal("bad token `%s' in iCCP specification", token_buffer);
 
-    /* FIXME: actually emit the chunk */
+    /* FIXME: actually emit the chunk (can't be done with 1.0.5) */
 }
 
 static void compile_sBIT(void)
@@ -732,10 +740,8 @@ static void compile_hIST(void)
     int		nhist = 0;
 
     while (get_inner_token())
-	if (token_equals(","))
-	    continue;
-	else
-	    hist[nhist++] = short_numeric(TRUE);
+	/* comma */
+	hist[nhist++] = short_numeric(TRUE);
 
     if (nhist != info_ptr->num_palette)
 	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, info_ptr->num_palette);
@@ -762,10 +768,8 @@ static void compile_tRNS(void)
 
     case PNG_COLOR_TYPE_PALETTE:
 	while (get_inner_token())
-	    if (token_equals(","))
-		continue;
-	    else
-		trans[ntrans++] = byte_numeric(TRUE);
+	    /* comma */
+	    trans[ntrans++] = byte_numeric(TRUE);
 	break;
 
     case PNG_COLOR_TYPE_RGB:
@@ -803,7 +807,7 @@ static void compile_pHYs(void)
 	{
 	    require_or_die("(");
 	    res_x = long_numeric(get_token());
-	    require_or_die(",");
+	    /* comma */
 	    res_y = long_numeric(get_token());
 	    require_or_die(")");
 	}
@@ -881,7 +885,7 @@ static void compile_iTXt(void)
     if (!language || !keyword || !text)
 	fatal("keyword or text is mising");
 
-    /* FIXME: actually emit the chunk */
+    /* FIXME: actually emit the chunk (can't be done with 1.0.5) */
 }
 
 static void compile_IMAGE(void)

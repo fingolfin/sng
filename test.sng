@@ -1,14 +1,14 @@
 # This is a synthetic SNG test file
 
-IHDR {
-	width 16
-	height 19
-	bitdepth 8
-	using color palette 
+IHDR: {
+	width: 16
+	height: 19
+	bitdepth: 8
+	using color: palette 
 	with interlace
 }
 
-gAMA {4.5}
+gAMA: {4.5}
 
 # This compiles, but triggers a libpng warning about invalid SBIT depth
 # The parameters are the standard values in 4.2.2.3
@@ -25,42 +25,42 @@ gAMA {4.5}
 # This cannot coexist with the sRGB chunk.
 iCCP {"dummy profile"}
 
-sBIT {
-  red 8
-  green 8
-  blue 8
-  # gray 8	# for non-color images
-  # alpha 8	# for images with alpha
+sBIT: {
+  red: 8
+  green: 8
+  blue: 8
+  # gray: 8	# for non-color images
+  # alpha: 8	# for images with alpha
 }
 
-PLTE {
+PLTE: {
    (0,     0, 255)
    (255,   0,   0)
    ( 70,  70,  70)
 }
 
-bKGD {
-  # red 127
-  # green 127
-  # blue 127
-  # gray 127	# for non-color images
-  index 0	# for paletted images
+bKGD: {
+  # red: 127
+  # green: 127
+  # blue: 127
+  # gray: 127	# for non-color images
+  index: 0	# for paletted images
 }
 
-hIST {23, 55, 10}
+hIST: {23, 55, 10}
 
-tRNS {
+tRNS: {
    255
-   # red 70 
-   # green 70
+   # red: 70 
+   # green: 70
    # blue 70
 }
 
-pHYs {
+pHYs: {
    resolution (500, 400) per meter
 }
 
-IMAGE {
+IMAGE: {
    base64
 3333333333333333
 3333333333333333
@@ -83,18 +83,18 @@ IMAGE {
 3333333333333333
 }
 
-tEXt {				# Ordinary text chunk
-  keyword "Title"
-  text "Sample SNG script"
+tEXt: {				# Ordinary text chunk
+  keyword: "Title"
+  text: "Sample SNG script"
 }
 
-zTXt {				# Compressed text chunk
-  keyword "Author"
-  text "Eric S. Raymond"
+zTXt: {				# Compressed text chunk
+  keyword: "Author"
+  text: "Eric S. Raymond"
 }
 
-iTXt {				# International UTF-8 keyword
-  language "en"
-  keyword "Description"
-  text "SNG demo, illustrating the language syntax"
+iTXt: {				# International UTF-8 keyword
+  language: "en"
+  keyword: "Description"
+  text: "SNG demo, illustrating the language syntax"
 }
