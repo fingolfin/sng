@@ -38,11 +38,11 @@ do
             echo "$file: recompilation of the canonicalized form failed.";
             exit 1
         fi
-        if cmp /tmp/decompiled$$.png /tmp/canonicalized$$.png
+        if cmp -s /tmp/decompiled$$.png /tmp/canonicalized$$.png
         then
 	    echo "$file: regression test passed."
 	else
-            echo "Decompiled and canonicalized versions differ.";
+            echo "$file: decompiled and canonicalized versions differ.";
             exit 1
         fi
     ;;
@@ -83,7 +83,7 @@ do
         then
 	    echo "$file: regression test passed."
 	else
-            echo "Decompiled and canonicalized versions differ.";
+            echo "$file: decompiled and canonicalized versions differ.";
             exit 1
         fi
     ;;
