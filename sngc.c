@@ -307,11 +307,15 @@ static int get_token(void)
 	    else
 		*tp++ = c;
 	}
+	*tp = '\0';
 	escapes(token_buffer, token_buffer);
 	token_class = STRING_TOKEN;
     }
     else if (ispunct(w))
+    {
+	*tp = '\0';
 	token_class = PUNCT_TOKEN;
+    }
     else
     {
 	for (;;)
@@ -335,10 +339,10 @@ static int get_token(void)
 	    else
 		*tp++ = c;
 	}
+	*tp = '\0';
 	token_class = WORD_TOKEN;
     }
 
-    *tp = '\0';
     if (verbose > 1)
 	fprintf(stderr, "token: %s\n", token_buffer);
     return(TRUE);
@@ -516,8 +520,17 @@ static void collect_data(int *pnbits, char **pbits)
 	fatal("missing format type in data segment");
     else if (token_class == STRING_TOKEN)
     {
-	*pbits = xstrdup(token_buffer);
-	*pnbits = strlen(*pbits);
+	*pnbits = 0;
+	*pbits = NULL;
+	do {
+	    int	seglen = strlen(token_buffer);
+
+	    *pbits = xrealloc(*pbits, *pnbits + seglen);
+	    memcpy(*pbits + *pnbits, token_buffer, seglen);
+	    *pnbits += seglen;	    
+	} while
+	      (get_inner_token() && token_class == STRING_TOKEN);
+	push_token();
 	return;
     }
     else if (token_equals("base64"))

@@ -42,6 +42,11 @@ char *safeprint(const char *buf)
 	    *tp++ = '\\'; *tp++ = '"';
 	    buf++;
 	}
+	else if (*buf == '\\')
+	{
+	    *tp++ = '\\'; *tp++ = '\\';
+	    buf++;
+	}
 	else if (isprint(*buf) || *buf == ' ')
 	    *tp++ = *buf++;
 	else if (*buf == '\n')
@@ -86,7 +91,7 @@ static void multi_dump(FILE *fpout, char *leader,
 
     for (i = 0; i < height; i++)
 	for (cp = data[i]; cp < data[i] + width; cp++)
-	    if (!isprint(*cp) || *cp == '\n')
+	    if (!isprint(*cp) && !isspace(*cp))
 		all_printable = 0;
 	    else if (*cp > 63)
 		base64 = 0;
@@ -95,10 +100,8 @@ static void multi_dump(FILE *fpout, char *leader,
     {
 	if (all_printable)
 	{
-	    char *str = malloc(width + 1);
+	    unsigned char *cp;
 
-	    memcpy(str, data[i], width);
-	    str[width] = '\0';
 	    if (i == 0)
 	    {
 		fprintf(fpout, "%s ", leader);
@@ -107,8 +110,20 @@ static void multi_dump(FILE *fpout, char *leader,
 		else
 		    fprintf(fpout, "\n");
 	    }
-	    fprintf(fpout, "\"%s\"%c\n", str, height == 1 ? ';' : ' ');
-	    free(str);
+
+	    fputc('"', fpout);
+	    for (cp = data[i]; cp < data[i] + width; cp++)
+	    {
+		char	cbuf[2];
+
+		cbuf[0] = *cp;
+		cbuf[1] = '\0';
+		fputs(safeprint(cbuf), fpout); 
+
+		if (*cp == '\n' && cp < data[i] + width - 1)
+		    fprintf(fpout, "\"\n\"");
+	    }
+	    fprintf(fpout, "\"%c\n", height == 1 ? ';' : ' ');
 	}
 	else if (base64)
 	{

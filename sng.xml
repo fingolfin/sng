@@ -45,11 +45,14 @@ literals respectively (all unsigned).  The <slong> element is a signed
 long-numeric literal. All numerics use C conventions; that is, they
 are decimal unless led by 0x (hex) or 0 (octal).
 
-The element <string> is a doublequote-delimited character string.
-C-style escapes (\en, \et, \rb, \r, \e followed by octal or hex digits)
-are interpreted.  The element <keyword> is a doublequote-delimited PNG
+The element <string> is any number of doublequote-delimited character
+string literals.  C-style escapes (\en, \et, \rb, \r, \e followed by
+octal or hex digits) are interpreted.  The result is the concatenation
+of all the literals.
+
+The element <keyword> is a doublequote-delimited PNG
 keyword; that is, a string of no more than 79 printable Latin-1
-characters or spaces, with no leading and no traling and no
+characters or spaces, with no leading and no trailing and no
 consecutive spaces.
 
 A <data> literal consists of a sequence of byte specifications in one

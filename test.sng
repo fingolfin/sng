@@ -166,7 +166,8 @@ gIFg {				# GIF Graphic Extension chunk
 gIFx {				# GIF Application Extension chunk
    identifier: "SNGCOMPI";
    code: "SNG";
-   data: "Dummy application data";
+   data: "Dummy application data\n" 
+		"illustrating assembly of multiple strings\n";
 }
 
 private prIv {
