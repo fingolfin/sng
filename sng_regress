@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# sng_regress -- regression test harness for sng
+#
+
+trap "rm -f /tmp/*$$.[ps]ng" 0 1 2 15 
+
+for file in $*
+do
+    case $file in
+    *.png)
+        echo "Regression-testing against PNG file \`$file'"
+        if [ ! sng <${file} >/tmp/decompiled$$.sng ]
+        then
+            echo "Decompilation of the test PNG failed";
+            exit 1
+        fi
+        if [ ! sng </tmp/decompiled$$.sng >/tmp/decompiled$$.png ]
+        then
+            echo "Recompilation of the decompiled form failed";
+            exit 1
+        fi
+        if [ ! sng </tmp/decompiled$$.png >/tmp/canonicalized$$.sng ]
+        then
+            echo "Generation of the canonicalized form failed.";
+            exit 1
+        fi
+        if [ ! sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png ]
+        then
+            echo "Recompilation of the canonicalized form failed.";
+            exit 1
+        fi
+        if cmp /tmp/decompiled$$.png /tmp/canonicalized$$.png
+        then
+	    echo "Regression on $file passed."
+	else
+            echo "Decompiled and canonicalized versions differ.";
+            exit 1
+        fi
+    ;;
+    *.sng)
+        echo "Regression-testing against SNG file \`$file'"
+        # Make a canonicalized version of the test file
+        # Regenerate canonicalized version from its PNG
+        # Diff the two
+        if [ ! sng <${file} >/tmp/test$$.png ]
+        then
+            echo "Compilation of the test SNG failed: $?";
+            exit 1
+        fi
+        if [ ! sng </tmp/test$$.png >/tmp/canonicalized$$.sng ]
+        then
+            echo "Generation of the canonicalized form failed.";
+            exit 1
+        fi
+        if [ ! sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png ]
+        then
+            echo "Recompilation of the canonicalized form failed.";
+            exit 1
+        fi
+        if [ ! sng </tmp/canonicalized$$.png >decompiled$$.sng ]
+        then
+            echo "Decompilation of the canonicalized form failed.";
+            exit 1
+        fi
+        if diff -c /tmp/canonicalized$$.sng decompiled$$.sng
+        then
+	    echo "Regression on $file passed."
+	else
+            echo "Decompiled and canonicalized versions differ.";
+            exit 1
+        fi
+    ;;
+    *)
+        echo "Non-PNG, non-SNG file \`$file' ignored"
+    ;;
+    esac
+done
+
+# sng_regress ends here
+
+
+
