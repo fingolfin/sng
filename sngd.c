@@ -31,7 +31,6 @@ static char *rendering_intent[] = {
 static char *current_file;
 static png_structp png_ptr;
 static png_infop info_ptr;
-static int true_depth;
 
 /*****************************************************************************
  *
@@ -199,12 +198,12 @@ static void multi_dump(FILE *fpout, char *leader,
 		fprintf(fpout, "%02x", *cp & 0xff);
 
 		/* only insert spacers for 8-bit images if > 1 channel */
-		if (true_depth == 8 && info_ptr->channels > 1)
+		if (png_ptr->bit_depth == 8 && info_ptr->channels > 1)
 		{
 		    if (((cp - data[i]) % info_ptr->channels) == info_ptr->channels - 1)
 			fputc(' ', fpout);
 		}
-		else if (true_depth == 16)
+		else if (png_ptr->bit_depth == 16)
 		    if (((cp - data[i]) % (info_ptr->channels*2)) == info_ptr->channels*2-1)
 			fputc(' ', fpout);
 	    }
@@ -267,7 +266,7 @@ static void dump_IHDR(FILE *fpout)
     case 4:
 	if (ityp == 2 || ityp == 4 || ityp == 6) {/* RGB or GA or RGBA */
 	    printerr(1, "invalid IHDR bit depth (%u) for %s image",
-		     true_depth, image_type[ityp]);
+		     png_ptr->bit_depth, image_type[ityp]);
 	}
 	break;
     case 8:
@@ -275,7 +274,7 @@ static void dump_IHDR(FILE *fpout)
     case 16:
 	if (ityp == 3) { /* palette */
 	    printerr(1, "invalid IHDR bit depth (%u) for %s image",
-		     true_depth, image_type[ityp]);
+		     png_ptr->bit_depth, image_type[ityp]);
 	}
 	break;
     default:
@@ -285,7 +284,7 @@ static void dump_IHDR(FILE *fpout)
 
     fprintf(fpout, "IHDR {\n");
     fprintf(fpout, "    width: %lu; height: %lu; bitdepth: %u;\n", 
-	    info_ptr->width, info_ptr->height, true_depth);
+	    info_ptr->width, info_ptr->height, png_ptr->bit_depth);
     fprintf(fpout, "    using");
     if (ityp & PNG_COLOR_MASK_COLOR)
 	fprintf(fpout, " color");
@@ -921,8 +920,15 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* Set up the input control if you are using standard C streams */
    png_init_io(png_ptr, fp);
 
-   /* If we have already read some of the signature */
-   /* png_set_sig_bytes(png_ptr, sig_read); */
+   /*
+    * Unpack images with bit depth < 8 into bytes per sample.
+    * We'll cheat, later on, by referring to png_ptr->bit_depth.
+    * This preserves the bit depth of the file, as opposed to
+    * the unpacked bit depth of the image.  But this is
+    * undocumented.  If it ever breaks, the regression test
+    * will start failing on images if depth 1, 2, and 4.
+    */
+   png_set_packing(png_ptr);
 
    /* The call to png_read_info() gives us all of the information from the
     * PNG file before the first IDAT (image data chunk).  REQUIRED
@@ -933,14 +939,6 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
-   /* need to gather some statistics before transformation */ 
-   true_depth = bit_depth;
-
-   if (bit_depth < 8)
-   {
-       png_set_packing(png_ptr);
-       true_depth = bit_depth;
-   }
    png_read_update_info(png_ptr, info_ptr);
 
    row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
