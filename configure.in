@@ -28,13 +28,6 @@ AC_ARG_WITH(png-inc,[  --with-png-inc=DIR         location of the libpng include
 
 AC_ARG_WITH(rgbtxt, [  --with-rgbtxt=DIR         location of a color database])
 
-if test -n "$with_rgbtxt"
-then
-    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt")
-else
-    AC_DEFINE(RGBTXT, "/usr/X11R6/lib/X11/rgb.txt")
-fi
-
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(m, pow)
 AC_CHECK_LIB(png, png_write_init, , , $LIBS)
@@ -46,6 +39,22 @@ fi
 if test "$ac_cv_lib_z_deflate" = "no"
 then
     AC_ERROR([ZLIB library is missing! Please get it.])
+fi
+
+if test -n "$with_rgbtxt"
+then
+    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt")
+else
+    with_rgbtxt="/usr/X11R6/lib/X11/rgb.txt"
+    AC_DEFINE(RGBTXT, "$with_rgbtxt")
+fi
+
+AC_MSG_CHECKING("for X color database")
+if test -f "$with_rgbtxt"
+then
+   AC_MSG_RESULT([found at $with_rgbtxt])
+else
+   AC_ERROR([$with_rgbtxt isn't there.])
 fi
 
 AC_OUTPUT(Makefile sng.spec)
