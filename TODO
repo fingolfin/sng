@@ -1,43 +1,22 @@
+			To-do list:
+
+Author's tasked:
+
 1. Multiline strings in SNG.
+2. Real safeprint, and string escape handling.
+3. Clean up and regularize the syntax.
+4. Make the -i option work.
+5. Find out why tRNS causes a CRC error
 
-2. Clean up and regularize the syntax.
+Suitable tasks for someone other than the author:
 
-3. Make the -i option work
+6. Add netpbm as a supported data literal format, in addition to the
+   current string and base64 hex.
 
-4. Find out why tRNS causes a CRC error
+7. At the moment, the code assumes that double and float fields 
+   in the info structure have the PNG_FLOATING_POINT_SUPPORTED
+   representation.  Conditionalize the code suitably.  Also add properly
+   conditionalized code so that everything still work with only
+   fixed-point (PNG_FIXED_POINT_SUPPORTED) enabled.
 
-5. Glenn writes:
 
-I'd like to see the row filters in there.  That would permit you
-to save and restore without having to do the filtering algorithm
-and would allow you to preserve particularly well-compressed data;
-all you'd need to do is inflate and deflate.  Also I'd like to  
-see the rows separated into structures with
-{decimal row_number, decimal filter, base64|hex pixels}:
-
-Image: {
-   base64
-   {0,  0,  3333333...},
-   {1,  0,  3333333...},
-   (2,  0,  0000011...),
-   [...]
-   {18, 0,  3333333...}
- }
-
-You might also allow decimal pixel data, which would have to be delimited
-with white space or commas: (0, 0, 3 3 3 3 3 ....)
-
-Alternatively, you could write the pixel data in netpbm ASCII format and
-the filters separately:
-
-Filters: {000000000000000}
-Image: {
-  netbpm
-{
-P2 18 18 255
-3 3 3 3 3 3 ...
-... 3 3 3 3 3 3
-}
-
-That way you could just yank a PGM or PPM right into the SNG with
-a text editor.
