@@ -149,6 +149,7 @@ zTXt: {				# Compressed text chunk
 iTXt: {				# International UTF-8 keyword
   language: "en";
   keyword: "Description";
+  translated: "Description:"
   text: "SNG demo, illustrating the language syntax";
 }
 

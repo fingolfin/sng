@@ -509,10 +509,14 @@ static void dump_text(png_infop info_ptr, FILE *fpout)
 	{
 	case PNG_TEXT_COMPRESSION_NONE:
 	    fprintf(fpout, "tEXt {\n");
+	    fprintf(fpout, "    keyword: \"%s\";\n", 
+		    safeprint(info_ptr->text[i].key));
 	    break;
 
 	case PNG_TEXT_COMPRESSION_zTXt:
 	    fprintf(fpout, "zTXt {\n");
+	    fprintf(fpout, "    keyword: \"%s\";\n", 
+		    safeprint(info_ptr->text[i].key));
 	    break;
 
 	case PNG_ITXT_COMPRESSION_NONE:
@@ -520,11 +524,13 @@ static void dump_text(png_infop info_ptr, FILE *fpout)
 	    fprintf(fpout, "iTXt {\n");
 	    fprintf(fpout, "    language: \"%s\";\n", 
 		    safeprint(info_ptr->text[i].lang));
+	    fprintf(fpout, "    keyword: \"%s\";\n", 
+		    safeprint(info_ptr->text[i].key));
+	    fprintf(fpout, "    translated: \"%s\";\n", 
+		    safeprint(info_ptr->text[i].lang_key));
 	    break;
 	}
 
-	fprintf(fpout, "    keyword: \"%s\";\n", 
-		safeprint(info_ptr->text[i].key));
 	fprintf(fpout, "    text: \"%s\";\n", 
 		safeprint(info_ptr->text[i].text));
 	fprintf(fpout, "}\n");

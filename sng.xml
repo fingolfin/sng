@@ -135,6 +135,7 @@ zTXt {				# Compressed text chunk
 iTXt {				# International UTF-8 keyword
   language <keyword>
   keyword <keyword>
+  tranlated <keyword>		# Translation of the keyword
   text <string>
   [compressed]
 }

@@ -1022,28 +1022,33 @@ static void compile_iTXt(void)
 {
     char	language[PNG_KEYWORD_MAX_LENGTH+1];
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1]; 
+    char	transkey[PNG_KEYWORD_MAX_LENGTH+1]; 
     char	text[PNG_STRING_MAX_LENGTH+1];
-    int		nlanguage = 0, nkeyword = 0, ntext = 0;
+    int		nlanguage = 0, nkeyword = 0, ntranskey = 0, ntext = 0;
     int		compression = PNG_TEXT_COMPRESSION_NONE;
     png_text	textblk;
 
+    compression = PNG_ITXT_COMPRESSION_NONE;
     while (get_inner_token())
 	if (token_equals("language"))
 	    nlanguage = keyword_validate(get_token(), language);
 	else if (token_equals("keyword"))
 	    nkeyword = keyword_validate(get_token(), keyword);
+ 	else if (token_equals("translated"))
+	    ntranskey = keyword_validate(get_token(), transkey);
 	else if (token_equals("text"))
 	    ntext = string_validate(get_token(), text);
 	else if (token_equals("compressed"))
-	    compression = PNG_TEXT_COMPRESSION_zTXt;
+	    compression = PNG_ITXT_COMPRESSION_zTXt;
 	else
 	    fatal("bad token `%s' in iTXt specification", token_buffer);
 
-    if (!language || !keyword || !text)
+    if (!language || !keyword || !transkey || !text)
 	fatal("keyword or text is missing");
 
     textblk.lang = language;
     textblk.key = keyword;
+    textblk.lang_key = transkey;
     textblk.text = text;
     textblk.compression = compression;
 
