@@ -1,7 +1,7 @@
 /*****************************************************************************
 
 NAME
-   sng.c -- compile SNG to PNG/MNG.
+   sngc.c -- compile SNG to PNG/MNG.
 
 *****************************************************************************/
 #include <stdio.h>
@@ -444,7 +444,10 @@ static void collect_data(int *pnbits, char **pbits)
 {
     /*
      * A data segment consists of a byte stream. 
-     * There are presently two formats:
+     * There are presently three formats:
+     *
+     * string:
+     *    An ASCII string.
      *
      * base64: 
      *   One character per byte; values are
@@ -464,6 +467,14 @@ static void collect_data(int *pnbits, char **pbits)
 
     if (!get_inner_token())
 	fatal("missing format type in data segment");
+    else if (token_equals("string"))
+    {
+	if (!get_token())
+	    fatal("Unexpected EOF in data element");
+	*pbits = xstrdup(token_buffer);
+	*pnbits = strlen(*pbits);
+	return;
+    }
     else if (token_equals("base64"))
 	pixperchar = TRUE;
     else if (token_equals("hex"))
@@ -483,7 +494,11 @@ static void collect_data(int *pnbits, char **pbits)
 	    break;
 	}
 	else if (isspace(c))
+	{
+	    if (c == '\n')
+		linenum++;
 	    continue;
+	}
 	else 
         {
 	    unsigned char	value;
@@ -1354,6 +1369,28 @@ static void compile_IMAGE(void)
     free(bits);
 }
 
+static void compile_private(char *name)
+/* compile a private chunk */
+{
+    int			nbits;
+    char		*bits;
+    png_unknown_chunk	chunk;
+
+    if (strlen(name) != 4)
+	fatal("wrong length for chunk name %s", token_buffer);
+    else
+	strcpy(chunk.name, name);
+
+    require_or_die("{");
+    collect_data(&nbits, &bits);
+    require_or_die("}");
+
+    chunk.data = bits;
+    chunk.size = nbits;
+    png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
+    png_free(png_ptr, bits);
+}
+
 int sngc(FILE *fin, FILE *fout)
 /* compile SNG on fin to PNG on fout */
 {
@@ -1410,7 +1447,7 @@ int sngc(FILE *fin, FILE *fout)
     ok:
 	if (!get_token())
 	    fatal("unexpected EOF");
-	if (!token_equals("{"))
+	if (!token_equals("{") && (pp - properties) != PRIVATE)
 	    fatal("missing chunk delimiter");
 	if (!pp->multiple_ok && pp->count > 0)
 	    fatal("illegal repeated chunk");
@@ -1571,7 +1608,7 @@ int sngc(FILE *fin, FILE *fout)
 	    break;
 
 	case PRIVATE:
-	    fatal("FIXME: private chunk types are not handled yet");
+	    compile_private(token_buffer);
 	    break;
 	}
 

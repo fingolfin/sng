@@ -141,4 +141,8 @@ gIFx {				# GIF Application Extension chunk
    data: "Dummy application data";
 }
 
+private prIv {
+   string "Test data for the private chunk"
+}
+
 # No sPLT chunk.

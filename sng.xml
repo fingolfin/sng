@@ -37,12 +37,14 @@ is, a string of no more than 79 printable Latin-1 characters or
 spaces, with no leading and no traling and no consecutive spaces.
 
 A <data> literal consists of a sequence of byte specifications in one
-of two formats.  Char-per-pixel format can be used if the image either
-has total (color plus alpha) bit depth of four or less, or it is a
-paletted image with 62 or fewer colors; values of the chars are 0-9,
-followed by a-z for 10-35, followed by A-Z for 36-62.  Otherwise, each
-byte is specified by two hex digits (0123456789abcdef).  Whitespace
-embedded in data literals is ignored.
+of three formats, signaled by the token `string', `base64', or `hex'.
+String format is a doublequote-delimited printable ASCII string.
+Base64 format can be used if the image either has total (color plus
+alpha) bit depth of four or less, or it is a paletted image with 64 or
+fewer colors; values of the chars are 0-9, followed by a-z for 10-35,
+followed by A-Z for 36-62, followed by % for 63 and $ for 64.  In hex
+format, each byte is specified by two hex digits (0123456789abcdef).
+Whitespace embedded in data literals is ignored.
 
 Comments in the syntax diagram describe intended semantics.
 .nf
@@ -175,16 +177,17 @@ gIFx {
    code <string>                      # Must be 3 characters
    data <string>
 }
+
+private <string> {		      # Private chunk declaration
+   <data>
+}
 .fi
 
 .SH BUGS
-Declaring a cHRM triggers a libpng warning about a supposedly
-incorrect sBIT value; it is not clear why.  This may be a PNG library
-bug.
-
-This is an alpha version.  MNG support is not there yet.
+This is an alpha version.  Decompilation of PNGs to SNG, and MNG
+support, are not there yet.
 .SH AUTHOR
-Eric S. Raymond <esr@snark.thyrsus.com> November 1990 (home page at
+Eric S. Raymond <esr@snark.thyrsus.com> December 1999 (home page at
 http://www.tuxedo.org/~esr/).
 
 
