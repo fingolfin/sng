@@ -57,7 +57,6 @@ bKGD: {
 # Frequencies, for rendering by viewers with small palettes
 hIST: {23, 55, 10}
 
-
 # Set transparency (for some reason this triggers a libpng CRC error)
 tRNS: {
   255;		# Render the first color in the palette fully transparent
@@ -150,12 +149,14 @@ zTXt: {				# Compressed text chunk
   text: "Eric S. Raymond";
 }
 
-iTXt: {				# International UTF-8 keyword
-  language: "en";
-  keyword: "Description";
-  translated: "Description:"
-  text: "SNG demo, illustrating the language syntax";
-}
+# The production releases of libpng don't support this yet.
+#
+#iTXt: {				# International UTF-8 keyword
+#  language: "en";
+#  keyword: "Description";
+#  translated: "Description:"
+#  text: "SNG demo, illustrating the language syntax";
+#}
 
 gIFg {				# GIF Graphic Extension chunk
    disposal: 23;
