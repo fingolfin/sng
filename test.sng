@@ -38,6 +38,14 @@ PLTE {
    (255, 0,   0)
 }
 
+bKGD {
+  # red 127
+  # green 127
+  # blue 127
+  # gray 127	# for non-color images
+  index 0	# for paletted images
+}
+
 IMAGE {
 0000001111100000
 0000011111110000

@@ -313,6 +313,20 @@ static png_uint_32 long_numeric(bool token_ok)
     return(result);
 }
 
+static png_uint_16 short_numeric(bool token_ok)
+/* validate current token as a PNG long (range 0..2^16-1) */
+{
+    unsigned long result;
+    char *vp;
+
+    if (!token_ok)
+	fatal("EOF while expecting short-integer constant");
+    result = strtoul(token_buffer, &vp, 0);
+    if (*vp || result == 65536)
+	fatal("invalid or out of range short constant");
+    return(result);
+}
+
 static png_byte byte_numeric(bool token_ok)
 /* validate current token as a byte */
 {
@@ -579,7 +593,7 @@ static void compile_sBIT(void)
 /* compile an sBIT chunk, set corresponding bits in info_ptr */
 {
     png_color_8	sigbits;
-    bool		color = (info_ptr->color_type & (PNG_COLOR_MASK_PALETTE | PNG_COLOR_MASK_COLOR));
+    bool color = (info_ptr->color_type & (PNG_COLOR_MASK_PALETTE | PNG_COLOR_MASK_COLOR));
 
     while (get_inner_token())
 	if (token_equals("red"))
@@ -588,13 +602,13 @@ static void compile_sBIT(void)
 		fatal("No color channels in this image type");
 	    sigbits.red = byte_numeric(get_token());
 	}
-	else if (token_equals("blue"))
+	else if (token_equals("green"))
 	{
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.green = byte_numeric(get_token());
 	}
-	else if (token_equals("green"))
+	else if (token_equals("blue"))
 	{
 	    if (!color)
 		fatal("No color channels in this image type");
@@ -612,8 +626,53 @@ static void compile_sBIT(void)
 		fatal("No alpha channel in this image type");
 	    sigbits.alpha = byte_numeric(get_token());
 	}
+	else 
+	    fatal("invalid channel name in sBIT specification");
 
     png_set_sBIT(png_ptr, info_ptr, &sigbits);
+}
+
+static void compile_bKGD(void)
+/* compile a bKGD chunk, put data in info structure */
+{
+    png_color_16	bkgbits;
+
+    while (get_inner_token())
+	if (token_equals("red"))
+	{
+	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
+		fatal("Can't use color background with this image type");
+	    bkgbits.red = byte_numeric(get_token());
+	}
+	else if (token_equals("green"))
+	{
+	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
+		fatal("Can't use color background with this image type");
+	    bkgbits.green = short_numeric(get_token());
+	}
+	else if (token_equals("blue"))
+	{
+	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
+		fatal("Can't use color background with this image type");
+	    bkgbits.blue = short_numeric(get_token());
+	}
+	else if (token_equals("gray"))
+	{
+	    if (info_ptr->color_type & (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE))
+		fatal("Can't use color background with this image type");
+	    bkgbits.gray = short_numeric(get_token());
+	}
+	else if (token_equals("index"))
+	{
+	    if (!(info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
+		fatal("Can't use index background with a non-palette image");
+	    bkgbits.index = byte_numeric(get_token());
+	}
+	else 
+	    fatal("invalid channel `%s' name in bKGD specification", 
+		  token_buffer);
+
+    png_set_bKGD(png_ptr, info_ptr, &bkgbits);
 }
 
 static void compile_tEXt(void)
@@ -874,7 +933,7 @@ int sngc(FILE *fin, FILE *fout)
 	case bKGD:
 	    if (properties[IDAT].count)
 		fatal("bKGD chunk must come between PLTE (if any) and IDAT");
-	    fatal("FIXME: bKGD chunk type is not handled yet");
+	    compile_bKGD();
 	    break;
 
 	case hIST:

@@ -75,6 +75,14 @@ sBIT {
    alpha <byte>			# Images with alpha only
 }
 
+bKGD {
+   red <short>			# Color images only
+   blue <short>			# Color images only
+   green <short>		# Color images only
+   gray <short>			# Grayscale images only
+   index <byte>			# Paletted images only
+}
+
 tEXt {				# Ordinary text chunk
   keyword <string>
   text <string>
