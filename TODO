@@ -6,7 +6,9 @@
 
 4. Build Automake/autoconf machinery.
 
-5. Glenn writes:
+5. Find out why tRNS causes a CRC error
+
+6. Glenn writes:
 
 I'd like to see the row filters in there.  That would permit you
 to save and restore without having to do the filtering algorithm

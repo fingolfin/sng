@@ -56,10 +56,11 @@ String format is a doublequote-delimited printable ASCII string.
 Base64 format can be used if the image either has total (color plus
 alpha) bit depth of four or less, or it is a paletted image with 64 or
 fewer colors; values of the chars are 0-9, followed by A-Z for 10-35,
-followed by a-z for 36-62, followed by + for 63 and / for 64 (RFC2045
+followed by a-z for 36-61, followed by + for 62 and / for 63 (RFC2045
 base-64 encoding).  In hex format, each byte is specified by two hex
-digits (0123456789abcdef).  Whitespace embedded in data literals is
-ignored.
+digits (0123456789abcdef).  Whitespace embedded in base64 and hex data
+literals is ignored.  A ';' ends a data literal (unless it occurs
+inside the string syntax).
 
 Comments in the syntax diagram describe intended semantics.
 .nf
