@@ -36,62 +36,63 @@ static chunkprops properties[] =
 {
 /*
  * The PNG 1.0 chunks, listed in order of the summary table in section 4.3.
- * Neither IHDR nor IEND are listed here because neither chunk has to appear
- * in the file.
+ * IEND is not listed here because it doesn't have to appear in the file.
  */
-#define PLTE	0
+#define IHDR	0
+    {"IHDR",		FALSE,	0},
+#define PLTE	1
     {"PLTE",		FALSE,	0},
-#define IDAT	1
+#define IDAT	2
     {"IDAT",		TRUE,	0},
-#define cHRM	2
+#define cHRM	3
     {"cHRM",		FALSE,	0},
-#define gAMA	3
+#define gAMA	4
     {"gAMA",		FALSE,	0},
-#define iCCP	4
+#define iCCP	5
     {"iCCP",		FALSE,	0},
-#define sBIT	5
+#define sBIT	6
     {"sBIT",		FALSE,	0},
-#define sRGB	6
+#define sRGB	7
     {"sRGB",		FALSE,	0},
-#define bKGD	7
+#define bKGD	8
     {"bKGD",		FALSE,	0},
-#define hIST	8
+#define hIST	9
     {"hIST",		FALSE,	0},
-#define tRNS	9
+#define tRNS	10
     {"tRNS",		FALSE,	0},
-#define pHYs	10
+#define pHYs	11
     {"pHYs",		FALSE,	0},
-#define sPLT	11
+#define sPLT	12
     {"sPLT",		TRUE,	0},
-#define tIME	12
+#define tIME	13
     {"tIME",		FALSE,	0},
-#define iTXt	13
+#define iTXt	14
     {"iTXt",		TRUE,	0},
-#define tEXt	14
+#define tEXt	15
     {"tEXt",		TRUE,	0},
-#define zTXt	15
+#define zTXt	16
     {"zTXt",		TRUE,	0},
 /*
  * Special-purpose chunks in PNG 1.2 specification.
  */
-#define oFFs	16
+#define oFFs	17
     {"pHYs",		FALSE,	0},
-#define pCAL	17
+#define pCAL	18
     {"pHYs",		FALSE,	0},
-#define sCAL	18
+#define sCAL	19
     {"pHYs",		FALSE,	0},
-#define gIFg	19
+#define gIFg	20
     {"pHYs",		FALSE,	0},
-#define gIFt	20
+#define gIFt	21
     {"pHYs",		FALSE,	0},
-#define gIFx	21
+#define gIFx	22
     {"pHYs",		FALSE,	0},
-#define fRAc	22
+#define fRAc	23
     {"pHYs",		FALSE,	0},
 /*
  * Private chunks
  */
-#define PRIVATE	23
+#define PRIVATE	24
     {"private",		TRUE,	0},
 };
 
@@ -307,20 +308,6 @@ static double double_numeric(bool token_ok)
  *
  ************************************************************************/
 
-static int get_chunktype(void)
-/* expecting a chunk name as current token; return the chunk type index */
-{
-    chunkprops *pp;
-
-    for (pp = properties; 
-		 pp < properties + sizeof(properties)/sizeof(chunkprops);
-		 pp++)
-	if (token_equals(pp->name))
-	    return(pp - properties);
-
-    return(NONE);
-}
-
 static void compile_IHDR(void)
 /* parse IHDR specification and emit corresponding bits */
 {
@@ -338,7 +325,7 @@ static void compile_IHDR(void)
 	else if (token_equals("bitdepth"))	/* FIXME: range check */
 	    info_ptr->bit_depth = byte_numeric(get_token());
         else if (token_equals("uses"))
-	    continue;		/* `uses' is just syntactic sugar */
+	    continue;			/* `uses' is just syntactic sugar */
         else if (token_equals("palette"))
 	    info_ptr->color_type |= PNG_COLOR_MASK_PALETTE;
         else if (token_equals("color"))
@@ -347,15 +334,10 @@ static void compile_IHDR(void)
 	    info_ptr->color_type |= PNG_COLOR_MASK_ALPHA;
         else if (token_equals("interlace"))
 	    info_ptr->interlace_type = PNG_INTERLACE_ADAM7;
-        else if ((chunktype = get_chunktype()) == EOF)
-	    fatal("no image data after header");
-	else if (chunktype == NONE)
-	    fatal("bad token in IHDR block");
-	else			/* we found a chunk name */
-	{
-	    push_token();
+	else if (token_equals("}"))
 	    break;
-	}
+	else
+	    fatal("bad token in IHDR specification");
 
     /* IHDR sanity checks & write */
     if (!info_ptr->height)
@@ -373,8 +355,6 @@ static void compile_IHDR(void)
 		 info_ptr->interlace_type,
 		 PNG_COMPRESSION_TYPE_BASE,
 		 PNG_FILTER_TYPE_BASE);
-	if (yydebug)
-	    fprintf(stderr, "IHDR specification processed\n");
     }
 }
 
@@ -391,11 +371,8 @@ static void compile_PLTE(void)
     {
 	if (!get_token())
 	    break;
-	else if (!token_equals("("))
-	{
-	    push_token();
+	else if (token_equals("}"))
 	    break;
-	}
 	palette[ncolors].red = byte_numeric(get_token());
 	get_token();
 	if (!token_equals(","))
@@ -418,7 +395,7 @@ static void compile_PLTE(void)
 static int pngc(FILE *fin, FILE *fout)
 /* compile PPNG on fin to PNG on fout */
 {
-    int	chunktype, prevchunk, errtype;
+    int	prevchunk, errtype;
     float gamma;
 
     yyin = fin;
@@ -455,22 +432,33 @@ static int pngc(FILE *fin, FILE *fout)
     /* set up the output control if you are using standard C streams */
     png_init_io(png_ptr, fout);
 
-    /* handle initial header */
-    compile_IHDR();
-
-    /* now interpret the following chunk specifications */
+    /* interpret the following chunk specifications */
     prevchunk = NONE;
-    while (get_token() && (chunktype = get_chunktype()) > NONE)
+    while (get_token())
     {
-	chunkprops *pp = &properties[chunktype];
+	chunkprops *pp;
 
+	for (pp = properties; 
+		 pp < properties + sizeof(properties)/sizeof(chunkprops);
+		 pp++)
+	    if (token_equals(pp->name))
+		goto ok;
+	fatal("unknown chunk type");
+
+    ok:
+	if (!get_token())
+	    fatal("unexpected EOF");
+	if (!token_equals("{"))
+	    fatal("missing chunk delimiter");
 	if (!pp->multiple_ok && pp->count > 0)
 	    fatal("illegal repeated chunk");
 
-	switch (chunktype)
+	switch (pp - properties)
 	{
-	case NONE:
-	    fatal("unknown chunk type");
+	case IHDR:
+	    if (prevchunk != NONE)
+		fatal("IHDR chunk must come first");
+	    compile_IHDR();
 	    break;
 
 	case PLTE:
@@ -499,6 +487,8 @@ static int pngc(FILE *fin, FILE *fout)
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("gAMA chunk must come before PLTE and IDAT");
 	    png_set_gAMA(png_ptr, info_ptr, double_numeric(get_token()));
+	    if (!get_token() || !token_equals("}"))
+		fatal("bad token in gAMA specification");
 	    break;
 
 	case iCCP:
@@ -606,7 +596,7 @@ static int pngc(FILE *fin, FILE *fout)
 
 	if (yydebug)
 	    fprintf(stderr, "%s specification processed\n", pp->name);
-	prevchunk = chunktype;
+	prevchunk = (pp - properties);
 	pp->count++;
     }
 
