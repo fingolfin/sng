@@ -1448,13 +1448,13 @@ static void compile_IMAGE(void)
 	      nbits, info_ptr->width, info_ptr->height);
 
     /* make image pack as small as possible */
-    if (info_ptr->bit_depth < 8)
+    if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8)
 	png_set_packing(png_ptr);
 
     /* got the bits; now write them out */
     rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	rowpointers[i] = &bits[i * info_ptr->width];
+	rowpointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
     png_write_image(png_ptr, rowpointers);
     free(bits);
 }
