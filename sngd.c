@@ -337,7 +337,6 @@ static void dump_PLTE(FILE *fpout)
 
 static void dump_image(png_bytepp rows, FILE *fpout)
 {
-#ifdef __UNUSED__
     if (idat)
     {
 	int	i;
@@ -349,7 +348,6 @@ static void dump_image(png_bytepp rows, FILE *fpout)
 	}
     }
     else
-#endif /* __UNUSED__ */
     {
 	fprintf(fpout, "IMAGE {\n");
 	multi_dump(fpout, "    ", 
@@ -777,8 +775,7 @@ static void dump_text(FILE *fpout)
     }
 }
 
-static void dump_unknown_chunks(
-				int after_idat, FILE *fpout)
+static void dump_unknown_chunks(int after_idat, FILE *fpout)
 {
     int	i;
 
@@ -865,6 +862,12 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
     dump_unknown_chunks(TRUE, fpout);
 }
 
+static int read_chunk_callback(png_structp ptr, png_unknown_chunkp chunk)
+{
+    /* FIXME: the -i option doesn't work yet, it yields a CRC error */
+    return(1);
+}
+
 int sngd(FILE *fp, char *name, FILE *fpout)
 /* read and decompile an SNG image presented on stdin */
 {
@@ -916,6 +919,14 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 
    /* keep all unknown chunks, we'll dump them later */
    png_set_keep_unknown_chunks(png_ptr, 2, NULL, 0);
+
+   /* treat IDAT as unknown so it gets passed through raw */
+   if (idat)
+   {
+       png_set_keep_unknown_chunks(png_ptr, 2, "IDAT", 1);
+       png_set_read_user_chunk_fn(png_ptr, NULL, read_chunk_callback);
+   }
+
 
    /* Set up the input control if you are using standard C streams */
    png_init_io(png_ptr, fp);

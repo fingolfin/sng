@@ -8,9 +8,7 @@
 
 int verbose;
 int sng_error;
-#ifdef __UNUSED__
 int idat;
-#endif /* __UNUSED__ */
 
 png_struct *png_ptr;
 png_info *info_ptr;
@@ -173,12 +171,10 @@ int main(int argc, char *argv[])
 	    ++verbose;
 	    i++;
 	    break;
-#ifdef __UNUSED__
 	case 'i':
 	    ++idat;
 	    i++;
 	    break;
-#endif /* __UNUSED__ */
 	case 'h':
 	default:
 	    fprintf(stderr, "sng: unknown option %c\n", argv[1][i]);
