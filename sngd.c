@@ -31,7 +31,7 @@ static char *rendering_intent[] = {
 static char *current_file;
 static png_structp png_ptr;
 static png_infop info_ptr;
-static int true_depth, true_channels;
+static int true_depth;
 
 /*****************************************************************************
  *
@@ -199,13 +199,13 @@ static void multi_dump(FILE *fpout, char *leader,
 		fprintf(fpout, "%02x", *cp & 0xff);
 
 		/* only insert spacers for 8-bit images if > 1 channel */
-		if (true_depth == 8 && true_channels > 1)
+		if (true_depth == 8 && info_ptr->channels > 1)
 		{
-		    if (((cp - data[i]) % true_channels) == true_channels - 1)
+		    if (((cp - data[i]) % info_ptr->channels) == info_ptr->channels - 1)
 			fputc(' ', fpout);
 		}
 		else if (true_depth == 16)
-		    if (((cp - data[i]) % (true_channels*2)) == true_channels*2-1)
+		    if (((cp - data[i]) % (info_ptr->channels*2)) == info_ptr->channels*2-1)
 			fputc(' ', fpout);
 	    }
 	    if (height == 1)
@@ -934,7 +934,6 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&interlace_type, NULL, NULL);
 
    /* need to gather some statistics before transformation */ 
-   true_channels = png_get_channels(png_ptr, info_ptr);
    true_depth = bit_depth;
 
    if (bit_depth < 8)
