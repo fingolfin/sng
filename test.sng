@@ -8,15 +8,15 @@ IHDR: {
 	with interlace
 }
 
-gAMA: {4.5}
+gAMA: {0.45}
 
 # This compiles, but triggers a libpng warning about invalid SBIT depth
 # The parameters are the standard values in the Specification section 4.2.2.3.
 #cHRM {
-#   white: (31270, 32900)
-#   red:   (6400,  3300)
-#   green: (3000,  6000)
-#   blue:  (1500,  600)
+#   white: (0.31270, 0.32900)
+#   red:   (0.6400,  0.3300)
+#   green: (0.3000,  0.6000)
+#   blue:  (0.1500,  0.600)
 #}
 
 # This cannot coexist with the iCCP chunk.
@@ -57,7 +57,7 @@ hIST: {23, 55, 10}
 #  255
    # red: 70 
    # green: 70
-   # blue 70
+   # blue: 70
 #}
 
 pHYs: {
@@ -65,12 +65,12 @@ pHYs: {
 }
 
 tIME {
-   year 1999
-   month 11
-   day 22
-   hour 16
-   minute 23
-   second 17
+   year: 1999
+   month: 11
+   day: 22
+   hour: 16
+   minute: 23
+   second: 17
 }
 
 oFFs {
@@ -94,8 +94,8 @@ sCAL {
 
 IMAGE: {
    base64
-3333333333333333
-3333333333333333
+2222222222222222
+2222222222222222
 0000001111100000
 0000011111110000
 0000111001111000
@@ -111,8 +111,8 @@ IMAGE: {
 0000001111000000
 0000001111000000
 0000000110000000
-3333333333333333
-3333333333333333
+2222222222222222
+2222222222222222
 }
 
 tEXt: {				# Ordinary text chunk
@@ -129,6 +129,18 @@ iTXt: {				# International UTF-8 keyword
   language: "en"
   keyword: "Description"
   text: "SNG demo, illustrating the language syntax"
+}
+
+gIFg {
+   disposal: 23
+   input: 17
+   delay: 55
+}
+
+gIFx {
+   identifier: "SNGCOMPI"
+   code: "SNG"
+   data: "Dummy application data"
 }
 
 # No sPLT chunk.

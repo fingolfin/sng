@@ -98,7 +98,7 @@ hIST {
    <short> [, <short>]*		# Count must match palette size
 }
 
-sTRN {
+tRNS {
    [gray <short>]		# Grayscale images only
    [<byte>]*			# Paletted images only
    [red <short>]		# True-color images only
@@ -163,16 +163,21 @@ sCAL {
 }
 
 IMAGE {<data>}
+
+gIFg {
+   disposal <byte>
+   input <byte>
+   delay <short>
+}
+
+gIFx {
+   identifier <string>                # Must be 8 characters
+   code <string>                      # Must be 3 characters
+   data <string>
+}
 .fi
 
 .SH BUGS
-Certain known safe-to-copy chunks that could theoretically occur
-before IDAT, such as the text chunks, are moved to after IDAT.  This
-reflects a limitation of libpng, which is designed to aggregate most
-non-text chunks in an image structure and write them out just before
-writing out the image.  This transformation is legal, but means that
-`sng | sng -d' is not necessarily a no-op.
-
 Declaring a cHRM triggers a libpng warning about a supposedly
 incorrect sBIT value; it is not clear why.  This may be a PNG library
 bug.
