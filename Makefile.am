@@ -7,13 +7,28 @@ man_MANS = sng.1
 # The man pages and script are here because automake has a bug
 EXTRA_DIST = Makefile sng.spec.in sng.spec sng.1 sng_regress indexgen.sh lsmgen.sh
 
+# This is necessary because as of version 1.4, automake generates a dist 
+# production that runs a broken automake command
+sng-@VERSION@.tar.gz: MANIFEST
+	(cd ..; ln -sf sng sng-@VERSION@)
+	(cd ..; tar -czf sng-@VERSION@.tar.gz `sed <sng-@VERSION@/MANIFEST s:^:sng-@VERSION@/:`)
+	mv -f ../sng-@VERSION@.tar.gz .
+	rm ../sng-@VERSION@
+
+MANIFEST: $(srcdir) Makefile.in
+	@echo $(DISTFILES) | tr "[ \t]" '\n' | sed -e '/^\.\//s///' | sort >MANIFEST
+	@wc -l MANIFEST
+
+# Make RPMs.  You need to be root to make this work
 RPMROOT=/usr/src/redhat
-rpm: dist
-	cp @PACKAGE@-@VERSION@.tar.gz $(RPMROOT)/SOURCES;
-	cp @PACKAGE@.spec $(RPMROOT)/SPECS
-	cd $(RPMROOT)/SPECS; rpm -ba @PACKAGE@.spec	
-	cp $(RPMROOT)/RPMS/`arch|sed 's/i[4-9]86/i386/'`/@PACKAGE@-@VERSION@*.rpm .
-	cp $(RPMROOT)/SRPMS/@PACKAGE@-@VERSION@*.src.rpm .
+RPM = rpm
+RPMFLAGS = -ba
+rpm: sng-@VERSION@.tar.gz
+	cp sng-@VERSION@.tar.gz $(RPMROOT)/SOURCES;
+	cp sng.spec $(RPMROOT)/SPECS
+	cd $(RPMROOT)/SPECS; $(RPM) $(RPMFLAGS) sng.spec	
+	cp $(RPMROOT)/RPMS/`arch|sed 's/i[4-9]86/i386/'`/sng*-@VERSION@*.rpm $(srcdir)
+	cp $(RPMROOT)/SRPMS/sng*-@VERSION@*.src.rpm $(srcdir)
 
 zip: $(DISTFILES)
 	zip @PACKAGE@-@VERSION@.zip $(DISTFILES)
