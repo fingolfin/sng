@@ -326,7 +326,7 @@ static void require_or_die(const char *str)
     if (!get_token())
 	fatal("unexpected EOF");
     else if (!token_equals(str))
-	fatal("unexpected token `%s'", token_buffer);
+	fatal("unexpected token `%s' while waiting for %s", token_buffer, str);
 }
 
 static png_uint_32 long_numeric(bool token_ok)
@@ -919,39 +919,39 @@ static void compile_sPLT(void)
 	    if (new_palette.depth != 8 && new_palette.depth != 16)
 		fatal("invalid sample depth in sPLT");
 	}
-        else 
-	    while (get_inner_token())
-	    {
-		if (!token_equals("("))
-		    fatal("bad syntax in sPLT description");
-		else if (nentries >= 256)
-		    fatal("too many palette entries in sPLT specification");
-		entries[nentries].red = short_numeric(get_token());
-		if (new_palette.depth == 8 && entries[nentries].red > 255)
-		    fatal("red value too large for sample depth");
-		/* comma */
-		entries[nentries].green = short_numeric(get_token());
-		if (new_palette.depth == 8 && entries[nentries].green > 255)
-		    fatal("green value too large for sample depth");
-		/* comma */
-		entries[nentries].blue = short_numeric(get_token());
-		if (new_palette.depth == 8 && entries[nentries].blue > 255)
-		    fatal("blue value too large for sample depth");
-		/* comma */
-		entries[nentries].alpha = short_numeric(get_token());
-		if (new_palette.depth == 8 && entries[nentries].alpha > 255)
-		    fatal("alpha value too large for sample depth");
-		require_or_die(")");
-		/* comma */
-		entries[nentries].frequency = short_numeric(get_token());
-		nentries++;
-	    }
+        else
+	{
+	    if (!token_equals("("))
+		fatal("bad token `%s' in sPLT description", token_buffer);
+	    else if (nentries >= 256)
+		fatal("too many palette entries in sPLT specification");
+	    entries[nentries].red = short_numeric(get_token());
+	    if (new_palette.depth == 8 && entries[nentries].red > 255)
+		fatal("red value too large for sample depth");
+	    /* comma */
+	    entries[nentries].green = short_numeric(get_token());
+	    if (new_palette.depth == 8 && entries[nentries].green > 255)
+		fatal("green value too large for sample depth");
+	    /* comma */
+	    entries[nentries].blue = short_numeric(get_token());
+	    if (new_palette.depth == 8 && entries[nentries].blue > 255)
+		fatal("blue value too large for sample depth");
+	    /* comma */
+	    entries[nentries].alpha = short_numeric(get_token());
+	    if (new_palette.depth == 8 && entries[nentries].alpha > 255)
+		fatal("alpha value too large for sample depth");
+	    /* comma */
+	    entries[nentries].frequency = short_numeric(get_token());
+	    nentries++;
+	    require_or_die(")");
+	}
 
     if (!nkeyword || !new_palette.depth)
 	fatal("incomplete sPLT specification");
 
     new_palette.entries = entries;
     new_palette.nentries = nentries;
+    new_palette.name = keyword;
     png_set_spalettes(png_ptr, info_ptr, &new_palette, 1);
 }
 

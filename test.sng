@@ -1,5 +1,6 @@
 # This is a synthetic SNG test file
 
+# Our first test is a paletted (type 3) image.
 IHDR: {
 	width: 16;
 	height: 19;
@@ -8,6 +9,7 @@ IHDR: {
 	with interlace;
 }
 
+# Standard gamma
 gAMA: {0.45}
 
 # The parameters are the standard values in the Specification section 4.2.2.3.
@@ -27,6 +29,7 @@ iCCP {
    profile hex 01 02 03 04 05;
 }
 
+# Sample bit depth chunk
 sBIT: {
   red: 8;
   green: 8;
@@ -35,12 +38,14 @@ sBIT: {
   # alpha: 8;	# for images with alpha
 }
 
+# An example palette -- three colors, one of which we will render transparent 
 PLTE: {
    (0,     0, 255)
    (255,   0,   0)
    ( 70,  70,  70)
 }
 
+# Set a background color
 bKGD: {
   # red: 127;
   # green: 127;
@@ -49,19 +54,24 @@ bKGD: {
   index: 0;	# for paletted images
 }
 
+# Frequencies, for rendering by viewers with small palettes
 hIST: {23, 55, 10}
 
-tRNS: {
-  255;
+
+# Set transparency for some reason this triggers a li\bpng CRC error
+#tRNS: {
+#  255;		# Render the first color in the palette fully transparent
    # red: 70;
    # green: 70;
    # blue: 70;
-}
+#}
 
+# Test the pHYs chunk; this data isn't really meaningful for the image
 pHYs: {
    resolution (500, 400) per meter;
 }
 
+# Dummy timestamp
 tIME {
    year: 1999;
    month: 11;
@@ -71,10 +81,12 @@ tIME {
    second: 17;
 }
 
+# Dummy offset
 oFFs {
    offset (23, 17) micrometers
 }
 
+# Dummy physical calibration data
 pCAL {
    name: "dummy physical calibration data";
    x0: 1234;
@@ -84,12 +96,23 @@ pCAL {
    parameters: 55 99;
 }
 
+# Dummy screen calibration data
 sCAL {
    unit: meter;
    width: 0.002;
    height: 0.001;
 }
 
+# Suggested palette
+sPLT {
+   name: "A random suggested palette";
+   depth: 8;
+   (0,     0, 255, 255, 7)
+   (255,   0,   0, 255, 5)
+   ( 70,  70,  70, 255, 3)
+}
+
+# The viewer will actually use this...
 IMAGE: {
    base64
 2222222222222222
@@ -142,7 +165,7 @@ gIFx {				# GIF Application Extension chunk
 }
 
 private prIv {
-   string "Test data for the private chunk"
+   string "Test data for the private chunk";
 }
 
 # No sPLT chunk.
