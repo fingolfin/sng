@@ -24,9 +24,10 @@ cHRM {
 # sRGB {1}	# This value conveys `relative colorimetric' intent.
 
 # This cannot coexist with the sRGB chunk.
+# First four bytes must be the big-endian length of the remainder 
 iCCP {
-   name: "dummy profile"; 
-   profile: hex 01 02 03 04 05;
+   name: "dummy profile";
+   profile: hex 00 00 00 05 01 02 03 04 05;
 }
 
 # Sample bit depth chunk
