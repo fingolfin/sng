@@ -1246,10 +1246,19 @@ static void compile_sCAL(void)
     char	unit[PNG_STRING_MAX_LENGTH+1];
     double	width, height;
     int 	nunit;
+    png_byte	unitbyte;
 
     while (get_inner_token())
 	if (token_equals("unit"))
+	{
 	    nunit = string_validate(get_token(), unit);
+	    if (token_equals("meter"))
+		unitbyte = PNG_SCALE_METER;
+	    else if (token_equals("radian"))
+		unitbyte = PNG_SCALE_RADIAN;
+	    else
+		unitbyte = PNG_SCALE_UNKNOWN;
+	}
 	else if (token_equals("width"))
 	    height = double_numeric(get_token());
 	else if (token_equals("height"))
@@ -1260,7 +1269,7 @@ static void compile_sCAL(void)
     if (!nunit || !width || !height)
 	fatal("incomplete sCAL specification");
 
-    png_set_sCAL(png_ptr, info_ptr, unit, width, height);
+    png_set_sCAL(png_ptr, info_ptr, unitbyte, width, height);
 }
 
 static void compile_gIFg(void)
