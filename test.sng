@@ -25,8 +25,8 @@ cHRM {
 
 # This cannot coexist with the sRGB chunk.
 iCCP {
-   name "dummy profile"; 
-   profile hex 01 02 03 04 05;
+   name: "dummy profile"; 
+   profile: hex 01 02 03 04 05;
 }
 
 # Sample bit depth chunk
@@ -58,7 +58,7 @@ bKGD: {
 hIST: {23, 55, 10}
 
 
-# Set transparency for some reason this triggers a li\bpng CRC error
+# Set transparency (for some reason this triggers a libpng CRC error)
 #tRNS: {
 #  255;		# Render the first color in the palette fully transparent
    # red: 70;
@@ -169,4 +169,5 @@ private prIv {
    string "Test data for the private chunk";
 }
 
-# No sPLT chunk.
+# Test file ends here
+
