@@ -364,7 +364,7 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
 
     if (yydebug)
 	fprintf(stderr, "collecting data in %s format\n", 
-		pixperchar ? "pixel-per-chatacter" : "hex");
+		pixperchar ? "pixel-per-character" : "hex");
     while ((c = fgetc(yyin)))
 	if (feof(yyin))
 	    fatal("unexpected EOF in data segment");
@@ -702,7 +702,10 @@ static int pngc(FILE *fin, FILE *fout)
 	case sRGB:
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("sRGB chunk must come before PLTE and IDAT");
-	    fatal("FIXME: sRGB chunk type is not handled yet");
+	    png_set_sRGB_gAMA_and_cHRM(png_ptr, info_ptr,
+				       byte_numeric(get_token()));
+	    if (!get_token() || !token_equals("}"))
+		fatal("bad token in sRGB specification");
 	    break;
 
 	case bKGD:

@@ -19,6 +19,9 @@ gAMA {4.5}
 #   blue  (1500,  600)
 #}
 
+# This cannot coexist with the iCCP chunk.
+sRGB {1}	# This value conveys `relative colorimetric' intent.
+
 PLTE {
    (0,   0, 255)
    (255, 0,   0)
