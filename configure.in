@@ -14,7 +14,6 @@ AC_PROG_INSTALL
 AC_PROG_CPP			dnl Later checks need this.
 AC_PROG_CC_C_O
 AC_HEADER_STDC
-AC_ARG_PROGRAM
 
 AC_ARG_WITH(png,[  --with-png=DIR             location of png lib/inc],
 		[LDFLAGS="${LDFLAGS} -L${withval}"
@@ -43,10 +42,16 @@ fi
 
 if test -n "$with_rgbtxt"
 then
-    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt")
+    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt", [Location of X color database])
 else
-    with_rgbtxt="/usr/X11R6/lib/X11/rgb.txt"
-    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt")
+    for dir in /usr/X11R6/lib/X11 /usr/lib/X11 /usr/openwin/lib
+    do
+	if test -f ${dir}/rgb.txt
+	then
+	    with_rgbtxt="${dir}/rgb.txt"
+	    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt", [Location of X color database])
+	fi
+    done
 fi
 
 AC_MSG_CHECKING("for X color database")

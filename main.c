@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "png.h"
 #include "sng.h"
 #include "config.h"

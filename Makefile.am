@@ -2,7 +2,6 @@
 bin_PROGRAMS = sng
 bin_SCRIPTS = sng_regress
 sng_SOURCES = main.c sngc.c sngd.c sng.h
-sng_LDFLAGS = -static
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
 EXTRA_DIST = Makefile sng.spec.in sng.spec sng.xml sng.1 sng_regress indexgen.sh lsmgen.sh test.sng
@@ -24,7 +23,7 @@ sng.1: sng.xml
 
 # Make RPMs.  You need to be root to make this work
 RPMROOT=/usr/src/redhat
-RPM = rpm
+RPM = rpmbuild
 RPMFLAGS = -ba
 rpm: sng-@VERSION@.tar.gz
 	cp sng-@VERSION@.tar.gz $(RPMROOT)/SOURCES;

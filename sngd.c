@@ -6,6 +6,7 @@ NAME
 *****************************************************************************/
 #include <stdlib.h>
 #include <stdarg.h>
+#include <ctype.h>
 #define PNG_INTERNAL
 #include "config.h"	/* for RGBTXT */
 #include "png.h"
@@ -562,7 +563,6 @@ static void dump_pHYs(FILE *fpout)
 #endif /* MNG_INTERFACE */
         printerr(1, "invalid pHYs unit");
     else if (info_ptr->valid & PNG_INFO_pHYs) {
-	fprintf(fpout, "");
         fprintf(fpout, "pHYs {xpixels: %lu; ypixels: %lu;",
 #ifndef MNG_INTERFACE
 	       info_ptr->x_pixels_per_unit, info_ptr->y_pixels_per_unit);
@@ -758,7 +758,7 @@ static void dump_sPLT(png_sPLT_tp ep, FILE *fpout)
 
     for (i = 0;  i < ep->nentries;  i++)
     {
-	char *name;
+	char *name = 0;
 
 	fprintf(fpout, "    (%3u,%3u,%3u), %3u, %3u "
 		"    # rgba = [0x%02x,0x%02x,0x%02x,0x%02x]",
@@ -958,13 +958,13 @@ static void dump_unknown_chunks(int after_idat, FILE *fpout)
 
 	if (!strcmp(up->name, "gIFg"))
 	{
-	    fprintf(fpout, "gIFg {\n", up->name);
+	  fprintf(fpout, "gIFg {\n");
 	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n",
 		    up->data[0], up->data[1], (float)(.01 * SH(up->data+2)));
 	}
 	else if (!strcmp(up->name, "gIFx"))
 	{
-	    fprintf(fpout, "gIFx {\n", up->name);
+	    fprintf(fpout, "gIFx {\n");
 	    fprintf(fpout, "    identifier: \"%.*s\"; code: \"%c%c%c\"\n",
 		    8, up->data, up->data[8], up->data[9], up->data[10]);
 	    dump_data(fpout, "    data: ", up->size - 11, up->data + 11);

@@ -330,6 +330,13 @@ The SNG home page is at <ulink url='http://sng.sourceforge.net/'>http://sng.sour
 
 <para>For more information about PNG, see the
 PNG website at &lt;<ulink url='http://www.libpng.org/pub/png/'>http://www.libpng.org/pub/png/</ulink>&gt;.</para>
+
+<para>The W3C recommendation is 
+<ulink
+url="http://www.w3.org/TR/2003/PR-PNG-20030520/index-noobject.html">
+Portable Network Graphics (PNG) Specification (Second
+Edition)</ulink>.  The PNG specification is also ISO/IEC 15948.</para>
+
 </refsect1>
 </refentry>
 
