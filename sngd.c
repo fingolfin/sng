@@ -158,7 +158,7 @@ static void multi_dump(FILE *fpout, char *leader,
 		    fprintf(fpout, "\n");
 	    }
 	    for (cp = data[i]; cp < data[i] + width; cp++)
-		fprintf(fpout, "%02x", *cp);
+		fprintf(fpout, "%02x", *cp & 0xff);
 	    if (height == 1)
 		fprintf(fpout, ";\n");
 	    else
@@ -710,6 +710,8 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
 /* dump a canonicalized SNG form of a PNG file */
 {
     int	i;
+
+    fprintf(fpout, "#SNG: from %s\n", current_file);
 
     dump_IHDR(fpout);			/* first critical chunk */
 
