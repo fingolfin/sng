@@ -38,14 +38,11 @@ The syntax of the language may change (possibly radically) before a
 production release.<p>
 
 You can download a <a
-href="ftp://sng.sourceforge.net/pub/sng/sng-${version}.tar.gz">source
+href="sng-${version}.tar.gz">source
 tarball</a>, or a <a
-href="ftp://sng.sourceforge.net/pub/sng/sng-${version}.zip">source ZIP
+href="sng-${version}.zip">source ZIP
 archive</a>.  RPMs are not yet available, but will be after the next
 major libpng release.<P>
-
-You can join the project <a href="http://sourceforge.net/mail/?group_id=1012">
-mailing lists</a>.<p>
 
 Note: To use sng, you will need to install libpng-1.0.5m or later.
 You can download it <a
