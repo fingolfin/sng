@@ -5,7 +5,7 @@ NAME
 
 TODO
   * Test hex-mode data collection
-  * Sanity checks
+  * Test compilation of non-palette image files.
 *****************************************************************************/
 #include <stdio.h>
 #include <string.h>
@@ -34,6 +34,9 @@ typedef struct {
     bool	multiple_ok;	/* OK to have more than one? */
     int		count;		/* how many have we seen? */
 } chunkprops;
+
+#define PNG_KEYWORD_MAX	79
+#define PNG_STRING_MAX	1024	/* FIXME: should be specified in the standard */
 
 #define MEMORY_QUANTUM	1024
 
@@ -111,6 +114,7 @@ static chunkprops properties[] =
 
 static png_struct *png_ptr;
 static png_info *info_ptr;
+static png_color palette[256];
 
 static FILE *yyin;
 
@@ -355,15 +359,44 @@ static double double_numeric(bool token_ok)
     return(result);
 }
 
-static char *string_validate(bool token_ok)
+static int string_validate(bool token_ok, char *stash)
 /* validate current token as a string */
 {
-    double result;
-    char *vp;
-
     if (!token_ok)
 	fatal("EOF while expecting string constant");
-    return(token_buffer);
+    else
+    {
+	int	len = strlen(token_buffer);
+
+	if (len > PNG_STRING_MAX)
+	    fatal("string token is too long");
+	strncpy(stash, token_buffer, PNG_STRING_MAX);
+	return(len);
+    }
+}
+
+static int keyword_validate(bool token_ok, char *stash)
+/* validate current token as a PNG keyword */
+{
+    if (!token_ok)
+	fatal("EOF while expecting PNG keyword");
+    else
+    {
+	int	len = strlen(token_buffer);
+	unsigned char	*cp;
+
+	if (len > PNG_KEYWORD_MAX)
+	    fatal("keyword token is too long");
+	strncpy(stash, token_buffer, PNG_KEYWORD_MAX);
+	if (isspace(stash[0]) || isspace(stash[len-1]))
+	    fatal("keywords may not contain leading or trailing spaces");
+	for (cp = stash; *cp; cp++)
+	    if (*cp < 32 || (*cp > 126 && *cp < 161))
+		fatal("keywords must contain Latin-1 characters only");
+	    else if (isspace(cp[0]) && isspace(cp[1]))
+		fatal("keywords may not contain consecutive spaces");
+	return(len);
+    }
 }
 
 static void collect_data(int pixperchar, int *pnbits, char **pbits)
@@ -446,7 +479,7 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
 static void compile_IHDR(void)
 /* parse IHDR specification, set corresponding bits in info_ptr */
 {
-    int chunktype;
+    int chunktype, d;
 
     /* read IHDR data */
     info_ptr->bit_depth = 8;
@@ -457,8 +490,8 @@ static void compile_IHDR(void)
 	    info_ptr->height = long_numeric(get_token());
 	else if (token_equals("width"))
 	    info_ptr->width = long_numeric(get_token());
-	else if (token_equals("bitdepth"))	/* FIXME: range check */
-	    info_ptr->bit_depth = byte_numeric(get_token());
+	else if (token_equals("bitdepth"))
+	    d = byte_numeric(get_token());
         else if (token_equals("using"))
 	    continue;			/* `uses' is just syntactic sugar */
         else if (token_equals("palette"))
@@ -479,12 +512,21 @@ static void compile_IHDR(void)
 	fatal("image height is zero or nonexistent");
     else if (!info_ptr->width)
 	fatal("image width is zero or nonexistent");
+    else if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16)
+	fatal("illegal bit depth %d in IHDR", d);
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+    {
+	if (d > 8)
+	    fatal("bit depth of paletted images must be 1, 2, 4, or 8");
+    }
+    else if (info_ptr->color_type != PNG_COLOR_TYPE_GRAY)
+	fatal("bit depth of RGB- and alpha-using images must be 8 or 16");
+    info_ptr->bit_depth = d;
 }
 
 static void compile_PLTE(void)
 /* parse PLTE specification, set corresponding bits in info_ptr */
 {
-    png_color	palette[256];
     int ncolors;
 
     memset(palette, '\0', sizeof(palette));
@@ -574,12 +616,9 @@ static void compile_iCCP(void)
 /* compile and emit an iCCP chunk */
 {
     int slen;
-    char *cp;
+    char *cp, name[PNG_KEYWORD_MAX+1];
 
-    get_token();	/* fill token buffer with string */
-    slen = strlen(token_buffer);
-    if (slen > 79)
-	fatal("profile name too long");
+    slen = keyword_validate(get_token(), name);
     cp = token_buffer + strlen(token_buffer);
     *cp++ = 0;		/* null separator */
     *cp++ = 0;		/* compression method */
@@ -629,6 +668,8 @@ static void compile_sBIT(void)
 	else 
 	    fatal("invalid channel name `%s' in sBIT specification",
 		  token_buffer);
+
+    /* FIXME: validate the depths -- see 4.2.4.3 'graph 7 */
 
     png_set_sBIT(png_ptr, info_ptr, &sigbits);
 }
@@ -772,37 +813,39 @@ static void compile_pHYs(void)
 static void compile_tEXt(void)
 /* compile and emit an tEXt chunk */
 {
-    char	*keyword = (char *)NULL, *text = (char *)NULL;
+    char	keyword[PNG_KEYWORD_MAX+1], text[PNG_STRING_MAX+1];
+    int		nkeyword = 0, ntext = 0;
 
     while (get_inner_token())
 	if (token_equals("keyword"))
-	    keyword = string_validate(get_token());
+	    nkeyword = keyword_validate(get_token(), keyword);
 	else if (token_equals("text"))
-	    text = string_validate(get_token());
+	    ntext = string_validate(get_token(), text);
 	else
 	    fatal("bad token `%s' in tEXt specification", token_buffer);
 
-    if (!keyword || !text)
-	fatal("keyword or text is mising");
+    if (!nkeyword || !ntext)
+	fatal("keyword or text is missing in tEXt specification");
 
     /* FIXME: actually emit the chunk */
 }
 
 static void compile_zTXt(void)
-/* compile and emit an iTXt chunk */
+/* compile and emit a zTXt chunk */
 {
-    char	*keyword = (char *)NULL, *text = (char *)NULL;
+    char	keyword[PNG_KEYWORD_MAX+1], text[PNG_STRING_MAX+1];
+    int		nkeyword = 0, ntext = 0;
 
     while (get_inner_token())
 	if (token_equals("keyword"))
-	    keyword = string_validate(get_token());
+	    nkeyword = keyword_validate(get_token(), keyword);
 	else if (token_equals("text"))
-	    text = string_validate(get_token());
+	    ntext = string_validate(get_token(), text);
 	else
 	    fatal("bad token `%s' in zTXt specification", token_buffer);
 
-    if (!keyword || !text)
-	fatal("keyword or text is mising");
+    if (!nkeyword || !ntext)
+	fatal("keyword or text is missing in zTXt specification");
 
     /* FIXME: actually emit the chunk */
 }
@@ -810,17 +853,18 @@ static void compile_zTXt(void)
 static void compile_iTXt(void)
 /* compile and emit an iTXt chunk */
 {
-    char	*language = (char *)NULL;
-    char	*keyword = (char *)NULL;
-    char	*text = (char *)NULL;
+    char	language[PNG_KEYWORD_MAX+1];
+    char	keyword[PNG_KEYWORD_MAX+1]; 
+    char	text[PNG_STRING_MAX+1];
+    int		nlanguage = 0, nkeyword = 0, ntext = 0;
 
     while (get_inner_token())
 	if (token_equals("language"))
-	    language = string_validate(get_token());
+	    nlanguage = keyword_validate(get_token(), language);
 	else if (token_equals("keyword"))
-	    keyword = string_validate(get_token());
+	    nkeyword = keyword_validate(get_token(), keyword);
 	else if (token_equals("text"))
-	    text = string_validate(get_token());
+	    ntext = string_validate(get_token(), text);
 	else
 	    fatal("bad token `%s' in iTXt specification", token_buffer);
 
@@ -1131,12 +1175,14 @@ int sngc(FILE *fin, FILE *fout)
 	fatal("palette property set, but no PLTE chunk found");
     if (!properties[IDAT].count)
 	fatal("no image data");
+    if (properties[iCCP].count && properties[sRGB].count)
+	fatal("cannot have both iCCP and sRGB chunks (PNG spec 4.2.2.4)");
 
     /* It is REQUIRED to call this to finish writing the rest of the file */
     png_write_end(png_ptr, info_ptr);
 
     /* if you malloced the palette, free it here */
-    free(info_ptr->palette);
+    /* free(info_ptr->palette); */
 
     /* clean up after the write, and free any memory allocated */
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
