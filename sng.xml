@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
    "-//OASIS//DTD DocBook XML V4.1.2//EN"
-   "docbook/docbookx.dtd" [
-<!ENTITY % ISOnum PUBLIC "ISO 8879:1986//ENTITIES Numeric and Special Graphic//EN">
-%ISOnum;
-]>
+   "docbook/docbookx.dtd">
 <refentry id='sng.1'>
 <refmeta>
 <refentrytitle>sng</refentrytitle>

@@ -5,7 +5,7 @@ sng_SOURCES = main.c sngc.c sngd.c sng.h
 sng_LDFLAGS = -static
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
-EXTRA_DIST = Makefile sng.spec.in sng.spec sng.sgml sng.1 sng_regress indexgen.sh lsmgen.sh test.sng
+EXTRA_DIST = Makefile sng.spec.in sng.spec sng.xml sng.1 sng_regress indexgen.sh lsmgen.sh test.sng
 
 # This is necessary because as of version 1.4, automake generates a dist 
 # production that runs a broken automake command
@@ -19,8 +19,8 @@ MANIFEST: $(srcdir) Makefile.in
 	@echo $(DISTFILES) | tr "[ \t]" '\n' | sed -e '/^\.\//s///' | sort >MANIFEST
 	@wc -l MANIFEST
 
-sng.1: sng.sgml
-	docbook2man sng.sgml
+sng.1: sng.xml
+	xmlto man sng.xml
 
 # Make RPMs.  You need to be root to make this work
 RPMROOT=/usr/src/redhat
