@@ -7,7 +7,7 @@ DESCRIPTION
    This module compiles PPNG (Printable PNG) to PNG.
 
 TODO
-  * Chunk compilation
+  * Test hex-mode data collection
   * Sanity checks
 *****************************************************************************/
 #include <stdio.h>
@@ -15,6 +15,7 @@ TODO
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 #define PNG_INTERNAL
 #include <png.h>
@@ -119,14 +120,25 @@ static int yydebug;
  *
  ************************************************************************/
 
-void fatal(char *str)
+void fatal(const char *fmt, ... )
 /* throw an error distinguishable from PNG library errors */
 {
+    char buf[BUFSIZ];
+    va_list ap;
+
     /* error message format can be stepped through by Emacs */
     if (linenum == EOF)
-	fprintf(stderr, "%s:EOF: %s\n", file, str);
+	sprintf(buf, "%s:EOF: ", file);
     else
-	fprintf(stderr, "%s:%d: %s\n", file, linenum, str);
+	sprintf(buf, "%s:%d: ", file, linenum);
+
+    va_start(ap, fmt);
+    vsprintf(buf + strlen(buf), fmt, ap);
+    va_end(ap);
+
+    strcat(buf, "\n");
+    fputs(buf, stderr);
+
     if (png_ptr)
 	longjmp(png_ptr->jmpbuf, 2);
     else
@@ -255,6 +267,21 @@ static int get_token(void)
     return(TRUE);
 }
 
+static int token_equals(const char *str)
+/* does the currently fetched token equal a specified string? */
+{
+    return !strcmp(str, token_buffer);
+}
+
+static int get_inner_token(void)
+/* get a token within a chunk specification */
+{
+    if (!get_token())
+	fatal("unexpected EOF");
+    else
+	return(!token_equals("}"));	/* do we see end delimiter? */
+}
+
 static int push_token(void)
 /* push back a token; must always be followed immediately by get_token */
 {
@@ -263,10 +290,13 @@ static int push_token(void)
     pushed = TRUE;
 }
 
-static int token_equals(char *str)
-/* does the currently fetched token equal a specified string? */
+static void require_or_die(const char *str)
+/* croak if the next token doesn't match what we expect */
 {
-    return !strcmp(str, token_buffer);
+    if (!get_token())
+	fatal("unexpected EOF");
+    else if (!token_equals(str))
+	fatal("unexpected token %s", token_buffer);
 }
 
 static png_uint_32 long_numeric(bool token_ok)
@@ -380,7 +410,6 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
 
     *pnbits = nbits;
     *pbits = bits;
-    fprintf(stderr, "I see %d bits\n", nbits);
 }
 
 /*************************************************************************
@@ -398,14 +427,14 @@ static void compile_IHDR(void)
     info_ptr->bit_depth = 8;
     info_ptr->color_type = 0;
     info_ptr->interlace_type = PNG_INTERLACE_NONE;
-    while (get_token())
+    while (get_inner_token())
 	if (token_equals("height"))
 	    info_ptr->height = long_numeric(get_token());
 	else if (token_equals("width"))
 	    info_ptr->width = long_numeric(get_token());
 	else if (token_equals("bitdepth"))	/* FIXME: range check */
 	    info_ptr->bit_depth = byte_numeric(get_token());
-        else if (token_equals("uses"))
+        else if (token_equals("using"))
 	    continue;			/* `uses' is just syntactic sugar */
         else if (token_equals("palette"))
 	    info_ptr->color_type |= PNG_COLOR_MASK_PALETTE;
@@ -413,14 +442,14 @@ static void compile_IHDR(void)
 	    info_ptr->color_type |= PNG_COLOR_MASK_COLOR;
         else if (token_equals("alpha"))
 	    info_ptr->color_type |= PNG_COLOR_MASK_ALPHA;
+        else if (token_equals("with"))
+	    continue;			/* `with' is just syntactic sugar */
         else if (token_equals("interlace"))
 	    info_ptr->interlace_type = PNG_INTERLACE_ADAM7;
-	else if (token_equals("}"))
-	    break;
 	else
-	    fatal("bad token in IHDR specification");
+	    fatal("bad token `%s' in IHDR specification", token_buffer);
 
-    /* IHDR sanity checks & write */
+    /* IHDR sanity checks */
     if (!info_ptr->height)
 	fatal("image height is zero or nonexistent");
     else if (!info_ptr->width)
@@ -436,24 +465,16 @@ static void compile_PLTE(void)
     memset(palette, '\0', sizeof(palette));
     ncolors = 0;
 
-    for(;;)
+    while (get_inner_token())
     {
-	if (!get_token())
-	    break;
-	else if (token_equals("}"))
-	    break;
+	if (!token_equals("("))
+	    fatal("bad syntax in PLTE description");
 	palette[ncolors].red = byte_numeric(get_token());
-	get_token();
-	if (!token_equals(","))
-	    fatal("bad syntax in palette specification");
+	require_or_die(",");
 	palette[ncolors].green = byte_numeric(get_token());
-	get_token();
-	if (!token_equals(","))
-	    fatal("bad syntax in palette specification");
+	require_or_die(",");
 	palette[ncolors].blue = byte_numeric(get_token());
-	get_token();
-	if (!token_equals(")"))
-	    fatal("bad syntax in palette specification");
+	require_or_die(")");
 	ncolors++;
     }
 
@@ -473,6 +494,55 @@ static void compile_IDAT(void)
     collect_data(FALSE, &nbits, &bits);
     png_write_chunk(png_ptr, "IDAT", bits, nbits);
     free(bits);
+}
+
+static void compile_cHRM(void)
+/* parse cHRM specification and emit corresponding bits */
+{
+    char	cmask = 0;
+
+    while (get_inner_token())
+    {
+	float	*cvx = NULL, *cvy;
+
+	if (token_equals("white"))
+	{
+	    cvx = &info_ptr->x_white;
+	    cvy = &info_ptr->y_white;
+	    cmask |= 0x01;
+	}
+	else if (token_equals("red"))
+	{
+	    cvx = &info_ptr->x_red;
+	    cvy = &info_ptr->y_red;
+	    cmask |= 0x02;
+	}
+	else if (token_equals("green"))
+	{
+	    cvx = &info_ptr->x_green;
+	    cvy = &info_ptr->y_green;
+	    cmask |= 0x04;
+	}
+	else if (token_equals("blue"))
+	{
+	    cvx = &info_ptr->x_blue;
+	    cvy = &info_ptr->y_blue;
+	    cmask |= 0x08;
+	}
+	else
+	    fatal("invalid color name in cHRM specification");
+
+	require_or_die("(");
+	*cvx = double_numeric(get_inner_token());
+	require_or_die(",");
+	*cvy = double_numeric(get_inner_token());
+	require_or_die(")");
+    }
+
+    if (cmask != 0x0f)
+	fatal("cHRM specification is not complete");
+    else
+	info_ptr->valid |= cHRM;
 }
 
 static void compile_IMAGE(void)
@@ -587,6 +657,8 @@ static int pngc(FILE *fin, FILE *fout)
 		fatal("PLTE chunk encountered after bKGD");
 	    else if (properties[tRNS].count)
 		fatal("PLTE chunk encountered after tRNS");
+	    else if (!(info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
+		fatal("PLTE chunk specified for non-palette image type");
 	    compile_PLTE();
 	    break;
 
@@ -604,7 +676,7 @@ static int pngc(FILE *fin, FILE *fout)
 	case cHRM:
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("cHRM chunk must come before PLTE and IDAT");
-	    fatal("FIXME: cHRM chunk type is not handled yet");
+	    compile_cHRM();
 	    break;
 
 	case gAMA:
