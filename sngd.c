@@ -470,7 +470,33 @@ static void dump_sRGB(png_infop info_ptr, FILE *fpout)
 
 static void dump_tIME(png_infop info_ptr, FILE *fpout)
 {
-    /* FIXME: dump tIME */
+    if (info_ptr->valid & PNG_INFO_tIME) {
+	static char *months[] =
+	{"(undefined)", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	char *month;
+
+	if (info_ptr->mod_time.month < 1 || info_ptr->mod_time.month > 12)
+	    month = months[0];
+	else
+	    month = months[info_ptr->mod_time.month];
+
+	fprintf(fpout, "tIME {\n");
+	fprintf(fpout, "    # %2d %s %4d %02d:%02d:%02d GMT\n", 
+		info_ptr->mod_time.day,
+		month,
+		info_ptr->mod_time.year,
+		info_ptr->mod_time.hour,
+		info_ptr->mod_time.minute,
+		info_ptr->mod_time.second);
+	fprintf(fpout, "    year:   %d\n", info_ptr->mod_time.year);
+	fprintf(fpout, "    month:  %d\n", info_ptr->mod_time.month);
+	fprintf(fpout, "    day:    %d\n", info_ptr->mod_time.day);
+	fprintf(fpout, "    hour:   %d\n", info_ptr->mod_time.hour);
+	fprintf(fpout, "    minute: %d\n", info_ptr->mod_time.minute);
+	fprintf(fpout, "    second: %d\n", info_ptr->mod_time.second);
+	fprintf(fpout, "}\n");
+    }
 }
 
 static void dump_text(png_infop info_ptr, FILE *fpout)
