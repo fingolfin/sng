@@ -45,10 +45,7 @@ typedef struct {
 #define PNG_STRING_MAX_LENGTH	(PNG_ZBUF_SIZE - 5)
 
 #define MEMORY_QUANTUM	1024
-
-#define MAX_TEXT_CHUNKS	64
 #define MAX_PARAMS	16
-
 #define PNG_MAX_LONG	2147483647L	/* 2^31 */
 
 /* chunk types */
@@ -126,7 +123,6 @@ static chunkprops properties[] =
 static png_struct *png_ptr;
 static png_info *info_ptr;
 static png_color palette[256];
-static png_text text_chunks[MAX_TEXT_CHUNKS], *ptp;
 
 static FILE *yyin;
 
@@ -530,40 +526,6 @@ static void collect_data(int *pnbits, char **pbits)
  *
  ************************************************************************/
 
-typedef struct qlist_t
-{
-    png_byte		name[5];
-    png_byte		*data;
-    png_size_t		size;
-    struct qlist_t	*next;
-}
-qlist;
-
-static qlist *head = NULL;
-
-static void queue_chunk(png_bytep name, png_bytep buf, png_size_t size)
-/* queue a chunk for emission after png_write_info() */
-{
-    if (properties[IDAT].count)
-    {
-	qlist	*qp;
-
-	for (qp = head; qp; qp = qp->next)
-	    png_write_chunk(png_ptr, qp->name, qp->data, qp->size);
-    }
-    else
-    {
-	qlist	*newblk = (qlist *)xalloc(sizeof(qlist));
-
-	strcpy(newblk->name, name);
-	newblk->data = (png_bytep)malloc(size);
-	memcpy(newblk->data, buf, size);
-	newblk->size = size;
-	newblk->next = head;
-	head = newblk;
-    }    
-}
-
 static void compile_IHDR(void)
 /* parse IHDR specification, set corresponding bits in info_ptr */
 {
@@ -660,7 +622,7 @@ static void compile_cHRM(void)
 
     while (get_inner_token())
     {
-	float	*cvx = NULL, *cvy;
+	float	*cvx = NULL, *cvy = NULL;
 
 	if (token_equals("white"))
 	{
@@ -981,6 +943,7 @@ static void compile_tEXt(void)
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
     char	text[PNG_STRING_MAX_LENGTH+1];
     int		nkeyword = 0, ntext = 0;
+    png_text	textblk;
 
     while (get_inner_token())
 	if (token_equals("keyword"))
@@ -993,24 +956,12 @@ static void compile_tEXt(void)
     if (!nkeyword || !ntext)
 	fatal("keyword or text is missing in tEXt specification");
 
-    /*
-     * If we've already written an IDAT chunk, then png_write_info()
-     * has already been called, so emit the text chunk directly.
-     * Otherwise, queue it up for processing when png_write_info()
-     * gets called.
-     */
-    if (properties[IDAT].count)
-	png_write_tEXt(png_ptr, keyword, text, strlen(text));
-    else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
-	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
-    else
-    {
-	ptp->lang = (char *)NULL;
-	ptp->key = xstrdup(keyword);
-	ptp->text = xstrdup(text);
-	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
-	ptp++;
-    }
+    textblk.lang = (char *)NULL;
+    textblk.key = keyword;
+    textblk.text = text;
+    textblk.compression = PNG_TEXT_COMPRESSION_NONE;
+
+    png_set_text(png_ptr, info_ptr, &textblk, 1);
 }
 
 static void compile_zTXt(void)
@@ -1019,6 +970,7 @@ static void compile_zTXt(void)
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
     char	text[PNG_STRING_MAX_LENGTH+1];
     int		nkeyword = 0, ntext = 0;
+    png_text	textblk;
 
     while (get_inner_token())
 	if (token_equals("keyword"))
@@ -1031,24 +983,12 @@ static void compile_zTXt(void)
     if (!nkeyword || !ntext)
 	fatal("keyword or text is missing in zTXt specification");
 
-    /*
-     * If we've already written an IDAT chunk, then png_write_info()
-     * has already ben called, so emit the text chunk directly.
-     * Otherwise, queue it up for processing when png_write_info()
-     * gets called.
-     */
-    if (properties[IDAT].count)
-	png_write_zTXt(png_ptr, keyword, text, strlen(text), PNG_TEXT_COMPRESSION_zTXt);
-    else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
-	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
-    else
-    {
-	ptp->lang = (char *)NULL;
-	ptp->key = xstrdup(keyword);
-	ptp->text = xstrdup(text);
-	ptp->compression = PNG_TEXT_COMPRESSION_zTXt;
-	ptp++;
-    }
+    textblk.lang = (char *)NULL;
+    textblk.key = keyword;
+    textblk.text = text;
+    textblk.compression = PNG_TEXT_COMPRESSION_zTXt;
+
+    png_set_text(png_ptr, info_ptr, &textblk, 1);
 }
 
 static void compile_iTXt(void)
@@ -1059,6 +999,7 @@ static void compile_iTXt(void)
     char	text[PNG_STRING_MAX_LENGTH+1];
     int		nlanguage = 0, nkeyword = 0, ntext = 0;
     int		compression = PNG_TEXT_COMPRESSION_NONE;
+    png_text	textblk;
 
     while (get_inner_token())
 	if (token_equals("language"))
@@ -1075,24 +1016,12 @@ static void compile_iTXt(void)
     if (!language || !keyword || !text)
 	fatal("keyword or text is missing");
 
-    /*
-     * If we've already written an IDAT chunk, then png_write_info()
-     * has already ben called, so emit the text chunk directly.
-     * Otherwise, queue it up for processing when png_write_info()
-     * gets called.
-     */
-    if (properties[IDAT].count)
-	png_write_iTXt(png_ptr, compression, language, keyword, text);
-    else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
-	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
-    else
-    {
-	ptp->lang = xstrdup(language);
-	ptp->key = xstrdup(keyword);
-	ptp->text = xstrdup(text);
-	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
-	ptp++;
-    }
+    textblk.lang = language;
+    textblk.key = keyword;
+    textblk.text = text;
+    textblk.compression = compression;
+
+    png_set_text(png_ptr, info_ptr, &textblk, 1);
 }
 
 static void compile_tIME(void)
@@ -1311,52 +1240,62 @@ static void compile_sCAL(void)
 static void compile_gIFg(void)
 /* parse gIFg specification and queue up the corresponding chunk */
 {
-    png_byte chunk[4];
+    png_byte chunkdata[4];
+    png_unknown_chunk chunk;
 
-    memset(chunk, '\0', sizeof(chunk));
+    memset(&chunk, '\0', sizeof(chunk));
+    memset(chunkdata, '\0', sizeof(chunkdata));
+    strcpy(chunk.name, "gIFg");
+    chunk.data = chunkdata;
+    chunk.size = 4;
 
-    if (get_inner_token())
+    while (get_inner_token())
 	if (token_equals("disposal"))
-	    chunk[0] = byte_numeric(get_token());
+	    chunkdata[0] = byte_numeric(get_token());
 	else if (token_equals("input"))
-	    chunk[1] = byte_numeric(get_token());
+	    chunkdata[1] = byte_numeric(get_token());
 	else if (token_equals("delay"))
-	    png_save_uint_16(chunk+2, short_numeric(get_token()));
+	    png_save_uint_16(chunkdata+2, short_numeric(get_token()));
 
-    queue_chunk("gIFg", chunk, 4);
+    png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
 }
 
 static void compile_gIFx(void)
 /* parse gIFx specification and queue up the corresponding chunk */
 {
-    png_byte chunk[PNG_STRING_MAX_LENGTH], buf[PNG_STRING_MAX_LENGTH], *ep;
+    png_byte chunkdata[PNG_STRING_MAX_LENGTH], buf[PNG_STRING_MAX_LENGTH];
+    png_unknown_chunk chunk;
 
-    memset(chunk, '\0', sizeof(chunk));
+    memset(&chunk, '\0', sizeof(chunk));
+    memset(chunkdata, '\0', sizeof(chunkdata));
+    strcpy(chunk.name, "gIFx");
+    chunk.data = chunkdata;
 
-    if (get_inner_token())
+    while (get_inner_token())
 	if (token_equals("identifier"))
 	{
-	    if (string_validate(get_token(), buf) == 8)
+	    if (string_validate(get_token(), buf) != 8)
 		fatal("application identifier has wrong length");
 	    else
-		memcpy(chunk, buf, 8);
+		memcpy(chunkdata, buf, 8);
 	}
 	else if (token_equals("code"))
 	{
-	    if (string_validate(get_token(), buf) == 3)
+	    if (string_validate(get_token(), buf) != 3)
 		fatal("authentication code has wrong length");
 	    else
-		memcpy(chunk, buf, 3);
+		memcpy(chunkdata + 8, buf, 3);
 	}
 	else if (token_equals("data"))
 	{
-	    if (string_validate(get_token(), buf) == 3)
-		fatal("authentication code has wrong length");
-	    else
-		strcpy(chunk + 11, buf);
+	    int datalen = string_validate(get_token(), buf);
+
+	    memcpy(chunkdata + 11, buf, datalen);
 	}
 
-    queue_chunk("gIFx", buf, 11 + strlen(chunk + 11));
+    chunk.size = 11 + strlen(chunkdata + 11);
+
+    png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
 }
 
 static void compile_IMAGE(void)
@@ -1418,7 +1357,6 @@ int sngc(FILE *fin, FILE *fout)
     float gamma;
 
     yyin = fin;
-    ptp = text_chunks;
 
     /* Create and initialize the png_struct with the desired error handler
      * functions.  If you want to use the default stderr and longjump method,
@@ -1490,6 +1428,7 @@ int sngc(FILE *fin, FILE *fout)
 		fatal("PLTE chunk encountered after tRNS");
 	    else if (!(info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
 		fatal("PLTE chunk specified for non-palette image type");
+	    png_write_info_before_PLTE(png_ptr, info_ptr);
 	    compile_PLTE();
 	    break;
 
@@ -1500,10 +1439,7 @@ int sngc(FILE *fin, FILE *fout)
 		fatal("IDAT chunks must be contiguous");
 	    /* force out the pre-IDAT portions */
 	    if (properties[IDAT].count == 0)
-	    {
-		png_set_text(png_ptr,info_ptr, text_chunks, ptp - text_chunks);
 		png_write_info(png_ptr, info_ptr);
-	    }
 	    compile_IDAT();
 	    break;
 
@@ -1625,10 +1561,7 @@ int sngc(FILE *fin, FILE *fout)
 		fatal("can't mix IDAT and IMAGE specs");
 	    /* force out the pre-IDAT portions */
 	    if (properties[IMAGE].count == 0)
-	    {
-		png_set_text(png_ptr,info_ptr, text_chunks, ptp - text_chunks);
 		png_write_info(png_ptr, info_ptr);
-	    }
 	    compile_IMAGE();
 	    properties[IDAT].count++;
 	    break;
@@ -1658,15 +1591,6 @@ int sngc(FILE *fin, FILE *fout)
 
     /* if you malloced the palette, free it here */
     /* free(info_ptr->palette); */
-
-    /* if we xstrdup()ed storage for any text chunks, free it now */
-    for (i = 0; i < ptp - text_chunks; i++)
-    {
-	if (text_chunks[i].lang)
-	    free(text_chunks[i].lang);
-	free(text_chunks[i].key);
-	free(text_chunks[i].text);
-    }
 
     /* clean up after the write, and free any memory allocated */
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
