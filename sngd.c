@@ -706,6 +706,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    if (png_ptr == NULL)
    {
       fclose(fp);
+      sng_error = 1;
       return(FAIL);
    }
 
@@ -715,6 +716,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    {
       fclose(fp);
       png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+      sng_error = 1;
       return(FAIL);
    }
 
@@ -728,6 +730,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
       png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
       fclose(fp);
       /* If we get here, we had a problem reading the file */
+      sng_error = 1;
       return(FAIL);
    }
 
