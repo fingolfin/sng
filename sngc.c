@@ -49,6 +49,8 @@ typedef struct {
 
 #define MEMORY_QUANTUM	1024
 
+#define MAX_TEXT_CHUNKS	64
+
 /* chunk types */
 static chunkprops properties[] = 
 {
@@ -124,6 +126,7 @@ static chunkprops properties[] =
 static png_struct *png_ptr;
 static png_info *info_ptr;
 static png_color palette[256];
+static png_text text_chunks[MAX_TEXT_CHUNKS], *ptp;
 
 static FILE *yyin;
 
@@ -178,6 +181,15 @@ void *xrealloc(void *p, unsigned long s)
     }
 
     return p;
+}
+
+static char *xstrdup(char *s)
+{
+    char	*r = xalloc(strlen(s) + 1);
+
+    strcpy(r, s);
+
+    return(r);
 }
 
 /*************************************************************************
@@ -666,7 +678,7 @@ static void compile_sBIT(void)
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.red = byte_numeric(get_token());
-	    if (sigbits.red >= sample_depth)
+	    if (sigbits.red > sample_depth)
 		fatal("red sample depth out of range");
 	}
 	else if (token_equals("green"))
@@ -674,7 +686,7 @@ static void compile_sBIT(void)
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.green = byte_numeric(get_token());
-	    if (sigbits.green >= sample_depth)
+	    if (sigbits.green > sample_depth)
 		fatal("red sample depth out of range");
 	}
 	else if (token_equals("blue"))
@@ -682,7 +694,7 @@ static void compile_sBIT(void)
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.blue = byte_numeric(get_token());
-	    if (sigbits.blue >= sample_depth)
+	    if (sigbits.blue > sample_depth)
 		fatal("red sample depth out of range");
 	}
 	else if (token_equals("gray"))
@@ -690,7 +702,7 @@ static void compile_sBIT(void)
 	    if (color)
 		fatal("No gray channel in this image type");
 	    sigbits.gray = byte_numeric(get_token());
-	    if (sigbits.gray >= sample_depth)
+	    if (sigbits.gray > sample_depth)
 		fatal("gray sample depth out of range");
 	}
 	else if (token_equals("alpha"))
@@ -698,7 +710,7 @@ static void compile_sBIT(void)
 	    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
 		fatal("No alpha channel in this image type");
 	    sigbits.alpha = byte_numeric(get_token());
-	    if (sigbits.alpha >= sample_depth)
+	    if (sigbits.alpha > sample_depth)
 		fatal("alpha sample depth out of range");
 	}
 	else 
@@ -842,7 +854,7 @@ static void compile_pHYs(void)
 }
 
 static void compile_tEXt(void)
-/* compile and emit an tEXt chunk */
+/* compile a text chunk; queue it up to be emitted later */
 {
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
     char	text[PNG_STRING_MAX_LENGTH+1];
@@ -859,7 +871,23 @@ static void compile_tEXt(void)
     if (!nkeyword || !ntext)
 	fatal("keyword or text is missing in tEXt specification");
 
-    /* FIXME: actually emit the chunk */
+    /*
+     * If we've already written an IDAT chunk, then png_write_info()
+     * has already ben called, so emit the text chunk directly.
+     * Otherwise, queue it up for processing when png_write_info()
+     * gets called.
+     */
+    if (properties[IDAT].count)
+	png_write_tEXt(png_ptr, keyword, text, strlen(text));
+    else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
+	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
+    else
+    {
+	ptp->key = xstrdup(keyword);
+	ptp->text = xstrdup(text);
+	ptp->text_length = strlen(text);
+	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
+    }
 }
 
 static void compile_zTXt(void)
@@ -880,7 +908,23 @@ static void compile_zTXt(void)
     if (!nkeyword || !ntext)
 	fatal("keyword or text is missing in zTXt specification");
 
-    /* FIXME: actually emit the chunk */
+    /*
+     * If we've already written an IDAT chunk, then png_write_info()
+     * has already ben called, so emit the text chunk directly.
+     * Otherwise, queue it up for processing when png_write_info()
+     * gets called.
+     */
+    if (properties[IDAT].count)
+	png_write_zTXt(png_ptr, keyword, text, strlen(text), PNG_TEXT_COMPRESSION_zTXt);
+    else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
+	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
+    else
+    {
+	ptp->key = xstrdup(keyword);
+	ptp->text = xstrdup(text);
+	ptp->text_length = strlen(text);
+	ptp->compression = PNG_TEXT_COMPRESSION_zTXt;
+    }
 }
 
 static void compile_iTXt(void)
@@ -1018,10 +1062,11 @@ static void compile_IMAGE(void)
 int sngc(FILE *fin, FILE *fout)
 /* compile SNG on fin to PNG on fout */
 {
-    int	prevchunk, errtype;
+    int	prevchunk, errtype, i;
     float gamma;
 
     yyin = fin;
+    ptp = text_chunks;
 
     /* Create and initialize the png_struct with the desired error handler
      * functions.  If you want to use the default stderr and longjump method,
@@ -1103,7 +1148,10 @@ int sngc(FILE *fin, FILE *fout)
 		fatal("IDAT chunks must be contiguous");
 	    /* force out the pre-IDAT portions */
 	    if (properties[IDAT].count == 0)
+	    {
+		png_set_text(png_ptr,info_ptr, text_chunks, ptp - text_chunks);
 		png_write_info(png_ptr, info_ptr);
+	    }
 	    compile_IDAT();
 	    break;
 
@@ -1227,7 +1275,10 @@ int sngc(FILE *fin, FILE *fout)
 		fatal("can't mix IDAT and IMAGE specs");
 	    /* force out the pre-IDAT portions */
 	    if (properties[IMAGE].count == 0)
+	    {
+		png_set_text(png_ptr,info_ptr, text_chunks, ptp - text_chunks);
 		png_write_info(png_ptr, info_ptr);
+	    }
 	    compile_IMAGE();
 	    properties[IDAT].count++;
 	    break;
@@ -1257,6 +1308,13 @@ int sngc(FILE *fin, FILE *fout)
 
     /* if you malloced the palette, free it here */
     /* free(info_ptr->palette); */
+
+    /* if we xstrdup()ed storage for any text chunks, free it now */
+    for (i = 0; i < ptp - text_chunks; i++)
+    {
+	free(text_chunks[i].key);
+	free(text_chunks[i].text);
+    }
 
     /* clean up after the write, and free any memory allocated */
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
