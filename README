@@ -18,6 +18,7 @@ sng.1		the manual page
 sngc.c		SNG to PNG compiler
 sngd.c		PNG to SNG decompiler
 test.sng	Test file exercising all chunk types
+TODO		unfinished business
 
 						Eric S. Raymond
 						esr@thyrsus.com
