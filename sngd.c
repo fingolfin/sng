@@ -191,18 +191,18 @@ static void dump_bKGD(png_infop info_ptr, FILE *fpout)
     {
 	fprintf(fpout, "bKGD {");
 	switch (info_ptr->color_type) {
-	case 0:
-	case 4:
+	case PNG_COLOR_TYPE_GRAY:
+	case PNG_COLOR_TYPE_GRAY_ALPHA:
 	    fprintf(fpout, "gray: %d;", info_ptr->background.gray);
 	    break;
-	case 2:
-	case 6:
+	case PNG_COLOR_TYPE_RGB:
+	case PNG_COLOR_TYPE_RGB_ALPHA:
 	    fprintf(fpout, "red: %d;  green: %d;  blue: %d;",
 			info_ptr->background.red,
 			info_ptr->background.green,
 			info_ptr->background.blue);
 	    break;
-	case 3:
+	case PNG_COLOR_TYPE_PALETTE:
 	    fprintf(fpout, "index: %d", info_ptr->background.index);
 	    break;
 	default:
@@ -313,7 +313,7 @@ static void dump_sBIT(png_infop info_ptr, FILE *fpout)
     if (info_ptr->valid & PNG_INFO_pHYs) {
 	fprintf(fpout, "sBIT {\n");
 	switch (info_ptr->color_type) {
-	case 0:
+	case PNG_COLOR_TYPE_GRAY:
 	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
 		printerr(1, "%d sBIT gray bits not valid for %dbit/sample image",
 			 info_ptr->sig_bit.gray, maxbits);
@@ -321,8 +321,8 @@ static void dump_sBIT(png_infop info_ptr, FILE *fpout)
 		fprintf(fpout, "    gray: %d;\n", info_ptr->sig_bit.gray);
 	    }
 	    break;
-	case 2:
-	case 3:
+	case PNG_COLOR_TYPE_RGB:
+	case PNG_COLOR_TYPE_RGB_ALPHA:
 	    if (info_ptr->sig_bit.red == 0 || info_ptr->sig_bit.red > maxbits) {
 		printerr(1, "%d sBIT red bits not valid for %dbit/sample image",
 			 info_ptr->sig_bit.red, maxbits);
@@ -337,7 +337,7 @@ static void dump_sBIT(png_infop info_ptr, FILE *fpout)
 			info_ptr->sig_bit.red, info_ptr->sig_bit.green, info_ptr->sig_bit.blue);
 	    }
 	    break;
-	case 4:
+	case PNG_COLOR_TYPE_GRAY_ALPHA:
 	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
 		printerr(2, "%d sBIT gray bits not valid for %dbit/sample image\n",
 			 info_ptr->sig_bit.gray, maxbits);
@@ -348,7 +348,7 @@ static void dump_sBIT(png_infop info_ptr, FILE *fpout)
 		fprintf(fpout, "    gray: %d; alpha: %d\n", info_ptr->sig_bit.gray, info_ptr->sig_bit.alpha);
 	    }
 	    break;
-	case 6:
+	case PNG_COLOR_TYPE_RGB_ALPHA:
 	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
 		printerr(1, "%d sBIT red bits not valid for %dbit/sample image",
 			 info_ptr->sig_bit.gray, maxbits);
