@@ -1126,14 +1126,12 @@ static void compile_oFFs(void)
     png_int_32	res_x, res_y;
 
     while (get_inner_token())
-	if (token_equals("offset"))
-	{
-	    require_or_die("(");
+	if (token_equals("xoffset"))
 	    res_x = slong_numeric(get_token());
-	    /* comma */
+	else if (token_equals("yoffset"))
 	    res_y = slong_numeric(get_token());
-	    require_or_die(")");
-	}
+	else if (token_equals("unit"))
+	    continue;
 	else if (token_equals("pixels"))
 	    unit = PNG_OFFSET_PIXEL;
 	else if (token_equals("micrometers"))

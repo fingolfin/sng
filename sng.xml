@@ -157,8 +157,10 @@ iTXt {                          # International UTF-8 keyword
   [compressed]
 }
 
-sOFFs {
-  offset(<slong>, <slong>) [pixels|micrometers]*
+oFFs {
+  xoffset <slong>
+  yoffset <slong> 
+  [unit pixels|micrometers]*
 }
 
 sPLT {

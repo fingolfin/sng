@@ -85,7 +85,9 @@ tIME {
 
 # Dummy offset
 oFFs {
-   offset (23, 17) micrometers
+   xoffset: 23;
+   yoffset: 17;
+   unit: micrometers
 }
 
 # Dummy physical calibration data

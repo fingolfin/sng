@@ -324,14 +324,13 @@ static void dump_iCCP(png_infop info_ptr, FILE *fpout)
 static void dump_oFFs(png_infop info_ptr, FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_oFFs) {
-	fprintf(fpout, "oFFs {\n");
-        fprintf(fpout, "    offset: (%ld, %ld)",
+        fprintf(fpout, "oFFs {xoffset: %ld; yoffset: %ld;",
 	       info_ptr->x_offset, info_ptr->y_offset);
 	if (info_ptr->offset_unit_type == PNG_OFFSET_PIXEL)
-	    fprintf(fpout, " pixels");
+	    fprintf(fpout, " unit: pixels");
 	else if (info_ptr->offset_unit_type == PNG_OFFSET_MICROMETER)
-	    fprintf(fpout, " micrometers");
-	fprintf(fpout, ";\n}\n");
+	    fprintf(fpout, " unit: micrometers");
+	fprintf(fpout, ";}\n");
     }
 }
 static void dump_pHYs(png_infop info_ptr, FILE *fpout)
