@@ -20,7 +20,7 @@ do
 	if [ "$eyeball_test" = "1" ]
 	then
 	    echo $file.
-	    sng <$file | sng >recompiled.png && xv -cmap $file recompiled.png
+	    sng <$file | sng >/tmp/recompiled$$.png && xv -cmap $file /tmp/recompiled$$.png
 	fi
 
         # echo "Regression-testing against PNG file \`$file'"
