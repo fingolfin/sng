@@ -4,7 +4,7 @@ sng -- compiler/decompiler for Scriptable Network Graphics
 .SH SYNOPSIS
 sng [-iv] [file...]
 .SH DESCRIPTION
-The sng program tranlsates between PNG (Portable Network Graphics)
+The sng program translates between PNG (Portable Network Graphics)
 format and SNG (Scriptable Network Graphics) format.  SNG is a printable and
 editable minilanguage for describing PNG files.
 
@@ -16,9 +16,10 @@ appropriate interlacing, compression, etcetera).
 
 Given no file arguments, sng translates stdin to stdout.  In this
 mode, it checks the first character. If that character is printable,
-the input stream is assumed to contain SNG; sng tries to translate it
-to PNG.  If the character is non-printable, the input stream is
-assumed to contain PNG; sng tries to translate it to SNG.
+the input stream is assumed to contain SNG; sng looks for an #SNG
+leader and tries to translate the file to PNG.  If the character is
+non-printable, the input stream is assumed to contain PNG; sng tries
+to translate it to SNG.
 
 For each file that sng operates on, it does its conversion according
 to the file extension (.png or .sng).  The result file has the same
@@ -57,21 +58,22 @@ consecutive spaces.
 
 A <data> literal consists of a sequence of byte specifications in one
 of three formats. String format is a doublequote-delimited printable
-ASCII string.  The other two formats are signaled by the token `base64', or `hex'.
-Base64 format can be used if the image either has total (color plus
-alpha) bit depth of four or less, or it is a paletted image with 64 or
-fewer colors; values of the chars are 0-9, followed by A-Z for 10-35,
-followed by a-z for 36-61, followed by + for 62 and / for 63 (RFC2045
-base-64 encoding).  In hex format, each byte is specified by two hex
-digits (0123456789abcdef).  Whitespace embedded in base64 and hex data
-literals is ignored.  A ';' ends a data literal (unless it occurs
-inside the string syntax).
+ASCII string.  The other two formats are signaled by the token
+`base64', or `hex'.  Base64 format can be used if the image either has
+total (color plus alpha) bit depth of four or less, or it is a
+paletted image with 64 or fewer colors; values of the chars are 0-9,
+followed by A-Z for 10-35, followed by a-z for 36-61, followed by +
+for 62 and / for 63 (RFC2045 base-64 encoding).  In hex format, each
+byte is specified by two hex digits (0123456789abcdef).  Whitespace
+embedded in base64 and hex data literals is ignored.  A ';' ends a
+data literal (unless it occurs inside the string syntax).
 
 Every SNG file must begin with the string "#SNG", followed by optional
 SNG version information, followed by a colon (`:', ASCII 58)
 character.  The remainder of the first line is ignored by SNG.
 
-Comments in the syntax diagram describe intended semantics.
+Comments in the syntax diagram describe intended semantics.  This
+specification should be read in conjunction with the PNG standard.
 .nf
 IHDR {
    height <long>
@@ -223,4 +225,6 @@ distribution TODO file for other minor problems.
 Eric S. Raymond <esr@snark.thyrsus.com> December 1999 (home page at
 http://www.tuxedo.org/~esr/).
 
+For more information about PNG, and code that uses the format, see the
+PNG website at <http://www.cdrom.com/pub/png/pngsuite.html>.
 
