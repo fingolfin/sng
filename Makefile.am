@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 bin_PROGRAMS = sng
-sng_SCRIPTS = sng_regress
+bin_SCRIPTS = sng_regress
 sng_SOURCES = main.c sngc.c sngd.c sng.h
 sng_LDFLAGS = -static
 man_MANS = sng.1
