@@ -202,6 +202,7 @@ static char token_buffer[BUFSIZ];
 static bool pushed;
 
 static int get_token(void)
+/* grab a token from yyin */
 {
     char	w, c, *tp = token_buffer;
 
@@ -528,6 +529,40 @@ static void collect_data(int *pnbits, char **pbits)
  * The compiler itself
  *
  ************************************************************************/
+
+typedef struct qlist_t
+{
+    png_byte		name[5];
+    png_byte		*data;
+    png_size_t		size;
+    struct qlist_t	*next;
+}
+qlist;
+
+static qlist *head = NULL;
+
+static void queue_chunk(png_bytep name, png_bytep buf, png_size_t size)
+/* queue a chunk for emission after png_write_info() */
+{
+    if (properties[IDAT].count)
+    {
+	qlist	*qp;
+
+	for (qp = head; qp; qp = qp->next)
+	    png_write_chunk(png_ptr, qp->name, qp->data, qp->size);
+    }
+    else
+    {
+	qlist	*newblk = (qlist *)xalloc(sizeof(qlist));
+
+	strcpy(newblk->name, name);
+	newblk->data = (png_bytep)malloc(size);
+	memcpy(newblk->data, buf, size);
+	newblk->size = size;
+	newblk->next = head;
+	head = newblk;
+    }    
+}
 
 static void compile_IHDR(void)
 /* parse IHDR specification, set corresponding bits in info_ptr */
@@ -965,7 +1000,7 @@ static void compile_tEXt(void)
      * gets called.
      */
     if (properties[IDAT].count)
-	png_write_tEXt(png_ptr, keyword, text);
+	png_write_tEXt(png_ptr, keyword, text, strlen(text));
     else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
@@ -1003,7 +1038,7 @@ static void compile_zTXt(void)
      * gets called.
      */
     if (properties[IDAT].count)
-	png_write_zTXt(png_ptr, keyword, text, PNG_TEXT_COMPRESSION_zTXt);
+	png_write_zTXt(png_ptr, keyword, text, strlen(text), PNG_TEXT_COMPRESSION_zTXt);
     else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
@@ -1273,6 +1308,57 @@ static void compile_sCAL(void)
     png_set_sCAL(png_ptr, info_ptr, unit, width, height);
 }
 
+static void compile_gIFg(void)
+/* parse gIFg specification and queue up the corresponding chunk */
+{
+    png_byte chunk[4];
+
+    memset(chunk, '\0', sizeof(chunk));
+
+    if (get_inner_token())
+	if (token_equals("disposal"))
+	    chunk[0] = byte_numeric(get_token());
+	else if (token_equals("input"))
+	    chunk[1] = byte_numeric(get_token());
+	else if (token_equals("delay"))
+	    png_save_uint_16(chunk+2, short_numeric(get_token()));
+
+    queue_chunk("gIFg", chunk, 4);
+}
+
+static void compile_gIFx(void)
+/* parse gIFx specification and queue up the corresponding chunk */
+{
+    png_byte chunk[PNG_STRING_MAX_LENGTH], buf[PNG_STRING_MAX_LENGTH], *ep;
+
+    memset(chunk, '\0', sizeof(chunk));
+
+    if (get_inner_token())
+	if (token_equals("identifier"))
+	{
+	    if (string_validate(get_token(), buf) == 8)
+		fatal("application identifier has wrong length");
+	    else
+		memcpy(chunk, buf, 8);
+	}
+	else if (token_equals("code"))
+	{
+	    if (string_validate(get_token(), buf) == 3)
+		fatal("authentication code has wrong length");
+	    else
+		memcpy(chunk, buf, 3);
+	}
+	else if (token_equals("data"))
+	{
+	    if (string_validate(get_token(), buf) == 3)
+		fatal("authentication code has wrong length");
+	    else
+		strcpy(chunk + 11, buf);
+	}
+
+    queue_chunk("gIFx", buf, 11 + strlen(chunk + 11));
+}
+
 static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
@@ -1519,15 +1605,15 @@ int sngc(FILE *fin, FILE *fout)
 	    break;
 
 	case gIFg:
-	    fatal("FIXME: gIFg chunk type is not handled yet");
+	    compile_gIFg();
 	    break;
 
 	case gIFt:
-	    fatal("FIXME: gIFt chunk type is not handled yet");
+	    fatal("gIFt chunks are not handled");
 	    break;
 
 	case gIFx:
-	    fatal("FIXME: gIFx chunk type is not handled yet");
+	    compile_gIFx();
 	    break;
 
 	case fRAc:
