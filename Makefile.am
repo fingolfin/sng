@@ -19,5 +19,6 @@ zip: $(DISTFILES)
 	zip @PACKAGE@-@VERSION@.zip $(DISTFILES)
 
 # Regression-test sng.  Passes if no differences show up.
+# Assumes we have a copy of Willem van Schaik's PNG test suite under pngsuite
 regress:
-	sng_regress test.sng
+	sng_regress test.sng -s pngsuite/[a-wyz]*.png
