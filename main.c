@@ -45,11 +45,7 @@ void fatal(const char *fmt, ... )
     fputs(buf, stderr);
 
     if (png_ptr)
-#ifndef PNG_JMPBUF_STACK_SUPPORTED
-	longjmp(png_ptr->jmpbuf, 2);
-#else
-	PNG_THROW(png_ptr, 2);
-#endif
+	longjmp(png_jmpbuf(png_ptr), 2);
     else
 	exit(2);
 }
