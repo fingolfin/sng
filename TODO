@@ -29,11 +29,11 @@ The following is a plausible XML syntax.  Would it be an improvement?
    width={long}
    bitdepth={byte} 
    [using=color+palette+alpha]	# PNG color type information
-   [interlace]			# Adam7 assumed if interlacing on
+   [interlace=none|adam7]	# Adam7 assumed if interlacing on
 />
 
 <PLTE>
-   [({byte},{byte},{byte})]*	# Any number of RGB triples
+   [<rgb r={byte} g={byte} b={byte}/>]*
 </PLTE>
 
 <IDAT>
@@ -115,7 +115,7 @@ or
   language={keyword}
   keyword={keyword}
   translated={keyword}          # Translation of the keyword
-  [compressed]
+  [compressed=yes|no]		# Defaults to "no"
 >{data}</iTXt>
 
 
@@ -126,7 +126,7 @@ or
 />
 
 <sPLT name={keyword} depth={byte}>
-   [({short}, {short}, {short}, {short}, {short})]*
+   [<rgbaf r={short}, g={short}, b={short}, a={short}, f={short}>]*
 </sPLT>
 
 <pCAL
@@ -163,5 +163,10 @@ or
    {data}
 </private>
 
+In data, remember you have to escape any '<' or  '&' characters. Or use a
+CDATA marked section, then you only have to escape ]]> which is unlikely
+(but possible) to occur.
 
+An XML parser is required to halt on well formedness errors, deal with
+entities, and so on.
 
