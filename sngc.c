@@ -574,7 +574,7 @@ static void collect_data(int *pnbytes, char **pbytes)
         {
 	    unsigned char	value;
 
-	    if (nbytes > quanta * MEMORY_QUANTUM)
+	    if (nbytes >= quanta * MEMORY_QUANTUM)
 		bytes = xrealloc(bytes, MEMORY_QUANTUM * ++quanta);
 
 	    switch(fmt)
