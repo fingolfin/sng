@@ -28,7 +28,6 @@ static char *rendering_intent[] = {
 };
 
 static char *current_file;
-static int rowsize;
 
 char *safeprint(const char *buf)
 /* visibilize a given string -- inverse of sngc.c:escapes() */
@@ -265,7 +264,9 @@ static void dump_PLTE(png_infop info_ptr, FILE *fpout)
     }
 }
 
-static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
+static void dump_image(png_structp png_ptr, 
+		       png_infop info_ptr,
+		       png_bytepp rows, FILE *fpout)
 {
 #ifdef __UNUSED__
     if (idat)
@@ -283,7 +284,7 @@ static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
     {
 	fprintf(fpout, "IMAGE {\n");
 	multi_dump(fpout, "    ", 
-		   rowsize,  info_ptr->height,
+		   png_get_rowbytes(png_ptr, info_ptr),  info_ptr->height,
 		   rows);
 	fprintf(fpout, "}\n");
     }
@@ -704,7 +705,8 @@ static void dump_unknown_chunks(png_infop info_ptr,
     }
 }
 
-void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
+void sngdump(png_structp png_ptr, png_infop info_ptr, 
+	     png_byte *row_pointers[], FILE *fpout)
 /* dump a canonicalized SNG form of a PNG file */
 {
     int	i;
@@ -738,7 +740,8 @@ void sngdump(png_infop info_ptr, png_byte *row_pointers[], FILE *fpout)
     dump_tIME(info_ptr, fpout);
     dump_text(info_ptr, fpout);
 
-    dump_image(info_ptr, row_pointers, fpout);	/* third critical chunk */
+    dump_image(png_ptr, info_ptr, 
+	       row_pointers, fpout);	/* third critical chunk */
 
     dump_unknown_chunks(info_ptr, TRUE, fpout);
 }
@@ -831,11 +834,9 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    if (!idat)		/* read and dump as a sequence of IDATs */
    {
 #endif /* __UNUSED__ */
-       rowsize = png_get_rowbytes(png_ptr, info_ptr);
-
        row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
        for (row = 0; row < height; row++)
-	   row_pointers[row] = malloc(rowsize);
+	   row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
 
        png_read_image(png_ptr, row_pointers);
 #ifdef __UNUSED__
@@ -846,7 +847,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    png_read_end(png_ptr, info_ptr);
 
    /* dump the image */
-   sngdump(info_ptr, row_pointers, fpout);
+   sngdump(png_ptr, info_ptr, row_pointers, fpout);
 
    /* clean up after the read, and free any memory allocated - REQUIRED */
    png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
