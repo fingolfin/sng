@@ -51,7 +51,7 @@ href="ftp://swrinde.nde.swri.edu/pub/png-group/src">here</a>).<p>
 (I am a credited contributor to the libpng reference library, and also
 maintain <A HREF="http://www.tuxedo.org/~esr/gif2png/">gif2png</A>.
 For more information on the PNG format and associated tools, see the
-official <A HREF="http://www.cdrom.com/pub/png/">PNG website</A>)<P>
+official <A HREF="http://www.libpng.org/pub/png/">PNG website</A>)<P>
 
 <HR>
 <table width="100%" cellpadding=0><tr>
