@@ -1,8 +1,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include "sng.h"
-
-#define VERSION "0.1"
+#include "config.h"
 
 int verbose;
 int idat;

@@ -3,11 +3,10 @@ bin_PROGRAMS = sng
 sng_SOURCES = main.c sngc.c sngd.c sng.h
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
-EXTRA_DIST = Makefile sng.spec.in sng.spec sng.1 specgen.sh indexgen.sh lsmgen.sh
+EXTRA_DIST = Makefile sng.spec.in sng.spec sng.1 indexgen.sh lsmgen.sh
 
 RPMROOT=/usr/src/redhat
 rpm: dist
-	specgen.sh	# Generate specfile
 	cp @PACKAGE@-@VERSION@.tar.gz $(RPMROOT)/SOURCES;
 	cp @PACKAGE@.spec $(RPMROOT)/SPECS
 	cd $(RPMROOT)/SPECS; rpm -ba @PACKAGE@.spec	
