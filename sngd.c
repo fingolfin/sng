@@ -454,7 +454,29 @@ static void dump_sPLT(png_spalette *ep, FILE *fpout)
 
 static void dump_tRNS(png_infop info_ptr, FILE *fpout)
 {
-    /* FIXME: dump tRNS */
+    if (info_ptr->valid & PNG_INFO_tRNS) {
+	int	i;
+
+	fprintf(fpout, "tRNS {\n");
+	switch (info_ptr->color_type) {
+	case PNG_COLOR_TYPE_GRAY:
+	    fprintf(fpout, "    gray: %d;\n", info_ptr->trans_values.gray);
+	    break;
+	case PNG_COLOR_TYPE_RGB:
+	    fprintf(fpout, "    red: %d; green: %d; blue: %d;\n",
+		    info_ptr->trans_values.red,
+		    info_ptr->trans_values.green,
+		    info_ptr->trans_values.blue);
+	case PNG_COLOR_TYPE_PALETTE:
+	    for (i = 0; i < info_ptr->num_trans; i++)
+		fprintf(fpout, " %d", info_ptr->trans[i]);
+	    break;
+	case PNG_COLOR_TYPE_GRAY_ALPHA:
+	case PNG_COLOR_TYPE_RGB_ALPHA:
+	    printerr(1, "tRNS chunk illegal with this image type");
+	}
+	fprintf(fpout, "}\n");
+    }
 }
 
 static void dump_sRGB(png_infop info_ptr, FILE *fpout)
