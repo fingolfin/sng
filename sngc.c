@@ -639,6 +639,67 @@ static void compile_iCCP(void)
     /* FIXME: actually emit the chunk */
 }
 
+static void compile_tEXt(void)
+/* compile and emit an tEXt chunk */
+{
+    char	*keyword = (char *)NULL, *text = (char *)NULL;
+
+    while (get_inner_token())
+	if (token_equals("keyword"))
+	    keyword = string_validate(get_token());
+	else if (token_equals("text"))
+	    text = string_validate(get_token());
+	else
+	    fatal("bad token `%s' in tEXt specification", token_buffer);
+
+    if (!keyword || !text)
+	fatal("keyword or text is mising");
+
+    /* FIXME: actually emit the chunk */
+}
+
+static void compile_zTXt(void)
+/* compile and emit an iTXt chunk */
+{
+    char	*keyword = (char *)NULL, *text = (char *)NULL;
+
+    while (get_inner_token())
+	if (token_equals("keyword"))
+	    keyword = string_validate(get_token());
+	else if (token_equals("text"))
+	    text = string_validate(get_token());
+	else
+	    fatal("bad token `%s' in zTXt specification", token_buffer);
+
+    if (!keyword || !text)
+	fatal("keyword or text is mising");
+
+    /* FIXME: actually emit the chunk */
+}
+
+static void compile_iTXt(void)
+/* compile and emit an iTXt chunk */
+{
+    char	*language = (char *)NULL;
+    char	*keyword = (char *)NULL;
+    char	*text = (char *)NULL;
+
+    while (get_inner_token())
+	if (token_equals("language"))
+	    language = string_validate(get_token());
+	else if (token_equals("keyword"))
+	    keyword = string_validate(get_token());
+	else if (token_equals("text"))
+	    text = string_validate(get_token());
+	else
+	    fatal("bad token `%s' in iTXt specification", token_buffer);
+
+    if (!language || !keyword || !text)
+	fatal("keyword or text is mising");
+
+    /* FIXME: actually emit the chunk */
+}
+
 int sngc(FILE *fin, FILE *fout)
 /* compile SNG on fin to PNG on fout */
 {
@@ -801,15 +862,15 @@ int sngc(FILE *fin, FILE *fout)
 	    break;
 
 	case iTXt:
-	    fatal("FIXME: iTXt chunk type is not handled yet");
+	    compile_iTXt();
 	    break;
 
 	case tEXt:
-	    fatal("FIXME: tEXt chunk type is not handled yet");
+	    compile_tEXt();
 	    break;
 
 	case zTXt:
-	    fatal("FIXME: zTXt chunk type is not handled yet");
+	    compile_zTXt();
 	    break;
 
 	case oFFs:

@@ -12,7 +12,7 @@ mode, it validates an existing MNG or PNG file.
 An SNG description consists of a series of chunk specifications in a
 simple editable text format.  These generally correspond one-for-one
 to PNG/MNG chunks.  There are two exceptions. The IMAGE chunk
-specification, which PPNG automatically translates into an IDAT chunk
+specification is automatically translated into an IDAT chunk
 (doing appropriate interlacing, compression, etcetera).  The PRIVATE
 chunk expresses nonstandard chunks as raw data.
 .SH SNG LANGUAGE SYNTAX
@@ -65,17 +65,38 @@ cHRM {
 
 sRGB {<byte>}			# Colorimetry intent, range 0-3
 
+iCCP {<string>}			# International Color Consortium profile name
+
+tEXt {				# Ordinary text chunk
+  keyword <string>
+  text <string>
+}
+
+zTXt {				# Compressed text chunk
+  keyword <string>
+  text <string>
+}
+
+iTXt {				# International UTF-8 keyword
+  language <string>
+  keyword <string>
+  text <string>
+}
+
 IMAGE {<data>}
 .fi
 
 .SH BUGS
-Certain chunks that could theoretically occur before IDAT (such as
-text chunks) are not accepted in SNG.  This reflects a limitation of
-libpng, which is designed to aggregate most non-text chunks in an
-image structure and write them out before writing out the image.
+Certain known safe-to-copy chunks that could theoretically occur
+before IDAT, such as the text chunks, are moved to after IDAT.  This
+reflects a limitation of libpng, which is designed to aggregate most
+non-text chunks in an image structure and write them out just before
+writing out the image.  This transformation is legal, but means that
+`sng | sng -d' is not necessarily a no-op.
 
 Declaring a cHRM triggers a libpng warning about a supposedly
-incorrect sBIT value; it is not clear why.  This may be a library bug.
+incorrect sBIT value; it is not clear why.  This may be a PNG library
+bug.
 
 This is an alpha version.  MNG support is not there yet.
 .SH AUTHOR
