@@ -193,7 +193,7 @@ gIFg {
 gIFx {
    identifier <string>                # Must be 8 characters
    code <string>                      # Must be 3 characters
-   data <string>
+   data <data>
 }
 
 private <string> {                    # Private chunk declaration

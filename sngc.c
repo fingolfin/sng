@@ -1336,9 +1336,12 @@ static void compile_gIFx(void)
 	}
 	else if (token_equals("data"))
 	{
-	    int datalen = string_validate(get_token(), buf);
+	    int datalen;
+	    char *data;
 
-	    memcpy(chunkdata + 11, buf, datalen);
+	    collect_data(&datalen, &data);
+	    memcpy(chunkdata + 11, data, datalen);
+	    free(data);
 	}
 
     chunk.size = 11 + strlen(chunkdata + 11);
