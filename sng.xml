@@ -226,6 +226,11 @@ private <string> {                    # Private chunk declaration
 The -i option doesn't work yet, and won't until libpng's ability to
 suppress special handling of IDATs is working.  See the
 distribution TODO file for other minor problems.
+.SH FILES
+.TP 5
+rgb.txt
+The X colorname database, used for RGB-to-name mappings in the
+decompiler and name-to-RGB mappings in the compiler. 
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com> December 1999 (home page at
 http://www.tuxedo.org/~esr/).

@@ -59,7 +59,7 @@ hIST: {23, 55, 10}
 
 
 # Set transparency (for some reason this triggers a libpng CRC error)
-#tRNS: {
+tRNS: {
   255;		# Render the first color in the palette fully transparent
    # red: 70;
    # green: 70;

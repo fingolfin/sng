@@ -605,14 +605,18 @@ static void dump_sPLT(png_spalette *ep, FILE *fpout)
 {
     long i;
 
+    initialize_hash(hash_by_rgb, rgb_hashbuckets, &rgb_initialized);
+
     fprintf(fpout, "sPLT {\n");
     fprintf(fpout, "    name: \"%s\";\n", safeprint(ep->name));
     fprintf(fpout, "    depth: %u;\n", ep->depth);
 
     for (i = 0;  i < ep->nentries;  i++)
+    {
+	char *name;
+
 	fprintf(fpout, "    (%3u,%3u,%3u,%3u,%u) "
-		"    # rgba = (0x%02x,0x%02x,0x%02x,0x%02x), "
-		"freq = %u\n",
+		"    # rgba = (0x%02x,0x%02x,0x%02x,0x%02x)",
 		ep->entries[i].red,
 		ep->entries[i].green,
 		ep->entries[i].blue,
@@ -621,8 +625,17 @@ static void dump_sPLT(png_spalette *ep, FILE *fpout)
 		ep->entries[i].red,
 		ep->entries[i].green,
 		ep->entries[i].blue,
-		ep->entries[i].alpha,
-		ep->entries[i].frequency);
+		ep->entries[i].alpha);
+
+	if (rgb_initialized)
+	    name = find_by_rgb(ep->entries[i].red,
+			       ep->entries[i].green,
+			       ep->entries[i].blue);
+	if (name)
+	    fprintf(fpout, " %s", name);
+
+	fprintf(fpout, ", freq = %u\n", ep->entries[i].frequency);
+    }
 
     fprintf(fpout, "}\n");
 }
