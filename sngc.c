@@ -1455,6 +1455,9 @@ int sngc(FILE *fin, char *name, FILE *fout)
     /* set up the output control if you are using standard C streams */
     png_init_io(png_ptr, fout);
 
+    /* keep all unknown chunks, we'll dump them later */
+    png_set_keep_unknown_chunks(png_ptr, 2, NULL, 0);
+
     /* interpret the following chunk specifications */
     prevchunk = NONE;
     while (get_token())

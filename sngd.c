@@ -28,51 +28,79 @@ static char *safeprint(char *str)
     return(str);
 }
 
-static void dump_data(FILE *fpout, char *leader, int size, unsigned char *data)
+static void multi_dump(FILE *fpout, char *leader,
+		       int width, int height,
+		       unsigned char *data[])
 /* dump data in a recompilable form */
 {
     unsigned char *cp;
-    int all_printable = 1, base64 = 1;
+    int i, all_printable = 1, base64 = 1;
 
-#define SHORT_DATA	60
+#define SHORT_DATA	50
 
-    for (cp = data; cp < data + size; cp++)
-	if (!isprint(*cp) || *cp == '\n')
-	    all_printable = 0;
-	else if (*cp > 63)
-	    base64 = 0;
+    for (i = 0; i < height; i++)
+	for (cp = data[i]; cp < data[i] + width; cp++)
+	    if (!isprint(*cp) || *cp == '\n')
+		all_printable = 0;
+	    else if (*cp > 63)
+		base64 = 0;
 
-    if (all_printable)
+    for (i = 0; i < height; i++)
     {
-	char *str = malloc(size + 1);
+	if (all_printable)
+	{
+	    char *str = malloc(width + 1);
 
-	memcpy(str, data, size);
-	data[size] = '\0';
-	fprintf(fpout, "%sstring \"%s\";\n", leader, data, str);
-	free(str);
-    }
-    else if (base64)
-    {
-	fprintf(fpout, "%sbase64", leader);
-	if (size < SHORT_DATA)
-	    fprintf(fpout, " ");
+	    memcpy(str, data[i], width);
+	    str[width] = '\0';
+	    if (i == 0)
+	    {
+		fprintf(fpout, "%sstring ", leader);
+		if (height == 1 && width < SHORT_DATA)
+		    fprintf(fpout, " ");
+		else
+		    fprintf(fpout, "\n");
+	    }
+	    fprintf(fpout, "\"%s\"\n", str);
+	    free(str);
+	}
+	else if (base64)
+	{
+	    if (i == 0)
+	    {
+		fprintf(fpout, "%sbase64", leader);
+		if (height == 1 && width < SHORT_DATA)
+		    fprintf(fpout, " ");
+		else
+		    fprintf(fpout, "\n");
+	    }
+	    for (cp = data[i]; cp < data[i] + width; cp++)
+		fputc("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$"[*cp], fpout);
+	    fprintf(fpout, "\n");
+	}
 	else
-	    fprintf(fpout, "\n    ");
-	for (cp = data; cp < data + size; cp++)
-	    fputc("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$"[*cp], fpout);
-	fprintf(fpout, ";\n");
+	{
+	    if (i == 0)
+	    {
+		fprintf(fpout, "%shex", leader);
+		if (height == 1 && width < SHORT_DATA)
+		    fprintf(fpout, " ");
+		else
+		    fprintf(fpout, "\n");
+	    }
+	    for (cp = data[i]; cp < data[i] + width; cp++)
+		fprintf(fpout, "%02x", *cp);
+	    fprintf(fpout, "\n");
+	}
     }
-    else
-    {
-	fprintf(fpout, "%shex", leader);
-	if (size < SHORT_DATA)
-	    fprintf(fpout, " ");
-	else
-	    fprintf(fpout, "\n    ");
-	for (cp = data; cp < data + size; cp++)
-	    fprintf(fpout, "%02x", *cp);
-	fprintf(fpout, ";\n");
-    }
+}
+
+static void dump_data(FILE *fpout, char *leader, int size, unsigned char *data)
+{
+    unsigned char *dope[1];
+
+    dope[0] = data;
+    multi_dump(fpout, leader, size, 1, dope);
 }
 
 static void printerr(int err, const char *fmt, ... )
@@ -175,6 +203,9 @@ static void dump_PLTE(png_infop info_ptr, FILE *fpout)
 static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
 {
     fprintf(fpout, "IMAGE {\n");
+    multi_dump(fpout, "    ", 
+	       info_ptr->width,  info_ptr->height,
+	       rows);
     fprintf(fpout, "}\n");
 }
 
@@ -582,7 +613,7 @@ static void dump_unknown_chunks(png_infop info_ptr,
 	    dump_data(fpout, "    data: ", up->size - 11, up->data + 11);
 	}
 	else
-	    dump_data(fpout, "   data: ", up->size, up->data);
+	    dump_data(fpout, "    data: ", up->size, up->data);
 	fprintf(fpout, "}\n");
 #undef SH
 #undef LG
