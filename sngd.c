@@ -265,6 +265,7 @@ static void dump_PLTE(png_infop info_ptr, FILE *fpout)
 
 static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
 {
+#ifdef __UNUSED__
     if (idat)
     {
 	int	i;
@@ -276,6 +277,7 @@ static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
 	}
     }
     else
+#endif /* __UNUSED__ */
     {
 	fprintf(fpout, "IMAGE {\n");
 	multi_dump(fpout, "    ", 
@@ -799,6 +801,11 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* If we have already read some of the signature */
    /* png_set_sig_bytes(png_ptr, sig_read); */
 
+#ifdef __UNUSED__
+   if (idat)
+       /* turn off IDAT chunk processing */;
+#endif /* __UNUSED__ */
+
    /* The call to png_read_info() gives us all of the information from the
     * PNG file before the first IDAT (image data chunk).  REQUIRED
     */
@@ -808,69 +815,22 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 		&width, &height, &bit_depth, &color_type,
 		&interlace_type, NULL, NULL);
 
-   /* Now it's time to read the image.  One of these methods is REQUIRED */
-   if (idat)		/* read and dump as a sequence of IDATs */
+#ifdef __UNUSED__
+   /*
+    * If idat is off, it's time to read the asctual image data.
+    * (If idat is on, the 
+    */
+   if (!idat)		/* read and dump as a sequence of IDATs */
    {
-       idat = 0;
-       for (;;)
-       {
-	   char ch;
-	   png_byte chunk_length[4], *chunkdata;
-	   png_uint_32 length;
-
-	   ch = fgetc(fp);
-	   ungetc(ch, fp);
-
-	   /*
-	    * Stop reading IDATs on the first chunk with a name that doesn't
-	    * begin with I.  This could be fooled if the last IDAT is 
-	    * followed by an unknown critical chunk beginning with I.
-	    */
-	   if (ch != 'I')
-	       break;
-
-	   idat++;	/* count IDAT sections */
-
-	   png_read_data(png_ptr, chunk_length, 4);
-	   length = png_get_uint_32(chunk_length);
-
-	   png_reset_crc(png_ptr);
-	   png_crc_read(png_ptr, png_ptr->chunk_name, 4);
-
-	   png_debug2(0, "Reading %s chunk, length=%d.\n", png_ptr->chunk_name,
-		      length);
-
-	   chunkdata = (png_byte *)malloc(length);
-	   png_crc_read(png_ptr, chunkdata, length);
-	   png_crc_finish(png_ptr, 0);
-
-	   /* FIXME: stash the chunkdata and length somewhere */
-
-	   if (png_memcmp(png_ptr->chunk_name, "IDAT", 4))
-	       printerr(3, "Unexpected chunk in IDAT sequence");
-	   else
-	   {
-	       if (!(png_ptr->mode & PNG_HAVE_IHDR))
-		   png_error(png_ptr, "Missing IHDR before IDAT");
-	       else if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE &&
-			!(png_ptr->mode & PNG_HAVE_PLTE))
-		   png_error(png_ptr, "Missing PLTE before IDAT");
-
-	       png_ptr->idat_size += length;
-	       png_ptr->mode |= PNG_HAVE_IDAT;
-	   }
-
-	   free(chunkdata);
-       }
-   }
-   else		/* read and dump as IMAGE */
-   {
+#endif /* __UNUSED__ */
        row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
        for (row = 0; row < height; row++)
 	   row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
 
        png_read_image(png_ptr, row_pointers);
+#ifdef __UNUSED__
    }
+#endif /* __UNUSED__ */
 
    /* read rest of file, and get additional chunks in info_ptr - REQUIRED */
    png_read_end(png_ptr, info_ptr);

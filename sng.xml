@@ -210,8 +210,9 @@ private <string> {                    # Private chunk declaration
 }
 .fi
 .SH BUGS
-The -i option doesn't work yet.  See the distribution TODO file
-for other minor problems.
+The -i option doesn't work yet, and won't until libpng's ability to
+suppress special handling of IDATs is working.  See the
+distribution TODO file for other minor problems.
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com> December 1999 (home page at
 http://www.tuxedo.org/~esr/).

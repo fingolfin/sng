@@ -2,9 +2,12 @@
 
 Author's tasks:
 
-1. Make the -i option work.
+1. Generate more test cases (truecolor images, etc.)
 
-2. Find out why tRNS causes a CRC error
+2. Find out why tRNS causes a CRC error in readers.
+
+3. Make the -i option work (once the library can support suppressing
+   normal IDAT processing).
 
 Suitable tasks for someone other than the author:
 
