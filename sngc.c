@@ -957,7 +957,7 @@ static void compile_tEXt(void)
      * gets called.
      */
     if (properties[IDAT].count)
-	png_write_tEXt(png_ptr, keyword, text, strlen(text));
+	png_write_tEXt(png_ptr, keyword, text);
     else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
@@ -965,7 +965,6 @@ static void compile_tEXt(void)
 	ptp->lang = (char *)NULL;
 	ptp->key = xstrdup(keyword);
 	ptp->text = xstrdup(text);
-	ptp->text_length = strlen(text);
 	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
 	ptp++;
     }
@@ -996,7 +995,7 @@ static void compile_zTXt(void)
      * gets called.
      */
     if (properties[IDAT].count)
-	png_write_zTXt(png_ptr, keyword, text, strlen(text), PNG_TEXT_COMPRESSION_zTXt);
+	png_write_zTXt(png_ptr, keyword, text, PNG_TEXT_COMPRESSION_zTXt);
     else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
@@ -1004,7 +1003,6 @@ static void compile_zTXt(void)
 	ptp->lang = (char *)NULL;
 	ptp->key = xstrdup(keyword);
 	ptp->text = xstrdup(text);
-	ptp->text_length = strlen(text);
 	ptp->compression = PNG_TEXT_COMPRESSION_zTXt;
 	ptp++;
     }
@@ -1041,8 +1039,7 @@ static void compile_iTXt(void)
      * gets called.
      */
     if (properties[IDAT].count)
-	png_write_iTXt(png_ptr, compression, 
-		       language, keyword, text, strlen(text));
+	png_write_iTXt(png_ptr, compression, language, keyword, text);
     else if (ptp - text_chunks >= MAX_TEXT_CHUNKS)
 	fatal("too many text chunks (limit is %d)", MAX_TEXT_CHUNKS);
     else
@@ -1050,7 +1047,6 @@ static void compile_iTXt(void)
 	ptp->lang = xstrdup(language);
 	ptp->key = xstrdup(keyword);
 	ptp->text = xstrdup(text);
-	ptp->text_length = strlen(text);
 	ptp->compression = PNG_TEXT_COMPRESSION_NONE;
 	ptp++;
     }
