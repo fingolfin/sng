@@ -61,7 +61,7 @@ static void multi_dump(FILE *fpout, char *leader,
 		else
 		    fprintf(fpout, "\n");
 	    }
-	    fprintf(fpout, "\"%s\"\n", str);
+	    fprintf(fpout, "\"%s\"%c\n", str, height == 1 ? ';' : ' ');
 	    free(str);
 	}
 	else if (base64)
@@ -76,7 +76,10 @@ static void multi_dump(FILE *fpout, char *leader,
 	    }
 	    for (cp = data[i]; cp < data[i] + width; cp++)
 		fputc("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$"[*cp], fpout);
-	    fprintf(fpout, "\n");
+	    if (height == 1)
+		fprintf(fpout, ";\n");
+	    else
+		fprintf(fpout, "\n");
 	}
 	else
 	{
@@ -90,7 +93,10 @@ static void multi_dump(FILE *fpout, char *leader,
 	    }
 	    for (cp = data[i]; cp < data[i] + width; cp++)
 		fprintf(fpout, "%02x", *cp);
-	    fprintf(fpout, "\n");
+	    if (height == 1)
+		fprintf(fpout, ";\n");
+	    else
+		fprintf(fpout, "\n");
 	}
     }
 }
