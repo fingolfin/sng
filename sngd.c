@@ -103,14 +103,14 @@ char *safeprint(const char *buf)
 	    *tp++ = '\\'; *tp++ = 'b';
 	    buf++;
 	}
-	else if (*buf < ' ')
+	else if ((unsigned char) *buf < ' ')
 	{
 	    *tp++ = '\\'; *tp++ = '^'; *tp++ = '@' + *buf;
 	    buf++;
 	}
 	else
 	{
-	    (void) sprintf(tp, "\\0x%02x", *buf++);
+	    (void) sprintf(tp, "\\x%02x", (unsigned char) *buf++);
 	    tp += strlen(tp);
 	}
     }
@@ -589,7 +589,7 @@ static void dump_sBIT(FILE *fpout)
 {
     int maxbits = (info_ptr->color_type == 3)? 8 : info_ptr->bit_depth;
 
-    if (info_ptr->valid & PNG_INFO_pHYs) {
+    if (info_ptr->valid & PNG_INFO_sBIT) {
 	fprintf(fpout, "sBIT {\n");
 	switch (info_ptr->color_type) {
 	case PNG_COLOR_TYPE_GRAY:

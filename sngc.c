@@ -275,11 +275,17 @@ static int get_token(void)
 		break;
 	    else if (c == '\n' && !literal)
 		fatal("runaway string");
-	    else if (tp >= token_buffer + sizeof(token_buffer))
+	    else if (tp >= token_buffer + sizeof(token_buffer) - 1)
 		fatal("string token too long");
 	    else
+	    {
+		if (literal)
+		{
+		    *tp++ = '\\';
+		    literal = FALSE;
+		}
 		*tp++ = c;
-	    literal = FALSE;
+	    }
 	}
 	*tp = '\0';
 	escapes(token_buffer, token_buffer);
