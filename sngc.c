@@ -1563,7 +1563,7 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     png_byte	**row_pointers;
-    int		i, nbytes, bytes_per_sample, samples_per_byte;
+    int		i, nbytes, bytes_per_sample;
     char	*bytes;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
@@ -1602,37 +1602,31 @@ static void compile_IMAGE(void)
     {
     case PNG_COLOR_TYPE_GRAY:
 	bytes_per_sample = doublewidth;
-	samples_per_byte = (8 / info_ptr->bit_depth);
 	break;
 
     case PNG_COLOR_TYPE_PALETTE:
 	bytes_per_sample = 1;
-        samples_per_byte = 1;
 	break;
 
     case PNG_COLOR_TYPE_RGB:
 	bytes_per_sample = 3 * doublewidth;
-        samples_per_byte = 1;
 	break;
 
     case PNG_COLOR_TYPE_RGB_ALPHA:
 	bytes_per_sample = 4 * doublewidth;
-        samples_per_byte = 1;
 	break;
 
     case PNG_COLOR_TYPE_GRAY_ALPHA:
 	bytes_per_sample = 2 * doublewidth;
-        samples_per_byte = 1;
 	break;
 
     default:	/* should never happen */
 	fatal("unknown color type");
     }
 
-    if (nbytes*samples_per_byte != info_ptr->width * info_ptr->height * bytes_per_sample)
-	fatal("size (%d*%d) of IMAGE doesn't match width*height*bps (%d*%d*%d) in IHDR",
-	      nbytes, samples_per_byte,
-	      info_ptr->width, info_ptr->height, bytes_per_sample);
+    if (nbytes != info_ptr->width * info_ptr->height * bytes_per_sample)
+	fatal("size (%d) of IMAGE doesn't match width*height*bps (%d*%d*%d) in IHDR",
+	      nbytes, info_ptr->width, info_ptr->height, bytes_per_sample);
 
 #ifndef PNG_INFO_IMAGE_SUPPORTED
     /* make image pack as small as possible */
