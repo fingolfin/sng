@@ -60,11 +60,11 @@ hIST: {23, 55, 10}
 
 # Set transparency (for some reason this triggers a libpng CRC error)
 #tRNS: {
-#  255;		# Render the first color in the palette fully transparent
+  255;		# Render the first color in the palette fully transparent
    # red: 70;
    # green: 70;
    # blue: 70;
-#}
+}
 
 # Test the pHYs chunk; this data isn't really meaningful for the image
 pHYs: {
