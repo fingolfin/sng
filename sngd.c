@@ -1,7 +1,7 @@
 /*****************************************************************************
 
 NAME
-   sngle.c -- decompile PNG to SNG.
+   sngd.c -- decompile PNG to SNG.
 
 *****************************************************************************/
 #include <stdlib.h>
@@ -924,11 +924,6 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* If we have already read some of the signature */
    /* png_set_sig_bytes(png_ptr, sig_read); */
 
-#ifdef __UNUSED__
-   if (idat)
-       /* turn off IDAT chunk processing */;
-#endif /* __UNUSED__ */
-
    /* The call to png_read_info() gives us all of the information from the
     * PNG file before the first IDAT (image data chunk).  REQUIRED
     */
@@ -949,22 +944,11 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    }
    png_read_update_info(png_ptr, info_ptr);
 
-#ifdef __UNUSED__
-   /*
-    * If idat is off, it's time to read the actual image data.
-    * (If idat is on, it has been treated as unknown chunks.)
-    */
-   if (!idat)		/* read and dump as a sequence of IDATs */
-   {
-#endif /* __UNUSED__ */
-       row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
-       for (row = 0; row < height; row++)
-	   row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
+   row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
+   for (row = 0; row < height; row++)
+       row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
 
-       png_read_image(png_ptr, row_pointers);
-#ifdef __UNUSED__
-   }
-#endif /* __UNUSED__ */
+   png_read_image(png_ptr, row_pointers);
 
    /* read rest of file, and get additional chunks in info_ptr - REQUIRED */
    png_read_end(png_ptr, info_ptr);
