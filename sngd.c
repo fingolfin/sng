@@ -210,7 +210,7 @@ static void dump_IHDR(FILE *fpout)
     int ityp;
 
     if (info_ptr->width == 0 || info_ptr->height == 0) {
-	printerr(1, "invalid IHDR image dimensions (%ldx%ld)",
+	printerr(1, "invalid IHDR image dimensions (%lux%lu)",
 		 info_ptr->width, info_ptr->height);
     }
 
@@ -223,7 +223,7 @@ static void dump_IHDR(FILE *fpout)
     case 2:
     case 4:
 	if (ityp == 2 || ityp == 4 || ityp == 6) {/* RGB or GA or RGBA */
-	    printerr(1, "invalid IHDR bit depth (%d) for %s image",
+	    printerr(1, "invalid IHDR bit depth (%u) for %s image",
 		     true_depth, image_type[ityp]);
 	}
 	break;
@@ -231,17 +231,17 @@ static void dump_IHDR(FILE *fpout)
 	break;
     case 16:
 	if (ityp == 3) { /* palette */
-	    printerr(1, "invalid IHDR bit depth (%d) for %s image",
+	    printerr(1, "invalid IHDR bit depth (%u) for %s image",
 		     true_depth, image_type[ityp]);
 	}
 	break;
     default:
-	printerr(1, "invalid IHDR bit depth (%d)", info_ptr->bit_depth);
+	printerr(1, "invalid IHDR bit depth (%u)", info_ptr->bit_depth);
 	break;
     }
 
     fprintf(fpout, "IHDR {\n");
-    fprintf(fpout, "    width: %ld; height: %ld; bitdepth: %d;\n", 
+    fprintf(fpout, "    width: %lu; height: %lu; bitdepth: %u;\n", 
 	    info_ptr->width, info_ptr->height, true_depth);
     fprintf(fpout, "    using");
     if (ityp & PNG_COLOR_MASK_COLOR)
@@ -311,17 +311,17 @@ static void dump_bKGD(FILE *fpout)
 	switch (info_ptr->color_type) {
 	case PNG_COLOR_TYPE_GRAY:
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
-	    fprintf(fpout, "gray: %d;", info_ptr->background.gray);
+	    fprintf(fpout, "gray: %u;", info_ptr->background.gray);
 	    break;
 	case PNG_COLOR_TYPE_RGB:
 	case PNG_COLOR_TYPE_RGB_ALPHA:
-	    fprintf(fpout, "red: %d;  green: %d;  blue: %d;",
+	    fprintf(fpout, "red: %u;  green: %u;  blue: %u;",
 			info_ptr->background.red,
 			info_ptr->background.green,
 			info_ptr->background.blue);
 	    break;
 	case PNG_COLOR_TYPE_PALETTE:
-	    fprintf(fpout, "index: %d", info_ptr->background.index);
+	    fprintf(fpout, "index: %u", info_ptr->background.index);
 	    break;
 	default:
 	    printerr(1, "unknown image type");
@@ -412,13 +412,13 @@ static void dump_pHYs(FILE *fpout)
         printerr(1, "invalid pHYs unit");
     else if (info_ptr->valid & PNG_INFO_pHYs) {
 	fprintf(fpout, "");
-        fprintf(fpout, "pHYs {xpixels: %ld; ypixels: %ld;",
+        fprintf(fpout, "pHYs {xpixels: %lu; ypixels: %lu;",
 	       info_ptr->x_pixels_per_unit, info_ptr->y_pixels_per_unit);
 	if (info_ptr->phys_unit_type == PNG_RESOLUTION_METER)
 	    fprintf(fpout, " per: meter;");
         fprintf(fpout, "}");
         if (info_ptr->phys_unit_type == 1 && info_ptr->x_pixels_per_unit == info_ptr->y_pixels_per_unit)
-	    fprintf(fpout, "  # (%ld dpi)\n", (long)(info_ptr->x_pixels_per_unit*0.0254 + 0.5));
+	    fprintf(fpout, "  # (%lu dpi)\n", (long)(info_ptr->x_pixels_per_unit*0.0254 + 0.5));
 	else
 	    fputc('\n', fpout);
     }
@@ -433,54 +433,54 @@ static void dump_sBIT(FILE *fpout)
 	switch (info_ptr->color_type) {
 	case PNG_COLOR_TYPE_GRAY:
 	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
-		printerr(1, "%d sBIT gray bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT gray bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.gray, maxbits);
 	    } else {
-		fprintf(fpout, "    gray: %d;\n", info_ptr->sig_bit.gray);
+		fprintf(fpout, "    gray: %u;\n", info_ptr->sig_bit.gray);
 	    }
 	    break;
 	case PNG_COLOR_TYPE_RGB:
 	case PNG_COLOR_TYPE_PALETTE:
 	    if (info_ptr->sig_bit.red == 0 || info_ptr->sig_bit.red > maxbits) {
-		printerr(1, "%d sBIT red bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT red bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.red, maxbits);
 	    } else if (info_ptr->sig_bit.green == 0 || info_ptr->sig_bit.green > maxbits) {
-		printerr(1, "%d sBIT green bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT green bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.green, maxbits);
 	    } else if (info_ptr->sig_bit.blue == 0 || info_ptr->sig_bit.blue > maxbits) {
-		printerr(1, "%d sBIT blue bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT blue bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.blue, maxbits);
 	    } else {
-		fprintf(fpout, "    red: %d; green: %d; blue: %d;\n",
+		fprintf(fpout, "    red: %u; green: %u; blue: %u;\n",
 			info_ptr->sig_bit.red, info_ptr->sig_bit.green, info_ptr->sig_bit.blue);
 	    }
 	    break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
 	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
-		printerr(2, "%d sBIT gray bits not valid for %dbit/sample image\n",
+		printerr(2, "%u sBIT gray bits not valid for %ubit/sample image\n",
 			 info_ptr->sig_bit.gray, maxbits);
 	    } else if (info_ptr->sig_bit.alpha == 0 || info_ptr->sig_bit.alpha > maxbits) {
-		printerr(2, "%d sBIT alpha bits(tm) not valid for %dbit/sample image\n",
+		printerr(2, "%u sBIT alpha bits(tm) not valid for %ubit/sample image\n",
 			 info_ptr->sig_bit.alpha, maxbits);
 	    } else {
-		fprintf(fpout, "    gray: %d; alpha: %d\n", info_ptr->sig_bit.gray, info_ptr->sig_bit.alpha);
+		fprintf(fpout, "    gray: %u; alpha: %u\n", info_ptr->sig_bit.gray, info_ptr->sig_bit.alpha);
 	    }
 	    break;
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
-		printerr(1, "%d sBIT red bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT red bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.gray, maxbits);
 	    } else if (info_ptr->sig_bit.green == 0 || info_ptr->sig_bit.green > maxbits) {
-		printerr(1, "%d sBIT green bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT green bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.green, maxbits);
 	    } else if (info_ptr->sig_bit.blue == 0 || info_ptr->sig_bit.blue > maxbits) {
-		printerr(1, "%d sBIT blue bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT blue bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.blue, maxbits);
 	    } else if (info_ptr->sig_bit.alpha == 0 || info_ptr->sig_bit.alpha > maxbits) {
-		printerr(1, "%d sBIT alpha bits not valid for %dbit/sample image",
+		printerr(1, "%u sBIT alpha bits not valid for %ubit/sample image",
 			 info_ptr->sig_bit.alpha, maxbits);
 	    } else {
-		fprintf(fpout, "    red: %d; green: %d; blue: %d; alpha: %d;\n",
+		fprintf(fpout, "    red: %u; green: %u; blue: %u; alpha: %u;\n",
 			info_ptr->sig_bit.red, 
 			info_ptr->sig_bit.green,
 			info_ptr->sig_bit.blue,
@@ -507,7 +507,7 @@ static void dump_pCAL(FILE *fpout)
 	fprintf(fpout, "    name: \"%s\";\n", safeprint(info_ptr->pcal_purpose));
 	fprintf(fpout, "    x0: %ld;\n", info_ptr->pcal_X0);
 	fprintf(fpout, "    x1: %ld;\n", info_ptr->pcal_X1);
-	fprintf(fpout, "    mapping: %s;        # equation type %d\n", 
+	fprintf(fpout, "    mapping: %s;        # equation type %u\n", 
 	       mapping_type[info_ptr->pcal_type], info_ptr->pcal_type);
 	fprintf(fpout, "    unit: \"%s\"\n", safeprint(info_ptr->pcal_units));
 	if (info_ptr->pcal_nparams)
@@ -577,20 +577,22 @@ static void dump_tRNS(FILE *fpout)
 	fprintf(fpout, "tRNS {\n");
 	switch (info_ptr->color_type) {
 	case PNG_COLOR_TYPE_GRAY:
-	    fprintf(fpout, "    gray: %d;\n", info_ptr->trans_values.gray);
+	    fprintf(fpout, "    gray: %u;\n", info_ptr->trans_values.gray);
 	    break;
 	case PNG_COLOR_TYPE_RGB:
-	    fprintf(fpout, "    red: %d; green: %d; blue: %d;\n",
+	    fprintf(fpout, "    red: %u; green: %u; blue: %u;\n",
 		    info_ptr->trans_values.red,
 		    info_ptr->trans_values.green,
 		    info_ptr->trans_values.blue);
+	    break;
 	case PNG_COLOR_TYPE_PALETTE:
 	    for (i = 0; i < info_ptr->num_trans; i++)
-		fprintf(fpout, " %d", info_ptr->trans[i]);
+		fprintf(fpout, " %u", info_ptr->trans[i]);
 	    break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 	    printerr(1, "tRNS chunk illegal with this image type");
+	    break;
 	}
 	fprintf(fpout, "}\n");
     }
@@ -602,7 +604,7 @@ static void dump_sRGB(FILE *fpout)
         printerr(1, "sRGB invalid rendering intent");
     }
     if (info_ptr->valid & PNG_INFO_sRGB) {
-        fprintf(fpout, "sRGB {intent: %d;}             # %s\n", 
+        fprintf(fpout, "sRGB {intent: %u;}             # %s\n", 
 	       info_ptr->srgb_intent, 
 	       rendering_intent[info_ptr->srgb_intent]);
     }
@@ -629,12 +631,12 @@ static void dump_tIME(FILE *fpout)
 		info_ptr->mod_time.hour,
 		info_ptr->mod_time.minute,
 		info_ptr->mod_time.second);
-	fprintf(fpout, "    year:   %d\n", info_ptr->mod_time.year);
-	fprintf(fpout, "    month:  %d\n", info_ptr->mod_time.month);
-	fprintf(fpout, "    day:    %d\n", info_ptr->mod_time.day);
-	fprintf(fpout, "    hour:   %d\n", info_ptr->mod_time.hour);
-	fprintf(fpout, "    minute: %d\n", info_ptr->mod_time.minute);
-	fprintf(fpout, "    second: %d\n", info_ptr->mod_time.second);
+	fprintf(fpout, "    year:   %u\n", info_ptr->mod_time.year);
+	fprintf(fpout, "    month:  %u\n", info_ptr->mod_time.month);
+	fprintf(fpout, "    day:    %u\n", info_ptr->mod_time.day);
+	fprintf(fpout, "    hour:   %u\n", info_ptr->mod_time.hour);
+	fprintf(fpout, "    minute: %u\n", info_ptr->mod_time.minute);
+	fprintf(fpout, "    second: %u\n", info_ptr->mod_time.second);
 	fprintf(fpout, "}\n");
     }
 }
