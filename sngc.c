@@ -195,7 +195,7 @@ static int get_token(void)
 		    return(FALSE);
 		if (w == '\n')
 		{
-		    w = fgetc(yyin);
+		    ungetc(w, yyin);
 		    break;
 		}
 	    }
@@ -327,12 +327,14 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
      * In either format, whitespace is ignored.
      */
     char *bits = xalloc(MEMORY_QUANTUM);
-    int	nbits = MEMORY_QUANTUM;
-    int offset = 0;
-    int ocount = 0;
     int quanta = 1;
+    int	nbits = 0;
+    int ocount = 0;
     int c;
-    
+
+    if (yydebug)
+	fprintf(stderr, "collecting data in %s format\n", 
+		pixperchar ? "pixel-per-chatacter" : "hex");
     while ((c = fgetc(yyin)))
 	if (feof(yyin))
 	    fatal("unexpected EOF in data segment");
@@ -378,6 +380,7 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
 
     *pnbits = nbits;
     *pbits = bits;
+    fprintf(stderr, "I see %d bits\n", nbits);
 }
 
 /*************************************************************************
@@ -469,11 +472,15 @@ static void compile_IDAT(void)
      */
     collect_data(FALSE, &nbits, &bits);
     png_write_chunk(png_ptr, "IDAT", bits, nbits);
+    free(bits);
 }
 
 static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
+    png_byte	**rowpointers;
+    int	i;
+
     /*
      * We know we can use format 1 if
      * (a) The image is paletted and the palette has 62 or fewer values.
@@ -482,7 +489,7 @@ static void compile_IMAGE(void)
      */
     bool pixperchar =
 	((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
-	 			&& info_ptr->num_palette >= 62)
+	 			&& info_ptr->num_palette <= 62)
 	|| (info_ptr->bit_depth <= 4);
     int		nbits;
     char	*bits;
@@ -490,10 +497,18 @@ static void compile_IMAGE(void)
     /* collect the data */
     collect_data(pixperchar, &nbits, &bits);
 
+    if (nbits != info_ptr->width * info_ptr->height)
+	fatal("size of IMAGE doesn't match height * width in IHDR");
+
     /* FIXME: perhaps this should be optional? */
     png_set_packing(png_ptr);
 
     /* got the bits; now write them out */
+    rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
+    for (i = 0; i < info_ptr->height; i++)
+	rowpointers[i] = &bits[i * info_ptr->width];
+    png_write_image(png_ptr, rowpointers);
+    free(bits);
 }
 
 static int pngc(FILE *fin, FILE *fout)
