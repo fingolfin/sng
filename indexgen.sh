@@ -45,12 +45,8 @@ images in the png test suite, but the design of SNG is not yet frozen.
 The syntax of the language may change (possibly radically) before a
 production release.<p>
 
-You can download a <a
-href="sng-${version}.tar.gz">source
-tarball</a>, or a <a
-href="sng-${version}.zip">source ZIP
-archive</a>.  RPMs are not yet available, but will be after the next
-major libpng release.<P>
+Downloads are available from SNG's <a
+href="https://sourceforge.net/projects/sng/">SourceForge page</a>
 
 Note: To use sng, you will need to install libpng-1.0.9beta7 or later.
 You can download it <a
