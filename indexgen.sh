@@ -46,7 +46,7 @@ The syntax of the language may change (possibly radically) before a
 production release.<p>
 
 Downloads are available from SNG's <a
-href="https://sourceforge.net/projects/sng/">SourceForge page</a>
+href="https://sourceforge.net/projects/sng/">SourceForge page</a>.<P>
 
 Note: To use sng, you will need to install libpng-1.0.9beta7 or later.
 You can download it <a
