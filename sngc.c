@@ -464,7 +464,7 @@ static int keyword_validate(bool token_ok, char *stash)
     }
 }
 
-static void collect_data(int *pnbits, char **pbits)
+static void collect_data(int *pnbytes, char **pbytes)
 /* collect data in either bitmap format */
 {
     /*
@@ -489,9 +489,9 @@ static void collect_data(int *pnbits, char **pbits)
      *
      * In either format, whitespace is ignored.
      */
-    char *bits = xalloc(MEMORY_QUANTUM);
+    char *bytes = xalloc(MEMORY_QUANTUM);
     int quanta = 1;
-    int	nbits = 0;
+    int	nbytes = 0;
     int ocount = 0;
     int c, maxval;
 #define BASE64_FMT	0
@@ -504,14 +504,14 @@ static void collect_data(int *pnbits, char **pbits)
 	fatal("missing format type in data segment");
     else if (token_class == STRING_TOKEN)
     {
-	*pnbits = 0;
-	*pbits = NULL;
+	*pnbytes = 0;
+	*pbytes = NULL;
 	do {
 	    int	seglen = strlen(token_buffer);
 
-	    *pbits = xrealloc(*pbits, *pnbits + seglen);
-	    memcpy(*pbits + *pnbits, token_buffer, seglen);
-	    *pnbits += seglen;	    
+	    *pbytes = xrealloc(*pbytes, *pnbytes + seglen);
+	    memcpy(*pbytes + *pnbytes, token_buffer, seglen);
+	    *pnbytes += seglen;	    
 	} while
 	      (get_inner_token() && token_class == STRING_TOKEN);
 	push_token();
@@ -538,7 +538,7 @@ static void collect_data(int *pnbits, char **pbits)
 	maxval = short_numeric(get_token());
 
 	if (width != info_ptr->width && height != info_ptr->height)
-	    fatal("ppm image dimensions don't mastch IHDR");
+	    fatal("ppm image dimensions don't match IHDR");
 	fmt = P3_FMT;
     }
     else
@@ -574,8 +574,8 @@ static void collect_data(int *pnbits, char **pbits)
         {
 	    unsigned char	value;
 
-	    if (nbits > quanta * MEMORY_QUANTUM)
-		bits = xrealloc(bits, MEMORY_QUANTUM * ++quanta);
+	    if (nbytes > quanta * MEMORY_QUANTUM)
+		bytes = xrealloc(bytes, MEMORY_QUANTUM * ++quanta);
 
 	    switch(fmt)
 	    {
@@ -592,7 +592,7 @@ static void collect_data(int *pnbits, char **pbits)
 		    value = 62;
 		else /* if (c == '/') */
 		    value = 63;
-		bits[nbits++] = value;
+		bytes[nbytes++] = value;
 		break;
 
 	    case HEX_FMT:
@@ -605,16 +605,16 @@ static void collect_data(int *pnbits, char **pbits)
 		else 
 		    value = (c - 'a') + 10;
 		if (ocount++ % 2)
-		    bits[nbits++] |= value;
+		    bytes[nbytes++] |= value;
 		else
-		    bits[nbits] = value * 16;
+		    bytes[nbytes] = value * 16;
 		break;
 
 	    case P1_FMT:
 		if (c == '0')
-		    bits[nbits++] = 0;
+		    bytes[nbytes++] = 0;
 		else if (c == '1')
-		    bits[nbits++] = 1;
+		    bytes[nbytes++] = 1;
 		else
 		    fatal("bad pbm character %02x in data block", c);
 		break;
@@ -629,7 +629,7 @@ static void collect_data(int *pnbits, char **pbits)
 		 * Channel order in PBM is R, then G, then B, same as PNG;
 		 * so a straight copy in the order we see them will work.
 		 */
-		bits[nbits++] = c;
+		bytes[nbytes++] = c;
 		break;
 	    }
 	}
@@ -639,8 +639,8 @@ static void collect_data(int *pnbits, char **pbits)
 #undef P1_FMT
 #undef P3_FMT
 
-    *pnbits = nbits;
-    *pbits = bits;
+    *pnbytes = nbytes;
+    *pbytes = bytes;
 }
 
 /*************************************************************************
@@ -1169,7 +1169,9 @@ static void compile_tEXt(void)
     if (!nkeyword || !ntext)
 	fatal("keyword or text is missing in tEXt specification");
 
+#ifdef PNG_iTXt_SUPPORTED
     textblk.lang = (char *)NULL;
+#endif
     textblk.key = keyword;
     textblk.text = text;
     textblk.compression = PNG_TEXT_COMPRESSION_NONE;
@@ -1196,7 +1198,9 @@ static void compile_zTXt(void)
     if (!nkeyword || !ntext)
 	fatal("keyword or text is missing in zTXt specification");
 
+#ifdef PNG_iTXt_SUPPORTED
     textblk.lang = (char *)NULL;
+#endif
     textblk.key = keyword;
     textblk.text = text;
     textblk.compression = PNG_TEXT_COMPRESSION_zTXt;
@@ -1233,9 +1237,11 @@ static void compile_iTXt(void)
     if (!language || !keyword || !transkey || !text)
 	fatal("keyword or text is missing");
 
-    textblk.lang = language;
     textblk.key = keyword;
+#ifdef PNG_iTXt_SUPPORTED
+    textblk.lang = language;
     textblk.lang_key = transkey;
+#endif
     textblk.text = text;
     textblk.compression = compression;
 
@@ -1557,14 +1563,14 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     png_byte	**row_pointers;
-    int		i, nbits, bytes_per_sample;
-    char	*bits;
+    int		i, nbytes, bytes_per_sample, samples_per_byte;
+    char	*bytes;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
     write_transform_options = 0;
     while (get_inner_token())
 	if (token_equals("pixels"))
-	    collect_data(&nbits, &bits);
+	    collect_data(&nbytes, &bytes);
 	else if (token_equals("options"))
 	{
 	    if (token_equals("identity"))
@@ -1596,31 +1602,37 @@ static void compile_IMAGE(void)
     {
     case PNG_COLOR_TYPE_GRAY:
 	bytes_per_sample = doublewidth;
+	samples_per_byte = (8 / info_ptr->bit_depth);
 	break;
 
     case PNG_COLOR_TYPE_PALETTE:
 	bytes_per_sample = 1;
+        samples_per_byte = 1;
 	break;
 
     case PNG_COLOR_TYPE_RGB:
 	bytes_per_sample = 3 * doublewidth;
+        samples_per_byte = 1;
 	break;
 
     case PNG_COLOR_TYPE_RGB_ALPHA:
 	bytes_per_sample = 4 * doublewidth;
+        samples_per_byte = 1;
 	break;
 
     case PNG_COLOR_TYPE_GRAY_ALPHA:
 	bytes_per_sample = 2 * doublewidth;
+        samples_per_byte = 1;
 	break;
 
     default:	/* should never happen */
 	fatal("unknown color type");
     }
 
-    if (nbits != info_ptr->width * info_ptr->height * bytes_per_sample)
-	fatal("size (%d) of IMAGE doesn't match width*height (%d*%d) in IHDR",
-	      nbits, info_ptr->width, info_ptr->height);
+    if (nbytes*samples_per_byte != info_ptr->width * info_ptr->height * bytes_per_sample)
+	fatal("size (%d*%d) of IMAGE doesn't match width*height*bps (%d*%d*%d) in IHDR",
+	      nbytes, samples_per_byte,
+	      info_ptr->width, info_ptr->height, bytes_per_sample);
 
 #ifndef PNG_INFO_IMAGE_SUPPORTED
     /* make image pack as small as possible */
@@ -1630,14 +1642,14 @@ static void compile_IMAGE(void)
     /* got the bits; now write them out */
     row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	row_pointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
+	row_pointers[i] = &bytes[i * info_ptr->width * bytes_per_sample];
     png_write_image(png_ptr, row_pointers);
-    free(bits);
+    free(bytes);
 #else
     /* got the bits; attach them to the info structure */
     info_ptr->row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	info_ptr->row_pointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
+	info_ptr->row_pointers[i] = &bytes[i * info_ptr->width * bytes_per_sample];
     info_ptr->valid |= PNG_INFO_IDAT;
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
@@ -1645,8 +1657,8 @@ static void compile_IMAGE(void)
 static void compile_private(char *name)
 /* compile a private chunk */
 {
-    int			nbits;
-    char		*bits;
+    int			nbytes;
+    char		*bytes;
     png_unknown_chunk	chunk;
 
     if (strlen(name) != 4)
@@ -1655,13 +1667,13 @@ static void compile_private(char *name)
 	strcpy(chunk.name, name);
 
     require_or_die("{");
-    collect_data(&nbits, &bits);
+    collect_data(&nbytes, &bytes);
     require_or_die("}");
 
-    chunk.data = bits;
-    chunk.size = nbits;
+    chunk.data = bytes;
+    chunk.size = nbytes;
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
-    png_free(png_ptr, bits);
+    png_free(png_ptr, bytes);
 }
 
 int sngc(FILE *fin, char *name, FILE *fout)
