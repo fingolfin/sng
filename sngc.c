@@ -749,14 +749,25 @@ static void compile_IDAT(void)
 {
     int		nbits;
     char	*bits;
+#ifdef PNG_INFO_IMAGE_SUPPORTED
+    png_unknown_chunk	chunk;
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 
     /*
      * Collect raw hex data and write it out as a chunk.
      */
     collect_data(&nbits, &bits);
     require_or_die("}");
+#ifndef PNG_INFO_IMAGE_SUPPORTED
     png_write_chunk(png_ptr, "IDAT", bits, nbits);
     free(bits);
+#else
+    strcpy(chunk.name, "IDAT");
+    chunk.data = bits;
+    chunk.size = nbits;
+    png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
+    png_free(png_ptr, bits);
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
 
 static void compile_cHRM(void)
@@ -1575,6 +1586,7 @@ static void compile_IMAGE(void)
 	fatal("size (%d) of IMAGE doesn't match width*height (%d*%d) in IHDR",
 	      nbits, info_ptr->width, info_ptr->height);
 
+#ifndef PNG_INFO_IMAGE_SUPPORTED
     /* make image pack as small as possible */
     if (info_ptr->bit_depth < 8)
 	png_set_packing(png_ptr);
@@ -1585,6 +1597,13 @@ static void compile_IMAGE(void)
 	rowpointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
     png_write_image(png_ptr, rowpointers);
     free(bits);
+#else
+    /* got the bits; attach them to the info structure */
+    info_ptr->rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
+    for (i = 0; i < info_ptr->height; i++)
+	info_ptr->rowpointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
+    info_ptr->valid |= PNG_INFO_IDAT;
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
 
 static void compile_private(char *name)
@@ -1703,7 +1722,9 @@ int sngc(FILE *fin, char *name, FILE *fout)
 		fatal("PLTE chunk encountered after tRNS");
 	    else if (!(info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
 		fatal("PLTE chunk specified for non-palette image type");
+#ifndef PNG_INFO_IMAGE_SUPPORTED
 	    png_write_info_before_PLTE(png_ptr, info_ptr);
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 	    compile_PLTE();
 	    break;
 
@@ -1713,8 +1734,10 @@ int sngc(FILE *fin, char *name, FILE *fout)
 	    if (prevchunk != IDAT && pp->count)
 		fatal("IDAT chunks must be contiguous");
 	    /* force out the pre-IDAT portions */
+#ifndef PNG_INFO_IMAGE_SUPPORTED
 	    if (properties[IDAT].count == 0)
 		png_write_info(png_ptr, info_ptr);
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 	    compile_IDAT();
 	    break;
 
@@ -1835,8 +1858,10 @@ int sngc(FILE *fin, char *name, FILE *fout)
 	    if (properties[IDAT].count)
 		fatal("can't mix IDAT and IMAGE specs");
 	    /* force out the pre-IDAT portions */
+#ifndef PNG_INFO_IMAGE_SUPPORTED
 	    if (properties[IMAGE].count == 0)
 		png_write_info(png_ptr, info_ptr);
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 	    compile_IMAGE();
 	    properties[IDAT].count++;
 	    break;
@@ -1861,8 +1886,13 @@ int sngc(FILE *fin, char *name, FILE *fout)
     if (properties[iCCP].count && properties[sRGB].count)
 	fatal("cannot have both iCCP and sRGB chunks (PNG spec 4.2.2.4)");
 
+#ifndef PNG_INFO_IMAGE_SUPPORTED
     /* It is REQUIRED to call this to finish writing the rest of the file */
     png_write_end(png_ptr, info_ptr);
+#else
+    /* write out the info data, including the image */
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_PACKING, NULL);
+#endif /* PNG_INFO_IMAGE_SUPPORTED */
 
     /* if you malloced the palette, free it here */
     /* free(info_ptr->palette); */
