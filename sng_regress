@@ -12,27 +12,27 @@ do
         # echo "Regression-testing against PNG file \`$file'"
         if [ sng <${file} >/tmp/decompiled$$.sng ]
         then
-            echo "Decompilation of the test PNG failed.";
+            echo "$file: decompilation of the test PNG failed.";
             exit 1
         fi
         if [ sng </tmp/decompiled$$.sng >/tmp/decompiled$$.png ]
         then
-            echo "Recompilation of the decompiled form failed.";
+            echo "$file: recompilation of the decompiled form failed.";
             exit 1
         fi
         if [ sng </tmp/decompiled$$.png >/tmp/canonicalized$$.sng ]
         then
-            echo "Generation of the canonicalized form failed.";
+            echo "$file: generation of the canonicalized form failed.";
             exit 1
         fi
         if [ sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png ]
         then
-            echo "Recompilation of the canonicalized form failed.";
+            echo "$file: recompilation of the canonicalized form failed.";
             exit 1
         fi
         if cmp /tmp/decompiled$$.png /tmp/canonicalized$$.png
         then
-	    echo "Regression on $file passed."
+	    echo "$file: regression test passed."
 	else
             echo "Decompiled and canonicalized versions differ.";
             exit 1
@@ -45,27 +45,27 @@ do
         # Diff the two
         if [ sng <${file} >/tmp/test$$.png ]
         then
-            echo "Compilation of the test SNG failed.";
+            echo "$file: compilation of the test SNG failed.";
             exit 1
         fi
         if [ sng </tmp/test$$.png >/tmp/canonicalized$$.sng ]
         then
-            echo "Generation of the canonicalized form failed.";
+            echo "$file: generation of the canonicalized form failed.";
             exit 1
         fi
         if [ sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png ]
         then
-            echo "Recompilation of the canonicalized form failed.";
+            echo "$file: recompilation of the canonicalized form failed.";
             exit 1
         fi
         if [ sng </tmp/canonicalized$$.png >/tmp/decompiled$$.sng ]
         then
-            echo "Decompilation of the canonicalized form failed.";
+            echo "$file: decompilation of the canonicalized form failed.";
             exit 1
         fi
         if diff -c /tmp/canonicalized$$.sng /tmp/decompiled$$.sng
         then
-	    echo "Regression on $file passed."
+	    echo "$file: regression test passed."
 	else
             echo "Decompiled and canonicalized versions differ.";
             exit 1
