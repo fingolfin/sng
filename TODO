@@ -1,0 +1,41 @@
+1. Multiline strings in SNG.
+
+2. Make the -i option work
+
+3. Build Automake/autoconf machinery.
+
+4. Glenn writes:
+
+I'd like to see the row filters in there.  That would permit you
+to save and restore without having to do the filtering algorithm
+and would allow you to preserve particularly well-compressed data;
+all you'd need to do is inflate and deflate.  Also I'd like to  
+see the rows separated into structures with
+{decimal row_number, decimal filter, base64|hex pixels}:
+
+Image: {
+   base64
+   {0,  0,  3333333...},
+   {1,  0,  3333333...},
+   (2,  0,  0000011...),
+   [...]
+   {18, 0,  3333333...}
+ }
+
+You might also allow decimal pixel data, which would have to be delimited
+with white space or commas: (0, 0, 3 3 3 3 3 ....)
+
+Alternatively, you could write the pixel data in netpbm ASCII format and
+the filters separately:
+
+Filters: {000000000000000}
+Image: {
+  netbpm
+{
+P2 18 18 255
+3 3 3 3 3 3 ...
+... 3 3 3 3 3 3
+}
+
+That way you could just yank a PGM or PPM right into the SNG with
+a text editor.
