@@ -1,10 +1,7 @@
 /*****************************************************************************
 
 NAME
-   ppngc.c -- compile editable text PPNG to PNG.
-
-DESCRIPTION
-   This module compiles PPNG (Printable PNG) to PNG.
+   sngc.c -- compile SNG to PNG/MNG.
 
 TODO
   * Test hex-mode data collection

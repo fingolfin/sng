@@ -1,21 +1,22 @@
-.TH pngc 1 "" "Open Source"
+.TH sng 1 "" "Open Source"
 .SH NAME
-ppng -- compile Printable PNG to PNG
+sng -- compiler/decompiler for Scriptable Network Graphics
 .SH SYNOPSIS
-pngc
+sng [-cd]
 .SH DESCRIPTION
-The ppng program compiles Printable PNG, a printable and editable 
-minilanguage for describing PNG files.  The output of the program
-is a PNG file.
+The sng program compiles Scriptable Network Graphics, a printable and
+editable minilanguage for describing PNG and MNG files.  The output of
+the program, in its normal mode, is a PNG or MNG file.  In its check
+mode, it validates an existing MNG or PNG file.
 
-A PPNG description consists of a series of chunk specifications in a
+An SNG description consists of a series of chunk specifications in a
 simple editable text format.  These generally correspond one-for-one
-to PNG.  There are two exceptions. The IMAGE chunk specification, which PPNG
-automatically translates into an IDAT chunk (doing appropriate
-interlacing, compression, etcetera).  The PRIVATE chunk expresses
-nonstandard chunks as raw data.
-.SH LANGUAGE SYNTAX
-In general, the language is token-oriented with tokens separated
+to PNG/MNG chunks.  There are two exceptions. The IMAGE chunk
+specification, which PPNG automatically translates into an IDAT chunk
+(doing appropriate interlacing, compression, etcetera).  The PRIVATE
+chunk expresses nonstandard chunks as raw data.
+.SH SNG LANGUAGE SYNTAX
+In general, the SNG language is token-oriented with tokens separated
 by whitespace.  
 
 In the syntax descriptions below, lines between {} may occur in any
@@ -69,12 +70,14 @@ IMAGE {<data>}
 
 .SH BUGS
 Certain chunks that could theoretically occur before IDAT (such as
-text chunks) are not accepted in PPNG.  This reflects a limitation of
+text chunks) are not accepted in SNG.  This reflects a limitation of
 libpng, which is designed to aggregate most non-text chunks in an
 image structure and write them out before writing out the image.
 
 Declaring a cHRM triggers a libpng warning about a supposedly
 incorrect sBIT value; it is not clear why.  This may be a library bug.
+
+This is an alpha version.  MNG support is not there yet.
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com> November 1990 (home page at
 http://www.tuxedo.org/~esr/).
