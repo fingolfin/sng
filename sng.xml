@@ -196,7 +196,7 @@ gIFx {
    data <string>
 }
 
-<string> {                            # Private chunk declaration
+private <string> {                    # Private chunk declaration
    <data>
 }
 .fi

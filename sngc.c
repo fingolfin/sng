@@ -1299,7 +1299,7 @@ static void compile_gIFg(void)
 	else if (token_equals("input"))
 	    chunkdata[1] = byte_numeric(get_token());
 	else if (token_equals("delay"))
-	    png_save_uint_16(chunkdata+2, short_numeric(get_token()));
+	    png_save_uint_16(chunkdata+2, (int)double_numeric(get_token()*100));
 
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
 }

@@ -621,20 +621,24 @@ static void dump_unknown_chunks(png_infop info_ptr,
 #define SH(p) ((unsigned short)((p)[1]) | (((p)[0]) << 8))
 #define LG(p) ((unsigned long)(SH((p)+2)) | ((ulg)(SH(p)) << 16))
 
-	fprintf(fpout, "%s {\n", up->name);
 	if (!strcmp(up->name, "gIFg"))
 	{
+	    fprintf(fpout, "gIFg {\n", up->name);
 	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n",
 		    up->data[0], up->data[1], (float)(.01 * SH(up->data+2)));
 	}
 	else if (!strcmp(up->name, "gIFx"))
 	{
+	    fprintf(fpout, "gIFx {\n", up->name);
 	    fprintf(fpout, "    identifier: \"%.*s\"; code: \"%c%c%c\"\n",
 		    8, up->data, up->data[8], up->data[9], up->data[10]);
 	    dump_data(fpout, "    data: ", up->size - 11, up->data + 11);
 	}
 	else
-	    dump_data(fpout, "    data: ", up->size, up->data);
+	{
+	    fprintf(fpout, "private %s {\n", up->name);
+	    dump_data(fpout, "    ", up->size, up->data);
+	}
 	fprintf(fpout, "}\n");
 #undef SH
 #undef LG
