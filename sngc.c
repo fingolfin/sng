@@ -204,7 +204,7 @@ static int get_token(void)
     if (pushed)
     {
 	pushed = FALSE;
-	if (verbose)
+	if (verbose > 1)
 	    fprintf(stderr, "saved token: %s\n", token_buffer);
 	return(TRUE);
     }
@@ -291,7 +291,7 @@ static int get_token(void)
 	}
 
     *tp = '\0';
-    if (verbose > 0)
+    if (verbose > 1)
 	fprintf(stderr, "token: %s\n", token_buffer);
     return(TRUE);
 }
@@ -314,7 +314,7 @@ static int get_inner_token(void)
 static int push_token(void)
 /* push back a token; must always be followed immediately by get_token */
 {
-    if (verbose)
+    if (verbose > 1)
 	fprintf(stderr, "pushing token: %s\n", token_buffer);
     pushed = TRUE;
 }
@@ -1643,7 +1643,7 @@ int sngc(FILE *fin, char *name, FILE *fout)
 	    break;
 	}
 
-	if (verbose)
+	if (verbose > 1)
 	    fprintf(stderr, "%s specification processed\n", pp->name);
 	prevchunk = (pp - properties);
 	pp->count++;

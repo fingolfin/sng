@@ -94,11 +94,11 @@ int main(int argc, char *argv[])
 			argv[i], errno);
 		continue;
 	    }
-	    if ((fpout = fopen(outfile, "r")) == NULL)
+	    if ((fpout = fopen(outfile, "w")) == NULL)
 	    {
 		fprintf(stderr,
 			"sng: couldn't open for output %s (%d)\n",
-			argv[i], errno);
+			outfile, errno);
 		continue;
 	    }
 
