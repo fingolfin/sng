@@ -995,8 +995,9 @@ static void compile_IMAGE(void)
     if (nbits != info_ptr->width * info_ptr->height * (sample_size / 8))
 	fatal("size of IMAGE doesn't match height * width in IHDR");
 
-    /* FIXME: perhaps this should be optional? */
-    png_set_packing(png_ptr);
+    /* make image pack as small as possible */
+    if (info_ptr->bit_depth<8)
+	png_set_packing(png_ptr);
 
     /* got the bits; now write them out */
     rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
