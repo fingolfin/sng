@@ -38,7 +38,14 @@ typedef struct {
 #ifndef PNG_KEYWORD_MAX_LENGTH
 #define PNG_KEYWORD_MAX_LENGTH	79
 #endif /* PNG_KEYWORD_MAX_LENGTH */
-#define PNG_STRING_MAX_LENGTH	1024	/* FIXME: should be specified in the standard */
+
+/*
+ * Maximum string size -- the size of an IDAT buffer minus the minimum overhead
+ * of a string chunk (that is, the overhead of a minimal tEXt chunk).  
+ * That overhead: four characters of chunk name, plus zero characters of 
+ * keyword, plus one character of NUL separator.
+ */
+#define PNG_STRING_MAX_LENGTH	(PNG_ZBUF_SIZE - 5)
 
 #define MEMORY_QUANTUM	1024
 
@@ -388,7 +395,6 @@ static int string_validate(bool token_ok, char *stash)
 static int keyword_validate(bool token_ok, char *stash)
 /* validate current token as a PNG keyword */
 {
-    /* FIXME: Use png_check_keyword() once we know how it works */
     if (!token_ok)
 	fatal("EOF while expecting PNG keyword");
     else
