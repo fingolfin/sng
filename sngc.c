@@ -35,8 +35,10 @@ typedef struct {
     int		count;		/* how many have we seen? */
 } chunkprops;
 
-#define PNG_KEYWORD_MAX	79
-#define PNG_STRING_MAX	1024	/* FIXME: should be specified in the standard */
+#ifndef PNG_KEYWORD_MAX_LENGTH
+#define PNG_KEYWORD_MAX_LENGTH	79
+#endif /* PNG_KEYWORD_MAX_LENGTH */
+#define PNG_STRING_MAX_LENGTH	1024	/* FIXME: should be specified in the standard */
 
 #define MEMORY_QUANTUM	1024
 
@@ -376,9 +378,9 @@ static int string_validate(bool token_ok, char *stash)
     {
 	int	len = strlen(token_buffer);
 
-	if (len > PNG_STRING_MAX)
+	if (len > PNG_STRING_MAX_LENGTH)
 	    fatal("string token is too long");
-	strncpy(stash, token_buffer, PNG_STRING_MAX);
+	strncpy(stash, token_buffer, PNG_STRING_MAX_LENGTH);
 	return(len);
     }
 }
@@ -393,9 +395,9 @@ static int keyword_validate(bool token_ok, char *stash)
 	int	len = strlen(token_buffer);
 	unsigned char	*cp;
 
-	if (len > PNG_KEYWORD_MAX)
+	if (len > PNG_KEYWORD_MAX_LENGTH)
 	    fatal("keyword token is too long");
-	strncpy(stash, token_buffer, PNG_KEYWORD_MAX);
+	strncpy(stash, token_buffer, PNG_KEYWORD_MAX_LENGTH);
 	if (isspace(stash[0]) || isspace(stash[len-1]))
 	    fatal("keywords may not contain leading or trailing spaces");
 	for (cp = stash; *cp; cp++)
@@ -632,7 +634,7 @@ static void compile_iCCP(void)
 /* compile and emit an iCCP chunk */
 {
     int slen;
-    char *cp, name[PNG_KEYWORD_MAX+1];
+    char *cp, name[PNG_KEYWORD_MAX_LENGTH+1];
 
     slen = keyword_validate(get_token(), name);
     cp = token_buffer + strlen(token_buffer);
@@ -819,7 +821,7 @@ static void compile_pHYs(void)
 	    fatal("invalid token `%s' in pHYs", token_buffer);
 
     if (!res_x || !res_y)
-	fatal("illegal or missing resolutions in pHYS specification");
+	fatal("illegal or missing resolutions in pHYs specification");
 
     png_set_pHYs(png_ptr, info_ptr, res_x, res_y, unit);
 }
@@ -827,7 +829,8 @@ static void compile_pHYs(void)
 static void compile_tEXt(void)
 /* compile and emit an tEXt chunk */
 {
-    char	keyword[PNG_KEYWORD_MAX+1], text[PNG_STRING_MAX+1];
+    char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
+    char	text[PNG_STRING_MAX_LENGTH+1];
     int		nkeyword = 0, ntext = 0;
 
     while (get_inner_token())
@@ -847,7 +850,8 @@ static void compile_tEXt(void)
 static void compile_zTXt(void)
 /* compile and emit a zTXt chunk */
 {
-    char	keyword[PNG_KEYWORD_MAX+1], text[PNG_STRING_MAX+1];
+    char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
+    char	text[PNG_STRING_MAX_LENGTH+1];
     int		nkeyword = 0, ntext = 0;
 
     while (get_inner_token())
@@ -867,9 +871,9 @@ static void compile_zTXt(void)
 static void compile_iTXt(void)
 /* compile and emit an iTXt chunk */
 {
-    char	language[PNG_KEYWORD_MAX+1];
-    char	keyword[PNG_KEYWORD_MAX+1]; 
-    char	text[PNG_STRING_MAX+1];
+    char	language[PNG_KEYWORD_MAX_LENGTH+1];
+    char	keyword[PNG_KEYWORD_MAX_LENGTH+1]; 
+    char	text[PNG_STRING_MAX_LENGTH+1];
     int		nlanguage = 0, nkeyword = 0, ntext = 0;
 
     while (get_inner_token())
@@ -1093,7 +1097,7 @@ int sngc(FILE *fin, FILE *fout)
 	case sPLT:
 	    if (properties[IDAT].count)
 		fatal("sPLT chunk must come before IDAT");
-	    fatal("FIXME: sPLT chunk type is not handled yet");
+	    fatal("FIXME: sPLT chunk type is not handled yet in libpng 1.0.5");
 	    break;
 
 	case tIME:
