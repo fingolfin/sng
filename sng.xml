@@ -79,7 +79,7 @@ unless led by 0x (hex) or 0 (octal).</para>
 
 <para>The element &lt;string&gt; is any number of
 doublequote-delimited character string literals.  C-style escapes
-(&bsol;n, &bsol;t, &bsol;b, &bsol;r, &bsol; followed by octal or hex
+(\n, \t, \b, \r or \ followed by octal or hex
 digits) are interpreted.  The result is the concatenation of all the
 literals.</para>
 
