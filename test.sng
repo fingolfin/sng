@@ -46,6 +46,8 @@ bKGD {
   index 0	# for paletted images
 }
 
+hIST { 23, 55 }
+
 IMAGE {
 0000001111100000
 0000011111110000

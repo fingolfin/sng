@@ -83,6 +83,10 @@ bKGD {
    index <byte>			# Paletted images only
 }
 
+hIST {
+   <short> [, <short>]*		# Count must match palette size
+}
+
 tEXt {				# Ordinary text chunk
   keyword <string>
   text <string>

@@ -676,6 +676,24 @@ static void compile_bKGD(void)
     png_set_bKGD(png_ptr, info_ptr, &bkgbits);
 }
 
+static void compile_hIST(void)
+/* compile a hIST chunk, put data in info structure */
+{
+    png_uint_16	hist[256];
+    int		nhist = 0;
+
+    while (get_inner_token())
+	if (token_equals(","))
+	    continue;
+	else
+	    hist[nhist++] = short_numeric(TRUE);
+
+    if (nhist != info_ptr->num_palette)
+	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, info_ptr->num_palette);
+
+    png_set_hIST(png_ptr, info_ptr, hist);
+}
+
 static void compile_tEXt(void)
 /* compile and emit an tEXt chunk */
 {
@@ -940,7 +958,7 @@ int sngc(FILE *fin, FILE *fout)
 	case hIST:
 	    if (!properties[PLTE].count || properties[IDAT].count)
 		fatal("hIST chunk must come between PLTE and IDAT");
-	    fatal("FIXME: hIST chunk type is not handled yet");
+	    compile_hIST();
 	    break;
 
 	case tRNS:
