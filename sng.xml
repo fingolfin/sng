@@ -49,7 +49,7 @@ long-numeric literal. All numerics use C conventions; that is, they
 are decimal unless led by 0x (hex) or 0 (octal).
 
 The element <string> is any number of doublequote-delimited character
-string literals.  C-style escapes (\en, \et, \rb, \r, \e followed by
+string literals.  C-style escapes (\en, \et, \eb, \er, \e followed by
 octal or hex digits) are interpreted.  The result is the concatenation
 of all the literals.
 
@@ -76,13 +76,13 @@ paletted image with 64 or fewer colors.  Whitespace is ignored.
 format, each byte is specified by two hex digits (0123456789abcdef),
 most significant first.  Whitespace is ignored.
 
-4. \fBP1\fR format is Portable Bit Map (PPM) format P1.  A decimal
+4. \fBP1\fR format is Portable Bit Map (PBM) format P1.  A decimal
 height and width follow; it is a fatal error for them to fail to match 
 the IHDR dimensions.  Following this, the only non-whitespace charaters
 are expected to be `0' and `1', with the obvious values.  Whitespace
 is ignored.
 
-5. \fBP3\fR format is Portable Bit Map (PPM) format P3.  A decimal
+5. \fBP3\fR format is Portable Pixel  Map (PPM) format P3.  A decimal
 height and width follow; it is a fatal error for them to fail to match 
 the IHDR dimensions.  A maximum channel value in decimal follows;
 it is a fatal error for any following channel value to exceed this
@@ -98,9 +98,9 @@ An <rgb> element may be expanded to:
 
 That is, it is either a paren-enclosed list of RGB values or a string
 naming a color bamed in the X RGB database.  Note that color names are
-not necessarily portable between hosts or even displays, doe to
-different screen gammas and colorimetric biases.  For this reason, the
-SNG decompiler generates color names in comments.
+not necessarily portable between hosts or even displays, due to
+different screen gammas and colorimetric biases.  For this
+reason, the SNG decompiler generates color names in comments.
 
 IMAGE segments contain unpacked and uninterlaced raster data.  There
 will be exactly one IMAGE per SNG dump, containing the pixel data from
@@ -269,8 +269,9 @@ decompiler and name-to-RGB mappings in the compiler.
 pbm(5), ppm(5).
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com> December 1999 (home page at
-http://www.tuxedo.org/~esr/).
+http://www.tuxedo.org/~esr/; SNG home page at
+http://www.tuxedo.org/~esr/sng/).
 
-For more information about PNG, and code that uses the format, see the
+For more information about PNG, see the
 PNG website at <http://www.cdrom.com/pub/png/pngsuite.html>.
 
