@@ -10,14 +10,10 @@ that graphics editors won't handle.  Also, since SNG is easy to
 generate from scripts, sng may be useful at the end of a pipeline that
 programmatically generates PNG images.
 
-This program requires libpng-1.0.8 or later.  With libpng-1.0.8, some
-unusual auxiliary chunks (tRNS, hIST, iCCP) will not be compiled
-correctly (this is due to bugs in libpng's memory management that have
-been fixed in 1.0.9).  All these should be handled correctly with 1.0.9;
-however the default build of 1.0.9 doesn't support the iTXT chunk 
-correctly, so sng won't either.
-
-With the 1.1.x version of libpng, all chunks including iTXT are handled
+This program requires libpng-1.0.9beta7 or later.  All these should be
+handled correctly with 1.0.9 final; however the default build of 1.0.9
+doesn't support the iTXT chunk correctly, so sng won't either.  With
+the 1.1.x version of libpng, all chunks including iTXT are handled
 correctly.
 
 For more details, consult the manual page.  Files in this distribution:
