@@ -905,24 +905,28 @@ static void dump_text(FILE *fpout)
 	case PNG_ITXT_COMPRESSION_NONE:
 	case PNG_ITXT_COMPRESSION_zTXt:
 	    fprintf(fpout, "iTXt {\n");
+#ifdef PNG_iTXt_SUPPORTED
 	    fprintf(fpout, "    language: \"%s\";\n", 
 #ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].lang));
 #else
 		    safeprint(info_ptr->annotations.text[i].lang));
 #endif /* MNG_INTERFACE */
+#endif /* PNG_iTXt_SUPPORTED */
 	    fprintf(fpout, "    keyword: \"%s\";\n", 
 #ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].key));
 #else
 		    safeprint(info_ptr->annotations.text[i].key));
 #endif /* MNG_INTERFACE */
+#ifdef PNG_iTXt_SUPPORTED
 	    fprintf(fpout, "    translated: \"%s\";\n", 
 #ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].lang_key));
 #else
 		    safeprint(info_ptr->annotations.text[i].lang_key));
 #endif /* MNG_INTERFACE */
+#endif /* PNG_iTXt_SUPPORTED */
 	    break;
 	}
 
@@ -1017,7 +1021,7 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
      * This is the earliest point at which we could write the image data;
      * the ancillary chunks after this point have no order contraints.
      * We choose to write the image last so that viewers/editors can get
-     * a look at all the ancillary.
+     * a look at all the ancillary information.
      */
 
     dump_tIME(fpout);
@@ -1106,7 +1110,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
     * This preserves the bit depth of the file, as opposed to
     * the unpacked bit depth of the image.  But this is
     * undocumented.  If it ever breaks, the regression test
-    * will start failing on images if depth 1, 2, and 4.
+    * will start failing on images of depth 1, 2, and 4.
     */
 #ifdef PNG_INFO_IMAGE_SUPPORTED
    png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_PACKING, NULL);
