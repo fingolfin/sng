@@ -750,6 +750,8 @@ static void compile_tRNS(void)
     int		ntrans = 0;
     png_color_16	tRNSbits;
 
+    memset(&tRNSbits, '0', sizeof(tRNSbits));
+
     /* input sample size in bits */
     switch (info_ptr->color_type)
     {

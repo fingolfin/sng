@@ -2,7 +2,7 @@
 
 IHDR {
 	width 16
-	height 15
+	height 19
 	bitdepth 8
 	using color palette 
 	with interlace
@@ -47,15 +47,14 @@ bKGD {
   index 0	# for paletted images
 }
 
-hIST {23, 55, 0}
+hIST {23, 55, 10}
 
-# tRNS processing doesn't seem to work
-#tRNS {
-#   10 10 10
+tRNS {
+   255
    # red 70 
    # green 70
    # blue 70
-#}
+}
 
 pHYs {
    resolution (500, 400) per meter
@@ -63,6 +62,8 @@ pHYs {
 
 IMAGE {
    base64
+3333333333333333
+3333333333333333
 0000001111100000
 0000011111110000
 0000111001111000
@@ -78,6 +79,8 @@ IMAGE {
 0000001111000000
 0000001111000000
 0000000110000000
+3333333333333333
+3333333333333333
 }
 
 tEXt {				# Ordinary text chunk
