@@ -25,10 +25,11 @@ order. Elements bracketed in [] are optional; a sequence bracketed by
 alternatives.  Elements separated by plus signs are an attribute set;
 any sequence of one or more of those element tokens is valid.
 
-The elements <byte>, <long>, <float>, <string> are byte numeric,
-long-integer numeric, float numeric literals respectively.  All
-numerics use C conventions; that is, they are decimal unless led by 0x
-(hex) or 0 (octal).
+The elements <byte>, <short>, <long>, <float>, <string> are byte
+numeric, short-integer numeric, long-integer numeric, float numeric
+literals respectively (all unsigned).  The <slong> element is a signed
+long-numeric literal. All numerics use C conventions; that is, they
+are decimal unless led by 0x (hex) or 0 (octal).
 
 The element <string> is a doublequote-delimited character string.
 The element <keyword> is a doublequote-delimited PNG keyword; that
@@ -130,6 +131,10 @@ iTXt {				# International UTF-8 keyword
   language <keyword>
   keyword <keyword>
   text <string>
+}
+
+sOFFs {
+  offset(<slong>, <slong>) [pixels|meters]*
 }
 
 IMAGE {<data>}

@@ -69,6 +69,10 @@ tIME {
    second 17
 }
 
+oFFs {
+   offset (23, 17) micrometers
+}
+
 IMAGE: {
    base64
 3333333333333333

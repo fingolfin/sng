@@ -51,6 +51,8 @@ typedef struct {
 
 #define MAX_TEXT_CHUNKS	64
 
+#define PNG_MAX_LONG	2147483647L	/* 2^31 */
+
 /* chunk types */
 static chunkprops properties[] = 
 {
@@ -96,19 +98,19 @@ static chunkprops properties[] =
  * Special-purpose chunks in PNG Extensions 1.2.0 specification.
  */
 #define oFFs	17
-    {"pHYs",		FALSE,	0},
+    {"oFFs",		FALSE,	0},
 #define pCAL	18
-    {"pHYs",		FALSE,	0},
+    {"pCAL",		FALSE,	0},
 #define sCAL	19
-    {"pHYs",		FALSE,	0},
+    {"sCAL",		FALSE,	0},
 #define gIFg	20
-    {"pHYs",		FALSE,	0},
+    {"gIFg",		FALSE,	0},
 #define gIFt	21
-    {"pHYs",		FALSE,	0},
+    {"gIFt",		FALSE,	0},
 #define gIFx	22
-    {"pHYs",		FALSE,	0},
+    {"gIFx",		FALSE,	0},
 #define fRAc	23
-    {"pHYs",		FALSE,	0},
+    {"fRAc",		FALSE,	0},
 
 /*
  * Image pseudo-chunk
@@ -341,7 +343,21 @@ static png_uint_32 long_numeric(bool token_ok)
     if (!token_ok)
 	fatal("EOF while expecting long-integer constant");
     result = strtoul(token_buffer, &vp, 0);
-    if (*vp || result == 2147483647L)
+    if (*vp || result >= PNG_MAX_LONG)
+	fatal("invalid or out of range long constant `%s'", token_buffer);
+    return(result);
+}
+
+static png_int_32 slong_numeric(bool token_ok)
+/* validate current token as a signed PNG long (range 0..2^31-1) */
+{
+    long result;
+    char *vp;
+
+    if (!token_ok)
+	fatal("EOF while expecting signed long-integer constant");
+    result = strtol(token_buffer, &vp, 0);
+    if (*vp || result >= PNG_MAX_LONG || result <= -PNG_MAX_LONG)
 	fatal("invalid or out of range long constant `%s'", token_buffer);
     return(result);
 }
@@ -828,7 +844,7 @@ static void compile_tRNS(void)
 static void compile_pHYs(void)
 /* compile a pHYs chunk, put data in info structure */
 {
-    png_byte	unit = 0;
+    png_byte	unit = PNG_RESOLUTION_UNKNOWN;
     png_uint_32	res_x, res_y;
 
     while (get_inner_token())
@@ -843,7 +859,7 @@ static void compile_pHYs(void)
 	else if (token_equals("per"))
 	    continue;
 	else if (token_equals("meter"))
-	    unit = 1;
+	    unit = PNG_RESOLUTION_METER;
 	else
 	    fatal("invalid token `%s' in pHYs", token_buffer);
 
@@ -946,7 +962,7 @@ static void compile_iTXt(void)
 	    fatal("bad token `%s' in iTXt specification", token_buffer);
 
     if (!language || !keyword || !text)
-	fatal("keyword or text is mising");
+	fatal("keyword or text is missing");
 
     /* FIXME: actually emit the chunk (can't be done with 1.0.5) */
 }
@@ -1005,6 +1021,34 @@ static void compile_tIME(void)
 	fatal("incomplete tIME specification");
 
     png_set_tIME(png_ptr, info_ptr, &stamp);
+}
+
+static void compile_oFFs(void)
+/* parse oFFs specification and set corresponding info fields */
+{
+    png_byte	unit = PNG_OFFSET_PIXEL;	/* default to pixels */
+    png_int_32	res_x, res_y;
+
+    while (get_inner_token())
+	if (token_equals("offset"))
+	{
+	    require_or_die("(");
+	    res_x = slong_numeric(get_token());
+	    /* comma */
+	    res_y = slong_numeric(get_token());
+	    require_or_die(")");
+	}
+	else if (token_equals("pixels"))
+	    unit = PNG_OFFSET_PIXEL;
+	else if (token_equals("micrometers"))
+	    unit = PNG_OFFSET_MICROMETER;
+	else
+	    fatal("invalid token `%s' in oFFs", token_buffer);
+
+    if (!res_x || !res_y)
+	fatal("illegal or missing offsets in oFFs specification");
+
+    png_set_oFFs(png_ptr, info_ptr, res_x, res_y, unit);
 }
 
 static void compile_IMAGE(void)
@@ -1239,7 +1283,7 @@ int sngc(FILE *fin, FILE *fout)
 	case oFFs:
 	    if (properties[IDAT].count)
 		fatal("oFFs chunk must come before IDAT");
-	    fatal("FIXME: oFFs chunk type is not handled yet");
+	    compile_oFFs();
 	    break;
 
 	case pCAL:
