@@ -1177,7 +1177,7 @@ static void compile_pCAL(void)
 	    eqtype = PNG_EQUATION_ARBITRARY;
 	    mask |= 0x08;
 	}
-	else if (token_equals("hyerbolic"))
+	else if (token_equals("hyperbolic"))
 	{
 	    eqtype = PNG_EQUATION_HYPERBOLIC;
 	    mask |= 0x08;
