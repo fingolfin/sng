@@ -808,6 +808,10 @@ int sngd(FILE *fp, char *name, FILE *fpout)
        /* turn off IDAT chunk processing */;
 #endif /* __UNUSED__ */
 
+    /* unpack images with small bit depths into bytes */
+    if (info_ptr->bit_depth < 8)
+	png_set_packing(png_ptr);
+
    /* The call to png_read_info() gives us all of the information from the
     * PNG file before the first IDAT (image data chunk).  REQUIRED
     */

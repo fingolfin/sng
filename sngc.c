@@ -651,7 +651,7 @@ static void compile_IHDR(void)
 	if (d > 8)
 	    fatal("bit depth of paletted images must be 1, 2, 4, or 8");
     }
-    else if (info_ptr->color_type != PNG_COLOR_TYPE_GRAY)
+    else if ((info_ptr->color_type != PNG_COLOR_TYPE_GRAY) && d!=8 && d!=16)
 	fatal("bit depth of RGB- and alpha-using images must be 8 or 16");
     info_ptr->bit_depth = d;
 }
@@ -1406,8 +1406,9 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     png_byte	**rowpointers;
-    int		i, nbits, sample_size;
+    int		i, nbits, bytes_per_sample;
     char	*bits;
+    int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
     /* collect the data */
     collect_data(&nbits, &bits);
@@ -1417,34 +1418,35 @@ static void compile_IMAGE(void)
     switch (info_ptr->color_type)
     {
     case PNG_COLOR_TYPE_GRAY:
-	sample_size = info_ptr->bit_depth;
+	bytes_per_sample = doublewidth;
 	break;
 
     case PNG_COLOR_TYPE_PALETTE:
-	sample_size = 8;
+	bytes_per_sample = 1;
 	break;
 
     case PNG_COLOR_TYPE_RGB:
-	sample_size = info_ptr->bit_depth * 3;
+	bytes_per_sample = 3 * doublewidth;
 	break;
 
     case PNG_COLOR_TYPE_RGB_ALPHA:
-	sample_size = info_ptr->bit_depth * 4;
+	bytes_per_sample = 4 * doublewidth;
 	break;
 
     case PNG_COLOR_TYPE_GRAY_ALPHA:
-	sample_size = info_ptr->bit_depth * 2;
+	bytes_per_sample = 2 * doublewidth;
 	break;
 
     default:	/* should never happen */
 	fatal("unknown color type");
     }
 
-    if (nbits != info_ptr->width * info_ptr->height * (sample_size / 8))
-	fatal("size of IMAGE doesn't match height * width in IHDR");
+    if (nbits != info_ptr->width * info_ptr->height * bytes_per_sample)
+	fatal("size (%d) of IMAGE doesn't match width*height (%d*%d) in IHDR",
+	      nbits, info_ptr->width, info_ptr->height);
 
     /* make image pack as small as possible */
-    if (info_ptr->bit_depth<8)
+    if (info_ptr->bit_depth < 8)
 	png_set_packing(png_ptr);
 
     /* got the bits; now write them out */
