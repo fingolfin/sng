@@ -51,13 +51,12 @@ bKGD: {
 
 hIST: {23, 55, 10}
 
-# Library generates a CRC error on this guy.
-#tRNS: {
-#  255
+tRNS: {
+  255
    # red: 70 
    # green: 70
    # blue: 70
-#}
+}
 
 pHYs: {
    resolution (500, 400) per meter
@@ -130,13 +129,13 @@ iTXt: {				# International UTF-8 keyword
   text: "SNG demo, illustrating the language syntax"
 }
 
-gIFg {
+gIFg {				# GIF Graphic Extension chunk
    disposal: 23
    input: 17
    delay: 55
 }
 
-gIFx {
+gIFx {				# GIF Application Extension chunk
    identifier: "SNGCOMPI"
    code: "SNG"
    data: "Dummy application data"
