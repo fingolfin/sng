@@ -2,11 +2,23 @@
 
 SNG (Scriptable Network Graphics) is a minilanguage designed to
 reflect the data and structure of PNG (Portable Network Graphics)
-files in an editable form.
+files in an editable form.  
 
 The sng program translates between SNG and PNG.  It can be useful
-especially for editing data in obscure ancillary chanks that graphics
-editors won't handle.
+especially for viewing and editing data in obscure ancillary chanks
+that graphics editors won't handle.  Also, since SNG is easy to
+generate from scripts, sng may be useful at the end of a pipeline that
+programmatically generates PNG images.
+
+This program requires libpng-1.0.8 or later.  With libpng-1.0.8, some
+unusual auxiliary chunks (tRNS, hIST, iCCP) will not be compiled
+correctly (this is due to bugs in libpng's memory management that have
+been fixed in 1.0.9).  All these should be handled correctly with 1.0.9;
+however the default build of 1.0.9 doesn't support the iTXT chunk 
+correctly, so sng won't either.
+
+With the 1.1.x version of libpng, all chunks including iTXT are handled
+correctly.
 
 For more details, consult the manual page.  Files in this distribution:
 
