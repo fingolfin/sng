@@ -30,7 +30,7 @@ AC_ARG_WITH(rgbtxt, [  --with-rgbtxt=DIR         location of a color database])
 
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(m, pow)
-AC_CHECK_LIB(png, png_write_init, , , $LIBS)
+AC_CHECK_LIB(png, png_get_io_ptr, , , $LIBS)
 
 if test "$ac_cv_lib_png_png_write_init" = "no"
 then
