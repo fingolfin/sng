@@ -20,6 +20,14 @@ cat >index.html <<EOF
 </table>
 <HR>
 
+<center>
+Powered by:<br>
+<A href="http://sourceforge.net"> 
+<IMG src="http://sourceforge.net/sflogo.php?group_id=1012&type=1"
+width="88" height="31" border="0"></A> 
+</center>
+<p>
+
 <H1 ALIGN=CENTER>The SNG home page</H1>
 
 SNG (Scriptable Network Graphics) is a minilanguage designed

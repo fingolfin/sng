@@ -17,21 +17,31 @@ make zip
 indexgen.sh
 lsmgen.sh
 
+echo "Uploading to SourceForge"
+FTP=esr@shell.sourceforge.net:/home/groups/ftp/pub/sng/
+HTML=esr@shell.sourceforge.net:/home/groups/sng/htdocs
+# First, copy to SourceForge website
+scp sng-${version}.tar.gz $FTP
+scp sng-${version}.zip $FTP
+scp index.html $HTML
+scp NEWS $FTP
+echo "Upload to SourceForge complete"
+
 lftp <<EOF
 # First, copy to primary website
-open $WWWHOST
-cd $WWWDIR/sng
-put sng-${version}.tar.gz
-# put sng-${version}-1.i386.rpm
-# put sng-${version}-1.src.rpm
-put sng-${version}.zip
-put index.html
-put NEWS
-lcd ..
-put software.html
-lcd sng
-close
-echo "Upload to tuxedo complete"
+#open $WWWHOST
+#cd $WWWDIR/sng
+#put sng-${version}.tar.gz
+## put sng-${version}-1.i386.rpm
+## put sng-${version}-1.src.rpm
+#put sng-${version}.zip
+#put index.html
+#put NEWS
+#lcd ..
+#put software.html
+#lcd sng
+#close
+#echo "Upload to tuxedo complete"
 
 # Next, copy to locke FTP directory 
 open locke.ccil.org

@@ -17,6 +17,8 @@ to get the best compression of typical GIF banners.
 
 Blue-sky stuff:
 
+Structured syntax for ICC profiles.  See <http://www.color.org/>.
+
 The following is a plausible XML syntax.  Would it be an improvement?
 
 <IHDR
