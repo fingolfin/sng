@@ -10,14 +10,13 @@ IHDR: {
 
 gAMA: {0.45}
 
-# This compiles, but triggers a libpng warning about invalid SBIT depth
 # The parameters are the standard values in the Specification section 4.2.2.3.
-#cHRM {
-#   white: (0.31270, 0.32900)
-#   red:   (0.6400,  0.3300)
-#   green: (0.3000,  0.6000)
-#   blue:  (0.1500,  0.600)
-#}
+cHRM {
+   white: (0.31270, 0.32900)
+   red:   (0.6400,  0.3300)
+   green: (0.3000,  0.6000)
+   blue:  (0.1500,  0.600)
+}
 
 # This cannot coexist with the iCCP chunk.
 # sRGB {1}	# This value conveys `relative colorimetric' intent.
