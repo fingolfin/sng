@@ -480,14 +480,24 @@ static void collect_data(int *pnbits, char **pbits)
      * hex: 
      *   Two hex digits per byte.
      *
+     * P1:
+     *   pbm format P1 (see pbm(5)).
+     *
+     * P3:
+     *   ppm format P3 (see ppm(5)).
+     *
      * In either format, whitespace is ignored.
      */
     char *bits = xalloc(MEMORY_QUANTUM);
     int quanta = 1;
     int	nbits = 0;
     int ocount = 0;
-    int c;
-    bool pixperchar;
+    int c, maxval;
+#define BASE64_FMT	0
+#define HEX_FMT		1
+#define P1_FMT		2
+#define P3_FMT		3
+    int fmt;
 
     if (!get_inner_token())
 	fatal("missing format type in data segment");
@@ -507,9 +517,29 @@ static void collect_data(int *pnbits, char **pbits)
 	return;
     }
     else if (token_equals("base64"))
-	pixperchar = TRUE;
+	fmt = BASE64_FMT;
     else if (token_equals("hex"))
-	pixperchar = FALSE;
+	fmt = HEX_FMT;
+    else if (token_equals("P1"))
+    {
+	int width = short_numeric(get_token());
+	int height = short_numeric(get_token());
+
+	if (width != info_ptr->width && height != info_ptr->height)
+	    fatal("pbm image dimensions don't mastch IHDR");
+	fmt = P1_FMT;
+    }
+    else if (token_equals("P3"))
+    {
+	int width = short_numeric(get_token());
+	int height = short_numeric(get_token());
+
+	maxval = short_numeric(get_token());
+
+	if (width != info_ptr->width && height != info_ptr->height)
+	    fatal("ppm image dimensions don't mastch IHDR");
+	fmt = P3_FMT;
+    }
     else
 	fatal("unknown data format");
 
@@ -524,7 +554,16 @@ static void collect_data(int *pnbits, char **pbits)
 	    ungetc('}', yyin);
 	    break;
 	}
-	else if (isspace(c))
+	else if (c == '#')	/* handle comments */
+	{
+	    while ((c = fgetc(yyin)))
+		if (feof(yyin) || c == '\n')
+		    break;
+	    if (c == '\n')
+		linenum++;
+	    continue;
+	}
+	else if (isspace(c))	/* skip whitespace */
 	{
 	    if (c == '\n')
 		linenum++;
@@ -537,8 +576,9 @@ static void collect_data(int *pnbits, char **pbits)
 	    if (nbits > quanta * MEMORY_QUANTUM)
 		bits = xrealloc(bits, MEMORY_QUANTUM * ++quanta);
 
-	    if (pixperchar)
+	    switch(fmt)
 	    {
+	    case BASE64_FMT:
 		if (!isalpha(c) && !isdigit(c))
 		    fatal("bad character %02x in data block", c);
 		else if (isdigit(c))
@@ -552,11 +592,11 @@ static void collect_data(int *pnbits, char **pbits)
 		else /* if (c == '/') */
 		    value = 63;
 		bits[nbits++] = value;
-	    }
-	    else
-	    {
+		break;
+
+	    case HEX_FMT:
 		if (!isxdigit(c))
-		    fatal("bad character %02x in IDAT block", c);
+		    fatal("bad hex character %02x in data block", c);
 		else if (isdigit(c))
 		    value = c - '0';
 		else if (isupper(c))
@@ -567,9 +607,36 @@ static void collect_data(int *pnbits, char **pbits)
 		    bits[nbits++] |= value;
 		else
 		    bits[nbits] = value * 16;
+		break;
+
+	    case P1_FMT:
+		if (c == '0')
+		    bits[nbits++] = 0;
+		else if (c == '1')
+		    bits[nbits++] = 1;
+		else
+		    fatal("bad pbm character %02x in data block", c);
+		break;
+
+	    case P3_FMT:
+		c = short_numeric(get_token());
+
+		if (c > maxval)
+		    fatal("channel value out of range in pbm block");
+
+		/*
+		 * Channel order in PBM is R, then G, then B, same as PNG;
+		 * so a straight copy in the order we see them will work.
+		 */
+		bits[nbits++] = c;
+		break;
 	    }
 	}
     }
+#undef BASE64_FMT
+#undef HEX_FMT
+#undef P1_FMT
+#undef P3_FMT
 
     *pnbits = nbits;
     *pbits = bits;

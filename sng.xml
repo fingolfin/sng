@@ -31,8 +31,10 @@ be dumped in raw form as IDAT chanks rather than as a reassembled
 IMAGE.  The -v option makes sng report on what files it is converting.
 .SH SNG LANGUAGE SYNTAX
 In general, the SNG language is token-oriented with tokens separated
-by whitespace.  The characters `:' and `;' are treated as whitespace,
-except the `;' terminates a data literal (see below).
+by whitespace.  Anywhere that whitespace may appear, a `#' comment
+leader causes all characters up to the next following newline to be
+ignored.  The characters `:' and `;' are treated as whitespace, except
+the `;' terminates a data element (see below).
 
 In the syntax descriptions below, lines between {} may occur in any
 order. Elements bracketed in [] are optional; a sequence bracketed by
@@ -56,17 +58,37 @@ keyword; that is, a string of no more than 79 printable Latin-1
 characters or spaces, with no leading and no trailing and no
 consecutive spaces.
 
-A <data> literal consists of a sequence of byte specifications in one
-of three formats. String format is a doublequote-delimited printable
-ASCII string.  The other two formats are signaled by the token
-`base64', or `hex'.  Base64 format can be used if the image either has
-total (color plus alpha) bit depth of four or less, or it is a
-paletted image with 64 or fewer colors; values of the chars are 0-9,
-followed by A-Z for 10-35, followed by a-z for 36-61, followed by +
-for 62 and / for 63 (RFC2045 base-64 encoding).  In hex format, each
-byte is specified by two hex digits (0123456789abcdef).  Whitespace
-embedded in base64 and hex data literals is ignored.  A ';' ends a
-data literal (unless it occurs inside the string syntax).
+A <data> element consists of a sequence of byte specifications in any of
+the following formats. Either '}' or ';' ends a data literal; `}' also
+ends the enclosing chunk.
+
+1. \fBstring\fR format is an SNG string literal or sequence of
+string literals (see above). The bytes of data are the string contents.
+
+2. \fBbase64\fR format is signaled by the leading token `base64'.  It
+is RFC2045 base-64 encoding, with decimal digits representing values
+0-9, followed by A-Z for 10-35, followed by a-z for 36-61, followed by
++ for 62 and / for 63.  Base64 format can be used if the image either
+has total (color plus alpha) bit depth of four or less, or it is a
+paletted image with 64 or fewer colors.  Whitespace is ignored.
+
+3. \fBhex\fR format is signaled by the leading token `hex'. In hex
+format, each byte is specified by two hex digits (0123456789abcdef),
+most significant first.  Whitespace is ignored.
+
+4. \fBP1\fR format is Portable Bit Map (PPM) format P1.  A decimal
+height and width follow; it is a fatal error for them to fail to match 
+the IHDR dimensions.  Following this, the only non-whitespace charaters
+are expected to be `0' and `1', with the obvious values.  Whitespace
+is ignored.
+
+5. \fBP3\fR format is Portable Bit Map (PPM) format P3.  A decimal
+height and width follow; it is a fatal error for them to fail to match 
+the IHDR dimensions.  A maximum channel value in decimal follows;
+it is a fatal error for any following channel value to exceed this
+value.  Following this are triples of decimal channel values
+representing RGB triples.   Whitespace separates decimal channel 
+values but is otherwise ignored.
 
 An <rgb> element may be expanded to:
 
@@ -243,6 +265,8 @@ distribution TODO file for other minor problems.
 rgb.txt
 The X colorname database, used for RGB-to-name mappings in the
 decompiler and name-to-RGB mappings in the compiler. 
+.SH SEE ALSO
+pbm(5), ppm(5).
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com> December 1999 (home page at
 http://www.tuxedo.org/~esr/).

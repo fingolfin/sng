@@ -46,7 +46,7 @@ then
     AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt")
 else
     with_rgbtxt="/usr/X11R6/lib/X11/rgb.txt"
-    AC_DEFINE(RGBTXT, "$with_rgbtxt")
+    AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt")
 fi
 
 AC_MSG_CHECKING("for X color database")

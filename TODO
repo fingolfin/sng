@@ -7,10 +7,7 @@ Author's tasks:
 
 Suitable tasks for someone other than the author:
 
-A. Add netpbm as a supported data literal format, in addition to the
-   current string and base64 hex.
-
-B. At the moment, the code assumes that double and float fields 
+2. At the moment, the code assumes that double and float fields 
    in the info structure have the PNG_FLOATING_POINT_SUPPORTED
    representation.  Conditionalize the code suitably.  Also add properly
    conditionalized code so that everything still work with only
