@@ -292,20 +292,28 @@ static int get_token(void)
     /* accumulate token */
     if (w == '\'' || w == '"')
     {
+	int literal = FALSE;
+
 	tp = token_buffer;
 	for (;;)
 	{
 	    c = fgetc(yyin);
 	    if (feof(yyin))
 		return(FALSE);
-	    else if (c == w)
+	    else if (c == '\\' && !literal)
+	    {
+		literal = TRUE;
+		continue;
+	    }
+	    else if (c == w && !literal)
 		break;
-	    else if (c == '\n')
+	    else if (c == '\n' && !literal)
 		fatal("runaway string");
 	    else if (tp >= token_buffer + sizeof(token_buffer))
 		fatal("string token too long");
 	    else
 		*tp++ = c;
+	    literal = FALSE;
 	}
 	*tp = '\0';
 	escapes(token_buffer, token_buffer);
@@ -851,7 +859,7 @@ static void compile_bKGD(void)
 	{
 	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
 		fatal("Can't use color background with this image type");
-	    bkgbits.red = byte_numeric(get_token());
+	    bkgbits.red = short_numeric(get_token());
 	}
 	else if (token_equals("green"))
 	{
@@ -914,6 +922,7 @@ static void compile_tRNS(void)
     case PNG_COLOR_TYPE_GRAY:
 	require_or_die("gray");
 	tRNSbits.gray = short_numeric(get_token());
+	require_or_die("}");
 	break;
 
     case PNG_COLOR_TYPE_PALETTE:
@@ -925,7 +934,7 @@ static void compile_tRNS(void)
     case PNG_COLOR_TYPE_RGB:
 	while (get_inner_token())
 	    if (token_equals("red"))
-		tRNSbits.red = byte_numeric(get_token());
+		tRNSbits.red = short_numeric(get_token());
 	    else if (token_equals("green"))
 		tRNSbits.green = short_numeric(get_token());
 	    else if (token_equals("blue"))
