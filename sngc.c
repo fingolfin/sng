@@ -1563,7 +1563,7 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     png_byte	**row_pointers;
-    int		i, nbytes, bytes_per_sample;
+    int		i, nbytes, bytes_per_sample, nsamples;
     char	*bytes;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
@@ -1624,9 +1624,32 @@ static void compile_IMAGE(void)
 	fatal("unknown color type");
     }
 
-    if (nbytes != info_ptr->width * info_ptr->height * bytes_per_sample)
-	fatal("size (%d) of IMAGE doesn't match width*height*bps (%d*%d*%d) in IHDR",
-	      nbytes, info_ptr->width, info_ptr->height, bytes_per_sample);
+    /*
+     * Compute the actual size of the image in samples.
+     */
+    if (info_ptr->bit_depth >= 8)
+	nsamples = nbytes / bytes_per_sample;
+    else
+    {
+	int samples_per_byte = (8 / info_ptr->bit_depth);
+
+	nsamples = nbytes * samples_per_byte;
+	/*
+	 * Images of bit depth less than 8 will have excess data in the
+	 * byte corresponding to the last pixel(s) in a row when the
+	 * width is not a multiple of 8.  Correct for this.
+	 */
+	if (info_ptr->width % 8)
+	{
+	    int excess_samples_per_line = (info_ptr->width % samples_per_byte);
+
+	    if (excess_samples_per_line)
+		nsamples -= info_ptr->height * (samples_per_byte - excess_samples_per_line);
+	}
+    }
+    if (nsamples != info_ptr->width * info_ptr->height)
+	fatal("sample count (%d) doesn't match width*height (%d*%d) in IHDR",
+	      nsamples, info_ptr->width, info_ptr->height);
 
 #ifndef PNG_INFO_IMAGE_SUPPORTED
     /* make image pack as small as possible */
