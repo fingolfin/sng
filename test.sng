@@ -82,8 +82,14 @@ pCAL {
    x0: 1234
    x1: 5678
    linear mapping
-   units: "BTU"
+   unit: "BTU"
    parameters: 55 99
+}
+
+sCAL {
+   unit: meter
+   width: 0.002
+   height: 0.001
 }
 
 IMAGE: {

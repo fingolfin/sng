@@ -602,7 +602,7 @@ static void compile_PLTE(void)
 	ncolors++;
     }
 
-    /* write out the accumulated palette entries */
+    /* register the accumulated palette entries into the info structure */
     png_set_PLTE(png_ptr, info_ptr, palette, ncolors);
 }
 
@@ -1142,10 +1142,10 @@ static void compile_pCAL(void)
 /* parse pCAL specification and set corresponding info fields */
 {
     char	name[PNG_KEYWORD_MAX_LENGTH+1];
-    char	units[PNG_STRING_MAX_LENGTH+1];
+    char	unit[PNG_STRING_MAX_LENGTH+1];
     char	strbuf[PNG_STRING_MAX_LENGTH+1];
     char	*params[MAX_PARAMS];
-    int 	eqtype, mask, nname, nunits, nstrbuf, nparams, required;
+    int 	eqtype, mask, nname, nunit, nstrbuf, nparams, required;
     png_int_32	x0, x1;
 
     while (get_inner_token())
@@ -1186,9 +1186,9 @@ static void compile_pCAL(void)
 	    eqtype = PNG_EQUATION_HYPERBOLIC;
 	    mask |= 0x08;
 	}
-	else if (token_equals("units"))
+	else if (token_equals("unit"))
 	{
-	    nunits = keyword_validate(get_token(), units);
+	    nunit = keyword_validate(get_token(), unit);
 	    mask |= 0x10;
 	}
         else if (token_equals("parameters"))
@@ -1241,7 +1241,31 @@ static void compile_pCAL(void)
 	fatal("%d parameters is wrong for this equation type in pCAL",nparams);
 
     png_set_pCAL(png_ptr, info_ptr,
-		 name, x0, x1, eqtype, nparams, units, params);
+		 name, x0, x1, eqtype, nparams, unit, params);
+}
+
+static void compile_sCAL(void)
+/* parse sCAL specification and emit corresponding bits */
+{
+    char	unit[PNG_STRING_MAX_LENGTH+1];
+    char	width[PNG_STRING_MAX_LENGTH+1];
+    char	height[PNG_STRING_MAX_LENGTH+1];
+    int 	nunit, nwidth, nheight;
+
+    while (get_inner_token())
+	if (token_equals("unit"))
+	    nunit = string_validate(get_token(), unit);
+	else if (token_equals("width"))
+	    nwidth = string_validate(get_token(), width);
+	else if (token_equals("height"))
+	    nheight = string_validate(get_token(), height);
+	else
+	    fatal("invalid token `%s' in pCAL specification", token_buffer);
+
+    if (!nunit || !nwidth || !nheight)
+	fatal("incomplete sCAL specification");
+
+    /* FIXME: add library call to set sCAL */
 }
 
 static void compile_IMAGE(void)
@@ -1488,7 +1512,7 @@ int sngc(FILE *fin, FILE *fout)
 	case sCAL:
 	    if (properties[IDAT].count)
 		fatal("sCAL chunk must come before IDAT");
-	    fatal("FIXME: sCAL chunk type is not handled yet");
+	    compile_sCAL();
 	    break;
 
 	case gIFg:

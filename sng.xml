@@ -156,6 +156,12 @@ pCAL {
    [parameters <string>*] 
 }
 
+sCAL {
+   unit meter|radian
+   width <string>
+   height <string>
+}
+
 IMAGE {<data>}
 .fi
 
