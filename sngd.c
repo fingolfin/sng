@@ -91,10 +91,12 @@ static void multi_dump(FILE *fpout, char *leader,
 
     for (i = 0; i < height; i++)
 	for (cp = data[i]; cp < data[i] + width; cp++)
+	{
 	    if (!isprint(*cp) && !isspace(*cp))
 		all_printable = 0;
-	    else if (*cp > 63)
+	    if (*cp > 64)
 		base64 = 0;
+	}
 
     for (i = 0; i < height; i++)
     {
