@@ -1,10 +1,12 @@
 1. Multiline strings in SNG.
 
-2. Make the -i option work
+2. Clean up and regularize the syntax.
 
-3. Build Automake/autoconf machinery.
+3. Make the -i option work
 
-4. Glenn writes:
+4. Build Automake/autoconf machinery.
+
+5. Glenn writes:
 
 I'd like to see the row filters in there.  That would permit you
 to save and restore without having to do the filtering algorithm
