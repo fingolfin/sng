@@ -763,7 +763,7 @@ static void compile_cHRM(void)
 /* parse cHRM specification, set corresponding bits in info_ptr */
 {
     char	cmask = 0;
-    float wx, wy, rx, ry, gx, gy, bx, by;
+    float	wx, wy, rx, ry, gx, gy, bx, by;
 
     while (get_inner_token())
     {
@@ -813,14 +813,37 @@ static void compile_cHRM(void)
     if (cmask != 0x0f)
 	fatal("cHRM specification is not complete");
     else
+    {
+#ifdef PNG_FLOATING_POINT_SUPPORTED
 	png_set_cHRM(png_ptr, info_ptr,
 		     wx, wy, rx, ry, gx, gy, bx, by);
+#else
+#ifdef PNG_FIXED_POINT_SUPPORTED
+	png_set_cHRM_fixed(png_ptr, info_ptr,
+			   FLOAT_TO_FIXED(wx),
+			   FLOAT_TO_FIXED(wy),
+			   FLOAT_TO_FIXED(rx),
+			   FLOAT_TO_FIXED(ry),
+			   FLOAT_TO_FIXED(gx),
+			   FLOAT_TO_FIXED(gy),
+			   FLOAT_TO_FIXED(bx),
+			   FLOAT_TO_FIXED(by));
+#endif
+#endif
+    }
 }
 
 static void compile_gAMA(void)
 /* compile and emit an gAMA chunk */
 {
-    png_set_gAMA(png_ptr, info_ptr, double_numeric(get_token()));
+    double gamma = double_numeric(get_token());
+
+#ifdef PNG_FLOATING_POINT_SUPPORTED
+    png_set_gAMA(png_ptr, info_ptr, gamma);
+#endif
+#ifdef PNG_FIXED_POINT_SUPPORTED
+    png_set_gAMA_fixed(png_ptr, info_ptr, FLOAT_TO_FIXED(gamma));
+#endif
     if (!get_token() || !token_equals("}"))
 	fatal("bad token `%s' in gAMA specification", token_buffer);
 }
@@ -1397,6 +1420,9 @@ static void compile_sCAL(void)
     double	width, height;
     int 	nunit;
     png_byte	unitbyte;
+#if !defined(FLOATING_POINT_SUPPORTED) && defined(FIXED_POINT_SUPPORTED)
+    char	width_s[BUFSIZ], height_s[BUFSIZ];
+#endif
 
     while (get_inner_token())
 	if (token_equals("unit"))
@@ -1410,16 +1436,32 @@ static void compile_sCAL(void)
 		unitbyte = PNG_SCALE_UNKNOWN;
 	}
 	else if (token_equals("width"))
+	{
 	    height = double_numeric(get_token());
+#if !defined(FLOATING_POINT_SUPPORTED) && defined(FIXED_POINT_SUPPORTED)
+	    strcpy(width_s, token_buffer);
+#endif
+	}
 	else if (token_equals("height"))
+	{
 	    width = double_numeric(get_token());
+#if !defined(FLOATING_POINT_SUPPORTED) && defined(FIXED_POINT_SUPPORTED)
+	    strcpy(height_s, token_buffer);
+#endif
+	}
 	else
 	    fatal("invalid token `%s' in pCAL specification", token_buffer);
 
     if (!nunit || !width || !height)
 	fatal("incomplete sCAL specification");
 
+#ifdef PNG_FLOATING_POINT_SUPPORTED
     png_set_sCAL(png_ptr, info_ptr, unitbyte, width, height);
+#else
+#ifdef PNG_FIXED_POINT_SUPPORTED
+    png_set_sCAL_s(png_ptr, info_ptr, unitbyte, width_s, height_s);
+#endif
+#endif
 }
 
 static void compile_gIFg(void)
@@ -1571,12 +1613,11 @@ int sngc(FILE *fin, char *name, FILE *fout)
 /* compile SNG on fin to PNG on fout */
 {
     int	prevchunk, errtype, i;
-    float gamma;
     char buf[BUFSIZ];
 
     yyin = fin;
     file = name;
-    linenum = 0;
+    linenum = 1;
 
     if (fgets(buf, sizeof(buf), fin) == NULL)
     {

@@ -391,6 +391,8 @@ static void dump_cHRM(FILE *fpout)
 {
     double wx, wy, rx, ry, gx, gy, bx, by;
 
+
+#ifdef PNG_FLOATING_POINT_SUPPORTED
     wx = info_ptr->x_white;
     wy = info_ptr->y_white;
     rx = info_ptr->x_red;
@@ -399,6 +401,18 @@ static void dump_cHRM(FILE *fpout)
     gy = info_ptr->y_green;
     bx = info_ptr->x_blue;
     by = info_ptr->y_blue;
+#else
+#ifdef PNG_FIXED_POINT_SUPPORTED
+    wx = FIXED_TO_FLOAT(info_ptr->int_x_white);
+    wy = FIXED_TO_FLOAT(info_ptr->int_y_white);
+    rx = FIXED_TO_FLOAT(info_ptr->int_x_red);
+    ry = FIXED_TO_FLOAT(info_ptr->int_y_red);
+    gx = FIXED_TO_FLOAT(info_ptr->int_x_green);
+    gy = FIXED_TO_FLOAT(info_ptr->int_y_green);
+    bx = FIXED_TO_FLOAT(info_ptr->int_x_blue);
+    by = FIXED_TO_FLOAT(info_ptr->int_y_blue);
+#endif
+#endif
 
     if (wx < 0 || wx > 0.8 || wy < 0 || wy > 0.8 || wx + wy > 1.0) {
 	printerr(1, "invalid cHRM white point %0g %0g", wx, wy);
@@ -423,7 +437,15 @@ static void dump_cHRM(FILE *fpout)
 static void dump_gAMA(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_gAMA) {
-        fprintf(fpout, "gAMA {%#0.5g}\n", info_ptr->gamma);
+#ifdef PNG_FLOATING_POINT_SUPPORTED
+        fprintf(fpout, "gAMA {%#0.5g}\n",
+		info_ptr->gamma);
+#else
+#ifdef PNG_FIXED_POINT_SUPPORTED
+        fprintf(fpout, "gAMA {%#0.5g}\n",
+		FIXED_TO_FLOAT(info_ptr->int_gamma));
+#endif
+#endif
     }
 }
 
@@ -594,8 +616,15 @@ static void dump_sCAL(FILE *fpout)
 	    fprintf(fpout, "    unit:   unknown\n");
 	    break;
 	}
+#ifdef PNG_FLOATING_POINT_SUPPORTED
 	fprintf(fpout, "    width:  %g\n", info_ptr->scal_pixel_width);
 	fprintf(fpout, "    height: %g\n", info_ptr->scal_pixel_height);
+#else
+#ifdef PNG_FIXED_POINT_SUPPORTED
+	fprintf(fpout, "    width:  %s\n", info_ptr->scal_s_width);
+	fprintf(fpout, "    height: %s\n", info_ptr->scal_s_height);
+#endif
+#endif
 	fprintf(fpout, "}\n");
     }
 }

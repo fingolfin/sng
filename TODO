@@ -2,16 +2,8 @@
 
 Author's tasks:
 
-1. Make the -i option work (once the library can support suppressing
-   normal IDAT processing).
-
-Suitable tasks for someone other than the author:
-
-2. At the moment, the code assumes that double and float fields 
-   in the info structure have the PNG_FLOATING_POINT_SUPPORTED
-   representation.  Conditionalize the code suitably.  Also add properly
-   conditionalized code so that everything still work with only
-   fixed-point (PNG_FIXED_POINT_SUPPORTED) enabled.
+* Make the -i option work (once the library can support suppressing
+  normal IDAT processing).
 
 Blue-sky stuff:
 
@@ -163,12 +155,3 @@ CDATA marked section, then you only have to escape ]]> which is unlikely
 An XML parser is required to halt on well formedness errors, deal with
 entities, and so on.
 
-Another possibility for palettes would be to use the same color
-identifiers as used in HTML, and register attributes c0 through c255
-(only those used would need to be present; this example is of one of
-those bloated PLTEs that we have been discussing lately):
-
-   <PLTE>
-      c0="#000000" c1="#300000" ... c215="#ffffff" c216=#000000 ...
-      c254="#000000" c255="#000000">
-   </PLTE>

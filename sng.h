@@ -51,4 +51,7 @@ extern png_info *info_ptr;
  */
 #define PNG_STRING_MAX_LENGTH	(PNG_ZBUF_SIZE - 5)
 
+#define FLOAT_TO_FIXED(d)	((png_fixed_point)((d) * 100000))
+#define FIXED_TO_FLOAT(n)	((float)((n) / 100000.0))
+
 /* sng.h ends here */
