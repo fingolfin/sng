@@ -118,6 +118,7 @@ static png_color palette[256];
 
 static color_item *cname_hashbuckets[COLOR_HASH_MODULUS];
 static int cname_initialized;
+static int write_transform_options;
 
 static int hash_by_cname(color_item *cp)
 /* hash by color's RGB value */
@@ -1498,6 +1499,8 @@ static void compile_gIFg(void)
 
 	    png_save_uint_16(chunkdata+2, (int)(delay*100));
 	}
+	else
+	    fatal("invalid token `%s' in gIFg specification", token_buffer);
 
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
 }
@@ -1537,6 +1540,8 @@ static void compile_gIFx(void)
 	    memcpy(chunkdata + 11, data, datalen);
 	    free(data);
 	}
+	else
+	    fatal("invalid token `%s' in gIFx specification", token_buffer);
 
     chunk.size = 11 + strlen(chunkdata + 11);
 
@@ -1551,9 +1556,35 @@ static void compile_IMAGE(void)
     char	*bits;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
-    /* collect the data */
-    collect_data(&nbits, &bits);
-    require_or_die("}");
+    write_transform_options = 0;
+    while (get_inner_token())
+	if (token_equals("pixels"))
+	    collect_data(&nbits, &bits);
+	else if (token_equals("options"))
+	{
+	    if (token_equals("identity"))
+		write_transform_options = PNG_TRANSFORM_IDENTITY;
+	    else if (token_equals("packing"))
+		write_transform_options |= PNG_TRANSFORM_PACKING;
+	    else if (token_equals("packswap"))
+		write_transform_options |= PNG_TRANSFORM_PACKSWAP;
+	    else if (token_equals("invert_mono"))
+		write_transform_options |= PNG_TRANSFORM_INVERT_MONO;
+	    else if (token_equals("shift"))
+		write_transform_options |= PNG_TRANSFORM_SHIFT;
+	    else if (token_equals("bgr"))
+		write_transform_options |= PNG_TRANSFORM_BGR;
+	    else if (token_equals("swap_alpha"))
+		write_transform_options |= PNG_TRANSFORM_SWAP_ALPHA;
+	    else if (token_equals("invert_alpha"))
+		write_transform_options |= PNG_TRANSFORM_INVERT_ALPHA;
+	    else if (token_equals("swap_endian"))
+		write_transform_options |= PNG_TRANSFORM_SWAP_ENDIAN;
+	    else if (token_equals("strip_filler"))
+		write_transform_options |= PNG_TRANSFORM_STRIP_FILLER;
+	}
+	else
+	    fatal("invalid token `%s' in IMAGE specification", token_buffer);
 
     /* compute input sample size in bits */
     switch (info_ptr->color_type)
@@ -1683,6 +1714,8 @@ int sngc(FILE *fin, char *name, FILE *fout)
 
     /* keep all unknown chunks, we'll dump them later */
     png_set_keep_unknown_chunks(png_ptr, 2, NULL, 0);
+
+    write_transform_options = PNG_TRANSFORM_IDENTITY;
 
     /* interpret the following chunk specifications */
     prevchunk = NONE;
@@ -1891,7 +1924,9 @@ int sngc(FILE *fin, char *name, FILE *fout)
     png_write_end(png_ptr, info_ptr);
 #else
     /* write out the info data, including the image */
-    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_PACKING, NULL);
+    if (!write_transform_options && info_ptr->bit_depth < 8)
+	write_transform_options |= PNG_TRANSFORM_PACKING;
+    png_write_png(png_ptr, info_ptr, write_transform_options, NULL);
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 
     /* if you malloced the palette, free it here */

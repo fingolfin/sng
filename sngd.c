@@ -350,7 +350,7 @@ static void dump_image(png_bytepp rows, FILE *fpout)
     else
     {
 	fprintf(fpout, "IMAGE {\n");
-	multi_dump(fpout, "    ", 
+	multi_dump(fpout, "    pixels ", 
 		   png_get_rowbytes(png_ptr, info_ptr),  info_ptr->height,
 		   rows);
 	fprintf(fpout, "}\n");

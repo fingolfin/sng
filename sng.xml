@@ -107,6 +107,12 @@ will be exactly one IMAGE per SNG dump, containing the pixel data from
 all IDAT chunks, unless the -i option is on.  In that case, there will
 be multiple IDAT chunks containing raw (compressed) image data.
 
+The options member of an IMAGE chunk (if present) sets image write
+transformations, supplying the third argument of the png_write_png()
+call used for output.  Note that for images with a bit depth of less
+than 8, there is a default `packing' transformation.  Consult the
+libpng(3) manual page for details.
+
 Every SNG file must begin with the string "#SNG", followed by optional
 SNG version information, followed by a colon (`:', ASCII 58)
 character.  The remainder of the first line is ignored by SNG.
@@ -235,7 +241,9 @@ sCAL {
 }
 
 IMAGE {
-   <data>
+   options identity+packing+packswap+invert_mono
+              +shift+bgr+swap_alpha+invert_alpha+swap_endian+strip_filler
+   pixels <data>
 }
 
 gIFg {
