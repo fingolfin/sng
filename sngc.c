@@ -31,6 +31,8 @@ typedef struct {
     int		count;		/* how many have we seen? */
 } chunkprops;
 
+#define MEMORY_QUANTUM	1024
+
 /* chunk types */
 static chunkprops properties[] = 
 {
@@ -344,18 +346,6 @@ static void compile_IHDR(void)
 	fatal("image height is zero or nonexistent");
     else if (!info_ptr->width)
 	fatal("image width is zero or nonexistent");
-    else
-    {
-	/* write the required header */
-	png_set_IHDR(png_ptr, info_ptr,
-		 info_ptr->width,
-		 info_ptr->height,
-		 info_ptr->bit_depth,
-		 info_ptr->color_type,
-		 info_ptr->interlace_type,
-		 PNG_COMPRESSION_TYPE_BASE,
-		 PNG_FILTER_TYPE_BASE);
-    }
 }
 
 static void compile_PLTE(void)
@@ -390,6 +380,85 @@ static void compile_PLTE(void)
 
     /* write out the accumulated palette entries */
     png_set_PLTE(png_ptr, info_ptr, palette, ncolors);
+}
+
+static void compile_IDAT(void)
+/* parse IDAT specification and emit corresponding bits */
+{
+    /*
+     * An IDAT segment consists of a byte stream. 
+     * There are two possible formats:
+     *
+     * 1. One character per byte; values are
+     * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+     * up to 62 values per pixel.
+     *
+     * 2. Two hex digits per byte.
+     *
+     * In either format, whitespace is ignored.
+     *
+     * We know we can use format 1 if
+     * (a) The image is paletted and the palette has 62 or fewer values.
+     * (b) Bit depth is 4 or less.
+     * These cover a lot of common cases.
+     */
+    bool pixperchar =
+	((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
+	 			&& info_ptr->num_palette >= 62)
+	|| (info_ptr->bit_depth <= 4);
+
+    char *bits = xalloc(MEMORY_QUANTUM);
+    int	nbits = MEMORY_QUANTUM;
+    int offset = 0;
+    int ocount = 0;
+    int quanta = 1;
+    int c;
+    
+    while ((c = fgetc(yyin)))
+	if (c == '}')
+	    break;
+	else if (isspace(c))
+	    continue;
+	else 
+        {
+	    unsigned char	value;
+
+	    if (nbits > quanta * MEMORY_QUANTUM)
+		bits = xrealloc(bits, MEMORY_QUANTUM * ++quanta);
+
+	    if (pixperchar)
+	    {
+		if (!isalpha(c) && !isdigit(c))
+		    fatal("bad character in IDAT block");
+		else if (isdigit(c))
+		    value = c - '0';
+		else if (isupper(c))
+		    value = (c - 'A') + 36;
+		else 
+		    value = (c - 'a') + 10;
+		bits[nbits++] = value;
+	    }
+	    else
+	    {
+		if (!isxdigit(c))
+		    fatal("bad character in IDAT block");
+		else if (isdigit(c))
+		    value = c - '0';
+		else if (isupper(c))
+		    value = (c - 'A') + 10;
+		else 
+		    value = (c - 'a') + 10;
+		if (ocount++ % 2)
+		    bits[nbits] = value * 16;
+		else
+		    bits[nbits++] |= value;
+	    }
+	}
+
+    /* FIXME: perhaps this should be optional? */
+    png_set_packing(png_ptr);
+
+    /* got the bits; now write them out */
 }
 
 static int pngc(FILE *fin, FILE *fout)
@@ -474,7 +543,10 @@ static int pngc(FILE *fin, FILE *fout)
 	case IDAT:
 	    if (prevchunk != IDAT && pp->count)
 		fatal("IDAT chunks must be contiguous");
-	    fatal("FIXME: IDAT chunk type is not handled yet");
+	    /* force out the pre-IDAT portions */
+	    if (properties[IDAT].count == 0)
+		png_write_info(png_ptr, info_ptr);
+	    compile_IDAT();
 	    break;
 
 	case cHRM:
