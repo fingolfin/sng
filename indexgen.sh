@@ -14,11 +14,12 @@ cat >index.html <<EOF
 </HEAD>
 <BODY>
 <table width="100%" cellpadding=0><tr>
-<td width="30%">Back to <a href="/~esr">Eric's Home Page</a>
-<td width="30%" align=center>Up to <a href="/~esr/sitemap.html">Site Map</a>
+<td width="30%">Back to <a href="http://www.tuxedo.org/~esr">Eric's Home Page</a>
+<td width="30%" align=center>Up to <a href="http://www.tuxedo.org/~esr/sitemap.html">Site Map</a>
 <td width="30%" align=right>$date
 </table>
 <HR>
+
 <H1 ALIGN=CENTER>The SNG home page</H1>
 
 SNG (Scriptable Network Graphics) is a minilanguage designed
@@ -36,23 +37,29 @@ images in the png test suite, but the design of SNG is not yet frozen.
 The syntax of the language may change (possibly radically) before a
 production release.<p>
 
-You can download a <a href="sng-${version}.tar.gz">source tarball</a>,
-or a <a href="sng-${version}.zip">source ZIP archive</a>.  RPMs are not
-yet available, but will be after the next major libpng release.<P>
+You can download a <a
+href="ftp://sng.sourceforge.net/pub/sng/sng-${version}.tar.gz">source
+tarball</a>, or a <a
+href="ftp://sng.sourceforge.net/pub/sng/sng-${version}.zip">source ZIP
+archive</a>.  RPMs are not yet available, but will be after the next
+major libpng release.<P>
+
+You can join the project <a href="http://sourceforge.net/mail/?group_id=1012">
+mailing lists</a>.<p>
 
 Note: To use sng, you will need to install libpng-1.0.5k or later.
 You can download it <a
 href="ftp://swrinde.nde.swri.edu/pub/png-group/src">here</a>).<p>
 
-(I am a credited contributor to the libpng reference library, and 
-also maintain <A HREF="../gif2png/">gif2png</A>.  For more information
-on the PNG format and associated tools, see the official 
-<A HREF="http://www.cdrom.com/pub/png/">PNG website</A>)<P>  
+(I am a credited contributor to the libpng reference library, and also
+maintain <A HREF="http://www.tuxedo.org/~esr/gif2png/">gif2png</A>.
+For more information on the PNG format and associated tools, see the
+official <A HREF="http://www.cdrom.com/pub/png/">PNG website</A>)<P>
 
 <HR>
 <table width="100%" cellpadding=0><tr>
-<td width="30%">Back to <a href="/~esr">Eric's Home Page</a>
-<td width="30%" align=center>Up to <a href="/~esr/sitemap.html">Site Map</a>
+<td width="30%">Back to <a href="http://www.tuxedo.org/~esr">Eric's Home Page</a>
+<td width="30%" align=center>Up to <a href="http://www.tuxedo.org/~esr/sitemap.html">Site Map</a>
 <td width="30%" align=right>$date
 </table>
 
