@@ -7,6 +7,7 @@ NAME
 #include <stdlib.h>
 #include <stdarg.h>
 #define PNG_INTERNAL
+#include "config.h"	/* for RGBTXT */
 #include "png.h"
 #include "sng.h"
 
@@ -31,6 +32,43 @@ static char *current_file;
 static png_structp png_ptr;
 static png_infop info_ptr;
 static int true_depth, true_channels;
+
+/*****************************************************************************
+ *
+ * Interface to RGB database
+ *
+ *****************************************************************************/
+
+#define COLOR_HASH_MODULUS	137		/* should be prime */
+#define COLOR_HASH(r, g, b)	(((r<<16)|(g<<8)|(b))%COLOR_HASH_MODULUS)
+
+static color_item *rgb_hashbuckets[COLOR_HASH_MODULUS];
+static int rgb_initialized;
+
+static int hash_by_rgb(color_item *cp)
+/* hash by color's RGB value */
+{
+    return(COLOR_HASH(cp->r, cp->g, cp->b));
+}
+
+static char *find_by_rgb(int r, int g, int b)
+{
+    color_item sc, *hp;
+
+   sc.r = r; sc.g = g; sc.b = b;
+
+    for (hp = rgb_hashbuckets[hash_by_rgb(&sc)]; hp; hp = hp->next)
+	if (hp->r == r && hp->g == g && hp->b == b)
+	    return(hp->name);
+
+    return((char *)NULL);
+}
+
+/*****************************************************************************
+ *
+ * Low-level helper code
+ *
+ *****************************************************************************/
 
 char *safeprint(const char *buf)
 /* visibilize a given string -- inverse of sngc.c:escapes() */
@@ -205,6 +243,12 @@ static void printerr(int err, const char *fmt, ... )
     sng_error = err;
 }
 
+/*****************************************************************************
+ *
+ * Chunk handlers
+ *
+ *****************************************************************************/
+
 static void dump_IHDR(FILE *fpout)
 {
     int ityp;
@@ -262,18 +306,32 @@ static void dump_PLTE(FILE *fpout)
 {
     int i;
 
+    initialize_hash(hash_by_rgb, rgb_hashbuckets, &rgb_initialized);
+
     if (info_ptr->color_type & PNG_COLOR_MASK_PALETTE)
     {
 	fprintf(fpout, "PLTE {\n");
 	for (i = 0;  i < info_ptr->num_palette;  i++)
+	{
+	    char	*name = NULL;
+
 	    fprintf(fpout, 
-		    "    (%3u,%3u,%3u)     # rgb = (0x%02x,0x%02x,0x%02x)\n",
+		    "    (%3u,%3u,%3u)     # rgb = (0x%02x,0x%02x,0x%02x)",
 		    info_ptr->palette[i].red,
 		    info_ptr->palette[i].green,
 		    info_ptr->palette[i].blue,
 		    info_ptr->palette[i].red,
 		    info_ptr->palette[i].green,
 		    info_ptr->palette[i].blue);
+
+	    if (rgb_initialized)
+		name = find_by_rgb(info_ptr->palette[i].red,
+				   info_ptr->palette[i].green,
+				   info_ptr->palette[i].blue);
+	    if (name)
+		fprintf(fpout, " %s", name);
+	    fputc('\n', fpout);
+	}
 
 	fprintf(fpout, "}\n");
     }
@@ -719,6 +777,12 @@ static void dump_unknown_chunks(
 #undef LG
     }
 }
+
+/*****************************************************************************
+ *
+ * Compiler main sequence
+ *
+ *****************************************************************************/
 
 void sngdump(png_byte *row_pointers[], FILE *fpout)
 /* dump a canonicalized SNG form of a PNG file */

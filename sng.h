@@ -1,11 +1,35 @@
 /* sng.h -- interface to the SNG compiler */
 
+typedef struct color_item_t
+{
+    unsigned char r, g, b;
+    char *name;
+    struct color_item_t	*next;
+}
+color_item;
+
 extern int sngc(FILE *fin, char *file, FILE *fout);
 extern int sngd(FILE *fin, char *file, FILE *fout);
+
+extern void fatal(const char *fmt, ... );
+extern void *xalloc(unsigned long s);
+extern void *xrealloc(void *p, unsigned long s);
+extern char *xstrdup(char *s);
+
+extern void initialize_hash(int hashfunc(color_item *),
+			    color_item *hashbuckets[],
+			    int *initflag);
 
 extern int verbose;
 extern int idat;
 extern int sng_error;
+
+extern int linenum;
+extern char *file;
+extern FILE *yyin;
+
+extern png_struct *png_ptr;
+extern png_info *info_ptr;
 
 #define SUCCEED	0
 #define FAIL	-1

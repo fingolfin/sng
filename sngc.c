@@ -9,7 +9,6 @@ NAME
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <stdarg.h>
 #define PNG_INTERNAL
 #include <png.h>
 
@@ -109,75 +108,7 @@ static chunkprops properties[] =
     {"private",		TRUE,	0},
 };
 
-static png_struct *png_ptr;
-static png_info *info_ptr;
 static png_color palette[256];
-
-static int linenum;
-static char *file;
-static FILE *yyin;
-
-/*************************************************************************
- *
- * Utility functions
- *
- ************************************************************************/
-
-static void fatal(const char *fmt, ... )
-/* throw an error distinguishable from PNG library errors */
-{
-    char buf[BUFSIZ];
-    va_list ap;
-
-    /* error message format can be stepped through by Emacs */
-    if (linenum == EOF)
-	sprintf(buf, "%s:EOF: ", file);
-    else
-	sprintf(buf, "%s:%d: ", file, linenum);
-
-    va_start(ap, fmt);
-    vsprintf(buf + strlen(buf), fmt, ap);
-    va_end(ap);
-
-    strcat(buf, "\n");
-    fputs(buf, stderr);
-
-    if (png_ptr)
-	longjmp(png_ptr->jmpbuf, 2);
-    else
-	exit(2);
-}
-
-static void *xalloc(unsigned long s)
-{
-    void *p=malloc((size_t)s);
-
-    if (p==NULL) {
-	fatal("out of memory");
-    }
-
-    return p;
-}
-
-static void *xrealloc(void *p, unsigned long s)
-{
-    p=realloc(p,(size_t)s);
-
-    if (p==NULL) {
-	fatal("out of memory");
-    }
-
-    return p;
-}
-
-static char *xstrdup(char *s)
-{
-    char	*r = xalloc(strlen(s) + 1);
-
-    strcpy(r, s);
-
-    return(r);
-}
 
 /*************************************************************************
  *

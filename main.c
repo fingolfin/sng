@@ -1,5 +1,8 @@
 #include <errno.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include "png.h"
 #include "sng.h"
 #include "config.h"
 
@@ -8,6 +11,146 @@ int sng_error;
 #ifdef __UNUSED__
 int idat;
 #endif /* __UNUSED__ */
+
+png_struct *png_ptr;
+png_info *info_ptr;
+
+/*************************************************************************
+ *
+ * Error and allocation functions
+ *
+ ************************************************************************/
+
+int linenum;
+char *file;
+FILE *yyin;
+
+void fatal(const char *fmt, ... )
+/* throw an error distinguishable from PNG library errors */
+{
+    char buf[BUFSIZ];
+    va_list ap;
+
+    /* error message format can be stepped through by Emacs */
+    if (!file)
+	buf[0] = '\0';
+    else if (linenum == EOF)
+	sprintf(buf, "%s:EOF: ", file);
+    else
+	sprintf(buf, "%s:%d: ", file, linenum);
+
+    va_start(ap, fmt);
+    vsprintf(buf + strlen(buf), fmt, ap);
+    va_end(ap);
+
+    strcat(buf, "\n");
+    fputs(buf, stderr);
+
+    if (png_ptr)
+	longjmp(png_ptr->jmpbuf, 2);
+    else
+	exit(2);
+}
+
+void *xalloc(unsigned long s)
+{
+    void *p=malloc((size_t)s);
+
+    if (p==NULL) {
+	fatal("out of memory");
+    }
+
+    return p;
+}
+
+void *xrealloc(void *p, unsigned long s)
+{
+    p=realloc(p,(size_t)s);
+
+    if (p==NULL) {
+	fatal("out of memory");
+    }
+
+    return p;
+}
+
+char *xstrdup(char *s)
+{
+    char	*r = xalloc(strlen(s) + 1);
+
+    strcpy(r, s);
+
+    return(r);
+}
+
+/*************************************************************************
+ *
+ * Hash initialization
+ *
+ ************************************************************************/
+
+#undef HASHDEBUG
+
+void initialize_hash(int hashfunc(color_item *), 
+		     color_item *hashbuckets[],
+		     int *initialized)
+/* initialize color lookup by given hash function */
+{
+    if (!*initialized)
+    {
+	FILE	*fp;
+	int red, green, blue;
+	char line[BUFSIZ], namebuf[BUFSIZ];
+
+	(*initialized)++;
+
+	if ((fp = fopen(RGBTXT, "r")) == NULL)
+	    fatal("RGB database %s is missing.", RGBTXT);
+	else
+	{
+	    int st;
+	    color_item sc;
+
+	    for (;;)
+	    {
+		fgets(line, sizeof(line) - 1, fp);
+		st = sscanf(line, "%d %d %d %[^\n]\n", 
+			     &red, &green, &blue, namebuf);
+		if (feof(fp))
+		    break;
+		else if (st == 4)
+		{
+		    color_item *op, *newcolor, **hashbucket;
+
+#ifdef HASHDEBUG
+		    printf("* Caching %s = (%u, %u, %u) => %d\n",
+			   namebuf, red, green, blue, hashfunc(&sc));
+#endif /* HASHDEBUG */
+		    sc.r = (unsigned char)red;
+		    sc.g = (unsigned char)green;
+		    sc.b = (unsigned char)blue;
+		    sc.name = namebuf;
+		    hashbucket = &hashbuckets[hashfunc(&sc)];
+
+		    newcolor  = xalloc(sizeof(color_item));
+		    memcpy(newcolor, &sc, sizeof(color_item));
+		    newcolor->name = xstrdup(namebuf);
+
+		    op = *hashbucket;
+		    *hashbucket = newcolor;
+		    newcolor->next = op;
+		}
+	    }
+	    fclose(fp);
+	}
+    }
+}
+
+/*************************************************************************
+ *
+ * Utility functions
+ *
+ ************************************************************************/
 
 int main(int argc, char *argv[])
 {
