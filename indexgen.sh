@@ -47,7 +47,7 @@ major libpng release.<P>
 You can join the project <a href="http://sourceforge.net/mail/?group_id=1012">
 mailing lists</a>.<p>
 
-Note: To use sng, you will need to install libpng-1.0.5k or later.
+Note: To use sng, you will need to install libpng-1.0.5m or later.
 You can download it <a
 href="ftp://swrinde.nde.swri.edu/pub/png-group/src">here</a>).<p>
 
