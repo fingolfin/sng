@@ -14,6 +14,12 @@ TODO
 #include <ctype.h>
 #include <stdarg.h>
 
+/* public variables */
+int linenum;
+char *file;
+int yydebug;
+
+
 #define PNG_INTERNAL
 #include <png.h>
 
@@ -107,9 +113,6 @@ static png_struct *png_ptr;
 static png_info *info_ptr;
 
 static FILE *yyin;
-static int linenum;
-static char *file;
-static int yydebug;
 
 /*************************************************************************
  *
@@ -636,8 +639,8 @@ static void compile_iCCP(void)
     /* FIXME: actually emit the chunk */
 }
 
-static int pngc(FILE *fin, FILE *fout)
-/* compile PPNG on fin to PNG on fout */
+int sngc(FILE *fin, FILE *fout)
+/* compile SNG on fin to PNG on fout */
 {
     int	prevchunk, errtype;
     float gamma;
@@ -883,10 +886,4 @@ static int pngc(FILE *fin, FILE *fout)
     return(0);
 }
 
-int main(int argc, char *argv[])
-{
-    linenum = 0;
-    file = "stdin";
-    yydebug = 1;
-    pngc(stdin, stdout);
-}
+/* sngc.c ends here */
