@@ -868,8 +868,7 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
 int sngd(FILE *fp, char *name, FILE *fpout)
 /* read and decompile an SNG image presented on stdin */
 {
-   png_uint_32 width, height;
-   int bit_depth, color_type, interlace_type, row;
+   png_uint_32 width, height, row;
    png_bytepp row_pointers;
 
    current_file = name;
@@ -920,6 +919,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* Set up the input control if you are using standard C streams */
    png_init_io(png_ptr, fp);
 
+
    /*
     * Unpack images with bit depth < 8 into bytes per sample.
     * We'll cheat, later on, by referring to png_ptr->bit_depth.
@@ -928,6 +928,12 @@ int sngd(FILE *fp, char *name, FILE *fpout)
     * undocumented.  If it ever breaks, the regression test
     * will start failing on images if depth 1, 2, and 4.
     */
+#ifdef PNG_INFO_IMAGE_SUPPORTED
+   png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_PACKING, NULL);
+
+   /* dump the image */
+   sngdump(info_ptr->rowpointers, fpout);
+#else
    png_set_packing(png_ptr);
 
    /* The call to png_read_info() gives us all of the information from the
@@ -935,14 +941,10 @@ int sngd(FILE *fp, char *name, FILE *fpout)
     */
    png_read_info(png_ptr, info_ptr);
 
-   png_get_IHDR(png_ptr, info_ptr, 
-		&width, &height, &bit_depth, &color_type,
-		&interlace_type, NULL, NULL);
-
    png_read_update_info(png_ptr, info_ptr);
 
-   row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
-   for (row = 0; row < height; row++)
+   row_pointers = (png_bytepp)malloc(info_ptr->height * sizeof(png_bytep));
+   for (row = 0; row < info_ptr->height; row++)
        row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
 
    png_read_image(png_ptr, row_pointers);
@@ -952,6 +954,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 
    /* dump the image */
    sngdump(row_pointers, fpout);
+#endif
 
    /* clean up after the read, and free any memory allocated - REQUIRED */
    png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
