@@ -10,15 +10,12 @@ NAME
 #include <unistd.h>
 #include <ctype.h>
 #include <stdarg.h>
-
-/* public variables */
-int linenum;
-char *file;
-int yydebug;
-
-
 #define PNG_INTERNAL
 #include <png.h>
+
+#include "sng.h"
+
+extern int verbose;
 
 typedef int	bool;
 #define FALSE	0
@@ -124,6 +121,8 @@ static png_struct *png_ptr;
 static png_info *info_ptr;
 static png_color palette[256];
 
+static int linenum;
+static char *file;
 static FILE *yyin;
 
 /*************************************************************************
@@ -205,7 +204,7 @@ static int get_token(void)
     if (pushed)
     {
 	pushed = FALSE;
-	if (yydebug)
+	if (verbose)
 	    fprintf(stderr, "saved token: %s\n", token_buffer);
 	return(TRUE);
     }
@@ -292,7 +291,7 @@ static int get_token(void)
 	}
 
     *tp = '\0';
-    if (yydebug > 0)
+    if (verbose > 0)
 	fprintf(stderr, "token: %s\n", token_buffer);
     return(TRUE);
 }
@@ -315,7 +314,7 @@ static int get_inner_token(void)
 static int push_token(void)
 /* push back a token; must always be followed immediately by get_token */
 {
-    if (yydebug)
+    if (verbose)
 	fprintf(stderr, "pushing token: %s\n", token_buffer);
     pushed = TRUE;
 }
@@ -1391,13 +1390,15 @@ static void compile_private(char *name)
     png_free(png_ptr, bits);
 }
 
-int sngc(FILE *fin, FILE *fout)
+int sngc(FILE *fin, char *name, FILE *fout)
 /* compile SNG on fin to PNG on fout */
 {
     int	prevchunk, errtype, i;
     float gamma;
 
     yyin = fin;
+    file = name;
+    linenum = 0;
 
     /* Create and initialize the png_struct with the desired error handler
      * functions.  If you want to use the default stderr and longjump method,
@@ -1612,7 +1613,7 @@ int sngc(FILE *fin, FILE *fout)
 	    break;
 	}
 
-	if (yydebug)
+	if (verbose)
 	    fprintf(stderr, "%s specification processed\n", pp->name);
 	prevchunk = (pp - properties);
 	pp->count++;
