@@ -1546,7 +1546,7 @@ static void compile_gIFx(void)
 static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
-    png_byte	**rowpointers;
+    png_byte	**row_pointers;
     int		i, nbits, bytes_per_sample;
     char	*bits;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
@@ -1592,16 +1592,16 @@ static void compile_IMAGE(void)
 	png_set_packing(png_ptr);
 
     /* got the bits; now write them out */
-    rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
+    row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	rowpointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
-    png_write_image(png_ptr, rowpointers);
+	row_pointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
+    png_write_image(png_ptr, row_pointers);
     free(bits);
 #else
     /* got the bits; attach them to the info structure */
-    info_ptr->rowpointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
+    info_ptr->row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
     for (i = 0; i < info_ptr->height; i++)
-	info_ptr->rowpointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
+	info_ptr->row_pointers[i] = &bits[i * info_ptr->width * bytes_per_sample];
     info_ptr->valid |= PNG_INFO_IDAT;
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
