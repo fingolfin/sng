@@ -68,6 +68,18 @@ byte is specified by two hex digits (0123456789abcdef).  Whitespace
 embedded in base64 and hex data literals is ignored.  A ';' ends a
 data literal (unless it occurs inside the string syntax).
 
+An <rgb> element may be expanded to:
+
+.nf
+(<byte>, <byte>, <byte>) | <string>
+.fi
+
+That is, it is either a paren-enclosed list of RGB values or a string
+naming a color bamed in the X RGB database.  Note that color names are
+not necessarily portable between hosts or even displays, doe to
+different screen gammas and colorimetric biases.  For this reason, the
+SNG decompiler generates color names in comments.
+
 IMAGE segments contain unpacked and uninterlaced raster data.  There
 will be exactly one IMAGE per SNG dump, containing the pixel data from
 all IDAT chunks, unless the -i option is on.  In that case, there will
@@ -89,7 +101,7 @@ IHDR {
 }
 
 PLTE {
-   [(<byte>,<byte>,<byte>)]*	# Any number of RGB triples
+   [<rgb>]*				# RGB triples or X color names
 }
 
 IDAT {
@@ -182,7 +194,7 @@ oFFs {
 sPLT {
    name <keyword>
    depth <byte>
-   [(<short>, <short>, <short>, <short>, <short>)]*
+   [<rgb>, <short>, <short>]*    # Color followed by alpha and frequency
 }
 
 pCAL {

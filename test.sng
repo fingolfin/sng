@@ -42,7 +42,7 @@ sBIT: {
 PLTE: {
    (0,     0, 255)
    (255,   0,   0)
-   ( 70,  70,  70)
+   "dark slate gray",
 }
 
 # Set a background color
@@ -111,9 +111,9 @@ sCAL {
 sPLT {
    name: "A random suggested palette";
    depth: 8;
-   (0,     0, 255, 255, 7)
-   (255,   0,   0, 255, 5)
-   ( 70,  70,  70, 255, 3)
+   (0,     0, 255), 255, 7;
+   (255,   0,   0), 255, 5;
+   ( 70,  70,  70), 255, 3;
 }
 
 # The viewer will actually use this...

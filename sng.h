@@ -8,6 +8,9 @@ typedef struct color_item_t
 }
 color_item;
 
+/* this modulus should be prime and close to the line count of rgb.txt */
+#define COLOR_HASH_MODULUS	751
+
 extern int sngc(FILE *fin, char *file, FILE *fout);
 extern int sngd(FILE *fin, char *file, FILE *fout);
 

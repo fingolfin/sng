@@ -39,7 +39,6 @@ static int true_depth, true_channels;
  *
  *****************************************************************************/
 
-#define COLOR_HASH_MODULUS	137		/* should be prime */
 #define COLOR_HASH(r, g, b)	(((r<<16)|(g<<8)|(b))%COLOR_HASH_MODULUS)
 
 static color_item *rgb_hashbuckets[COLOR_HASH_MODULUS];
@@ -615,8 +614,8 @@ static void dump_sPLT(png_spalette *ep, FILE *fpout)
     {
 	char *name;
 
-	fprintf(fpout, "    (%3u,%3u,%3u,%3u,%u) "
-		"    # rgba = (0x%02x,0x%02x,0x%02x,0x%02x)",
+	fprintf(fpout, "    (%3u,%3u,%3u), %3u, %3u "
+		"    # rgba = [0x%02x,0x%02x,0x%02x,0x%02x]",
 		ep->entries[i].red,
 		ep->entries[i].green,
 		ep->entries[i].blue,
@@ -632,7 +631,7 @@ static void dump_sPLT(png_spalette *ep, FILE *fpout)
 			       ep->entries[i].green,
 			       ep->entries[i].blue);
 	if (name)
-	    fprintf(fpout, " %s", name);
+	    fprintf(fpout, ", name = %s", name);
 
 	fprintf(fpout, ", freq = %u\n", ep->entries[i].frequency);
     }

@@ -112,6 +112,40 @@ static png_color palette[256];
 
 /*************************************************************************
  *
+ * Color-name handling
+ *
+ ************************************************************************/
+
+static color_item *cname_hashbuckets[COLOR_HASH_MODULUS];
+static int cname_initialized;
+
+static int hash_by_cname(color_item *cp)
+/* hash by color's RGB value */
+{
+    unsigned int h = 0;
+    char *p;
+
+    for (p = cp->name; *p; p++)
+	h = COLOR_HASH_MODULUS * h + *p;
+    return(h % COLOR_HASH_MODULUS);
+}
+
+static color_item *find_by_cname(char *name)
+/* find a character name */
+{
+   color_item sc, *hp;
+
+   sc.name = name;
+
+    for (hp = cname_hashbuckets[hash_by_cname(&sc)]; hp; hp = hp->next)
+	if (strcmp(hp->name, name) == 0)
+	    return(hp);
+
+    return((color_item *)NULL);
+}
+
+/*************************************************************************
+ *
  * Token-parsing code
  *
  ************************************************************************/
@@ -602,22 +636,41 @@ static void compile_PLTE(void)
 {
     int ncolors;
 
+    initialize_hash(hash_by_cname, cname_hashbuckets, &cname_initialized);
+
     memset(palette, '\0', sizeof(palette));
     ncolors = 0;
 
     while (get_inner_token())
     {
-	if (!token_equals("("))
-	    fatal("bad syntax in PLTE description");
-	else if (ncolors >= 256)
+	if (ncolors >= 256)
 	    fatal("too many palette entries in PLTE specification");
-	palette[ncolors].red = byte_numeric(get_token());
-	/* comma */
-	palette[ncolors].green = byte_numeric(get_token());
-	/* comma */
-	palette[ncolors].blue = byte_numeric(get_token());
-	require_or_die(")");
-	ncolors++;
+	if (token_class == STRING_TOKEN)
+	{
+	    color_item *cp = find_by_cname(token_buffer);
+
+	    if (!cp)
+		fatal("unknown color name `%s' in PLTE", token_buffer);
+	    else
+	    {
+		palette[ncolors].red = cp->r;
+		palette[ncolors].green = cp->g;
+		palette[ncolors].blue = cp->b;
+		ncolors++;
+	    }
+	}
+	else if (token_equals("("))
+	{
+	    palette[ncolors].red = byte_numeric(get_token());
+	    /* comma */
+	    palette[ncolors].green = byte_numeric(get_token());
+	    /* comma */
+	    palette[ncolors].blue = byte_numeric(get_token());
+	    require_or_die(")");
+	    ncolors++;
+	}
+	else
+	    fatal("bad token %s in PLTE", token_buffer);
     }
 
     /* register the accumulated palette entries into the info structure */
@@ -918,6 +971,8 @@ static void compile_sPLT(void)
     png_spalette new_palette;
     png_spalette_entry	entries[256];
 
+    initialize_hash(hash_by_cname, cname_hashbuckets, &cname_initialized);
+
     new_palette.depth = 0;
     while (get_inner_token())
 	if (token_equals("name"))
@@ -928,11 +983,32 @@ static void compile_sPLT(void)
 	    if (new_palette.depth != 8 && new_palette.depth != 16)
 		fatal("invalid sample depth in sPLT");
 	}
-        else
+	else if (token_class == STRING_TOKEN)
 	{
-	    if (!token_equals("("))
-		fatal("bad token `%s' in sPLT description", token_buffer);
-	    else if (nentries >= 256)
+	    color_item *cp = find_by_cname(token_buffer);
+
+	    if (!cp)
+		fatal("unknown color name `%s' in PLTE", token_buffer);
+	    else
+	    {
+		if (nentries >= 256)
+		    fatal("too many palette entries in sPLT specification");
+		palette[nentries].red = cp->r;
+		palette[nentries].green = cp->g;
+		palette[nentries].blue = cp->b;
+
+		/* comma */
+		entries[nentries].alpha = short_numeric(get_token());
+		if (new_palette.depth == 8 && entries[nentries].alpha > 255)
+		    fatal("alpha value too large for sample depth");
+		/* comma */
+		entries[nentries].frequency = short_numeric(get_token());
+		nentries++;
+	    }
+	}
+	else if (token_equals("("))
+	{
+	    if (nentries >= 256)
 		fatal("too many palette entries in sPLT specification");
 	    entries[nentries].red = short_numeric(get_token());
 	    if (new_palette.depth == 8 && entries[nentries].red > 255)
@@ -945,6 +1021,8 @@ static void compile_sPLT(void)
 	    entries[nentries].blue = short_numeric(get_token());
 	    if (new_palette.depth == 8 && entries[nentries].blue > 255)
 		fatal("blue value too large for sample depth");
+	    require_or_die(")");
+
 	    /* comma */
 	    entries[nentries].alpha = short_numeric(get_token());
 	    if (new_palette.depth == 8 && entries[nentries].alpha > 255)
@@ -952,8 +1030,9 @@ static void compile_sPLT(void)
 	    /* comma */
 	    entries[nentries].frequency = short_numeric(get_token());
 	    nentries++;
-	    require_or_die(")");
 	}
+	else
+	    fatal("bad token `%s' in sPLT description", token_buffer);
 
     if (!nkeyword || !new_palette.depth)
 	fatal("incomplete sPLT specification");
