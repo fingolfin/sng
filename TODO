@@ -2,9 +2,9 @@
 
 Author's tasks:
 
-1. Multiline strings in SNG.
-2. Make the -i option work.
-3. Find out why tRNS causes a CRC error
+1. Make the -i option work.
+
+2. Find out why tRNS causes a CRC error
 
 Suitable tasks for someone other than the author:
 
