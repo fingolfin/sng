@@ -107,6 +107,15 @@ pHYs {
    [per meter]
 }
 
+tIME {
+   year <short>
+   month <byte>
+   day <byte>
+   hour <byte>
+   minute <byte>
+   second <byte>
+}
+
 tEXt {				# Ordinary text chunk
   keyword <keyword>
   text <string>

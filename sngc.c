@@ -388,6 +388,7 @@ static int string_validate(bool token_ok, char *stash)
 static int keyword_validate(bool token_ok, char *stash)
 /* validate current token as a PNG keyword */
 {
+    /* FIXME: Use png_check_keyword() once we know how it works */
     if (!token_ok)
 	fatal("EOF while expecting PNG keyword");
     else
@@ -892,6 +893,62 @@ static void compile_iTXt(void)
     /* FIXME: actually emit the chunk (can't be done with 1.0.5) */
 }
 
+static void compile_tIME(void)
+/* compile a tIME chunk, put data in info structure */
+{
+    png_time stamp;
+    int time_mask = 0;
+
+    while (get_inner_token())
+	if (token_equals("year"))
+	{
+	    stamp.year = short_numeric(get_token());
+	    time_mask |= 0x01;
+	}
+	else if (token_equals("month"))
+	{
+	    stamp.month = byte_numeric(get_token());
+	    if (stamp.month < 1 || stamp.month > 12)
+		fatal("month value out of range");
+	    time_mask |= 0x02;
+	}
+	else if (token_equals("day"))
+	{
+	    stamp.day = byte_numeric(get_token());
+	    if (stamp.day < 1 || stamp.day > 31)
+		fatal("day value out of range");
+	    time_mask |= 0x04;
+	}
+	else if (token_equals("hour"))
+	{
+	    stamp.hour = byte_numeric(get_token());
+	    if (stamp.hour > 23)
+		fatal("hour value out of range");
+	    time_mask |= 0x08;
+	}
+	else if (token_equals("minute"))
+	{
+	    stamp.minute = byte_numeric(get_token());
+	    if (stamp.minute > 59)
+		fatal("minute value out of range");
+	    time_mask |= 0x10;
+	}
+	else if (token_equals("second"))
+	{
+	    stamp.second = byte_numeric(get_token());
+	    if (stamp.second > 59)
+		fatal("second value out of range");
+	    time_mask |= 0x20;
+	}
+	else
+	    fatal("bad token `%s' in tIME specification", token_buffer);
+
+    if (time_mask != 0x3f)
+	fatal("incomplete tIME specification");
+
+    png_set_tIME(png_ptr, info_ptr, &stamp);
+}
+
 static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
@@ -1101,7 +1158,7 @@ int sngc(FILE *fin, FILE *fout)
 	    break;
 
 	case tIME:
-	    fatal("FIXME: tIME chunk type is not handled yet");
+	    compile_tIME();
 	    break;
 
 	case iTXt:

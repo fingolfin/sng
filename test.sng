@@ -60,6 +60,15 @@ pHYs: {
    resolution (500, 400) per meter
 }
 
+tIME {
+   year 1999
+   month 11
+   day 22
+   hour 16
+   minute 23
+   second 17
+}
+
 IMAGE: {
    base64
 3333333333333333
