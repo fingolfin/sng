@@ -1035,6 +1035,8 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
 static int read_chunk_callback(png_structp ptr, png_unknown_chunkp chunk)
 {
     /* FIXME: the -i option doesn't work yet, it yields a CRC error */
+    if (memcmp(chunk->name, "IDAT", 4) == 0)
+	png_ptr->mode |= PNG_HAVE_IDAT;
     return(1);
 }
 
@@ -1077,7 +1079,13 @@ int sngd(FILE *fp, char *name, FILE *fpout)
     * the normal method of doing things with libpng).  REQUIRED unless you
     * set up your own error handlers in the png_create_read_struct() earlier.
     */
-   if (setjmp(png_ptr->jmpbuf))
+#ifndef PNG_JMPBUF_STACK_SUPPORTED
+    /* Old interface */
+    if (setjmp(png_ptr->jmpbuf))
+#else
+    /* New interface */
+    if (setjmp(png_create_jmpbuf(png_ptr)))
+#endif
    {
       /* Free all of the memory associated with the png_ptr and info_ptr */
       png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);

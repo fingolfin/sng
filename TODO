@@ -5,6 +5,16 @@ Author's tasks:
 * Make the -i option work (once the library can support suppressing
   normal IDAT processing).
 
+* MNG support?  (May mean an MNG library has to be written first...)
+  MNG test images are at ftp://swrinde.nde.swri.edu/pub/mng/images. 
+  Glenn adds:
+
+Also you can make all the test images you want by capturing animated   
+GIF ad banners and converting them with ImageMagick's "convert".  I've
+made about 450 of them and haven't yet found one that wouldn't convert.
+Can't post them though because they don't belong to me.  Use "-quality 90"
+to get the best compression of typical GIF banners.
+
 Blue-sky stuff:
 
 The following is a plausible XML syntax.  Would it be an improvement?
@@ -37,7 +47,7 @@ The following is a plausible XML syntax.  Would it be an improvement?
 <sRGB intent={byte}/>           # Colorimetry intent, range 0-3
 
 <iCCP name={keyword}>           # International Color Consortium profile
-   {data}               
+   <pixels>{data}</pixels>               
 </iCCP>
 
 <sBIT
