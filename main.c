@@ -1,3 +1,56 @@
+/*============================================================================
+ *
+ *   Copyright 1995-1999 by Alexander Lehmann <lehmann@usa.net>,
+ *                          Andreas Dilger <adilger@enel.ucalgary.ca>,
+ *                          Glenn Randers-Pehrson <randeg@alum.rpi.edu>,
+ *                          Greg Roelofs <newt@pobox.com>,
+ *                          John Bowler <jbowler@acm.org>,
+ *                          Tom Lane <tgl@sss.pgh.pa.us>
+ *                          Eric S. Raymond <esr@thyrsus.com>
+ *  
+ *   Permission to use, copy, modify, and distribute this software and its
+ *   documentation for any purpose and without fee is hereby granted, provided
+ *   that the above copyright notice appear in all copies and that both that
+ *   copyright notice and this permission notice appear in supporting
+ *   documentation.  This software is provided "as is" without express or
+ *   implied warranty.
+ *
+ *===========================================================================*/
+
+/*
+ * Compilation example (GNU C, command line; replace "zlibpath" as appropriate):
+ *
+ *    without zlib:
+ *       gcc -O -o pngcheck pngcheck.c
+ *    with zlib support:
+ *       gcc -O -DUSE_ZLIB -I/zlibpath -o pngcheck pngcheck.c -L/zlibpath -lz
+ *    or (static zlib):
+ *       gcc -O -DUSE_ZLIB -I/zlibpath -o pngcheck pngcheck.c /zlibpath/libz.a
+ *
+ * Windows compilation example (MSVC, command line, assuming VCVARS32.BAT or
+ * whatever has been run; setargv.obj comes with MSVC and expands wildcards):
+ *
+ *    without zlib:
+ *       cl -nologo -O -W3 -DWIN32 pngcheck.c setargv.obj
+ *    with zlib support (note that Win32 zlib is compiled as a DLL by default):
+ *       cl -nologo -O -W3 -DWIN32 -DUSE_ZLIB -I/zlibpath -c pngcheck.c
+ *       link -nologo pngcheck.obj setargv.obj \zlibpath\zlib.lib
+ *       [copy pngcheck.exe and zlib.dll to installation directory]
+ *    or
+ *       link -nologo pngcheck.obj setargv.obj \zlibpath\zlibstat.lib
+ *       [if you have a static library for zlib]
+ *
+ * zlib info:
+ *	ftp://www.cdrom.com/pub/infozip/zlib/zlib.html
+ * PNG/MNG info:
+ *	http://www.cdrom.com/pub/png/
+ *	http://www.cdrom.com/pub/mng/
+ *	ftp://swrinde.nde.swri.edu/pub/mng/
+ * pngcheck sources:
+ *	http://www.cdrom.com/pub/png/pngcode.html
+ *	ftp://swrinde.nde.swri.edu/pub/png/applications/   (may be out of date)
+ */
+
 #include <stdio.h>
 #include "sng.h"
 
