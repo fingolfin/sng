@@ -883,18 +883,18 @@ static void compile_sPLT(void)
 /* compile sPLT chunk */
 {
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1];
-    int		nkeyword = 0;
-    png_byte	depth = 0;
+    int		nentries = 0, nkeyword = 0;
+    png_spalette new_palette;
     png_spalette_entry	entries[256];
-    int		nentries;
 
+    new_palette.depth = 0;
     while (get_inner_token())
 	if (token_equals("name"))
 	    nkeyword = keyword_validate(get_token(), keyword);
         else if (token_equals("depth"))
 	{
-	    depth = byte_numeric(get_token());
-	    if (depth != 8 && depth != 16)
+	    new_palette.depth = byte_numeric(get_token());
+	    if (new_palette.depth != 8 && new_palette.depth != 16)
 		fatal("invalid sample depth in sPLT");
 	}
         else 
@@ -905,19 +905,19 @@ static void compile_sPLT(void)
 		else if (nentries >= 256)
 		    fatal("too many palette entries in sPLT specification");
 		entries[nentries].red = short_numeric(get_token());
-		if (depth == 8 && entries[nentries].red > 255)
+		if (new_palette.depth == 8 && entries[nentries].red > 255)
 		    fatal("red value too large for sample depth");
 		/* comma */
 		entries[nentries].green = short_numeric(get_token());
-		if (depth == 8 && entries[nentries].green > 255)
+		if (new_palette.depth == 8 && entries[nentries].green > 255)
 		    fatal("green value too large for sample depth");
 		/* comma */
 		entries[nentries].blue = short_numeric(get_token());
-		if (depth == 8 && entries[nentries].blue > 255)
+		if (new_palette.depth == 8 && entries[nentries].blue > 255)
 		    fatal("blue value too large for sample depth");
 		/* comma */
 		entries[nentries].alpha = short_numeric(get_token());
-		if (depth == 8 && entries[nentries].alpha > 255)
+		if (new_palette.depth == 8 && entries[nentries].alpha > 255)
 		    fatal("alpha value too large for sample depth");
 		require_or_die(")");
 		/* comma */
@@ -925,11 +925,12 @@ static void compile_sPLT(void)
 		nentries++;
 	    }
 
-    if (!nkeyword || !depth)
+    if (!nkeyword || !new_palette.depth)
 	fatal("incomplete sPLT specification");
 
-    /* FIXME: make this call work */
-    /* png_write_sPLT(png_ptr, keyword, depth, spalette, nentries); */
+    new_palette.entries = entries;
+    new_palette.nentries = nentries;
+    png_set_spalettes(png_ptr, info_ptr, &new_palette, 1);
 }
 
 static void compile_tEXt(void)
