@@ -152,7 +152,7 @@ zTXt {                          # Compressed text chunk
 iTXt {                          # International UTF-8 keyword
   language <keyword>
   keyword <keyword>
-  tranlated <keyword>           # Translation of the keyword
+  translated <keyword>          # Translation of the keyword
   text <string>
   [compressed]
 }
@@ -175,7 +175,7 @@ pCAL {
    x1 <slong>
    mapping linear|euler|exponential|hyperbolic
    unit <string>
-   [parameters <string>*] 
+   [parameters <string>] 
 }
 
 sCAL {
