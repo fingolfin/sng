@@ -228,7 +228,7 @@ static int get_token(void)
 		    linenum++;
 		break;
 	    }
-	    else if (ispunct(c))
+	    else if (ispunct(c) && c != '.')
 	    {
 		ungetc(c, yyin);
 		break;
@@ -374,7 +374,7 @@ static void compile_IHDR(void)
 		 PNG_COMPRESSION_TYPE_BASE,
 		 PNG_FILTER_TYPE_BASE);
 	if (yydebug)
-	    fprintf(stderr, "IHDR processed\n");
+	    fprintf(stderr, "IHDR specification processed\n");
     }
 }
 
@@ -412,8 +412,6 @@ static void compile_PLTE(void)
     }
 
     /* write out the accumulated palette entries */
-    if (yydebug)
-	fprintf(stderr, "Wrote %d palette entries\n", ncolors);
     png_set_PLTE(png_ptr, info_ptr, palette, ncolors);
 }
 
@@ -606,6 +604,8 @@ static int pngc(FILE *fin, FILE *fout)
 	    break;
 	}
 
+	if (yydebug)
+	    fprintf(stderr, "%s specification processed\n", pp->name);
 	prevchunk = chunktype;
 	pp->count++;
     }
