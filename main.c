@@ -101,17 +101,19 @@ static void usage(void)
     fprintf(stderr, "   Compiled with zlib %s; using zlib %s.\n",
 	    ZLIB_VERSION, zlib_version);
 #endif
-    fprintf(stderr, "\nTest PNG image files for corruption, and print size/type/compression info.\n\n");
-    fprintf(stderr, "Usage:  pngcheck [-vqt7f] file.png [file.png [...]]\n");
-    fprintf(stderr, "   or:  pngcheck [-vqt7f] file.mng [file.mng [...]]\n");
-    fprintf(stderr, "   or:  ... | pngcheck [-sx][vqt7f]\n");
-    fprintf(stderr, "   or:  pngcheck -{sx}[vqt7f] file-containing-PNGs...\n\n");
+    fprintf(stderr, "\nTest PNG/MNG image files for corruption, and decompile them to SNG.\n");
+    fprintf(stderr, "Compile SNG files to PNG/MNG.\n\n");
+    fprintf(stderr, "Usage:  sng [-vqt7f] file.png [file.png [...]]\n");
+    fprintf(stderr, "   or:  sng [-vqt7f] file.mng [file.mng [...]]\n");
+    fprintf(stderr, "   or:  sng -{sx}[vqt7f] file-containing-PNGs...\n");
+    fprintf(stderr, "   or:  sng [-v] [file.sng...]\n");
+    fprintf(stderr, "   or:  ... | sng [-sx][vqt7f]\n");
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "   -v  test verbosely (print most chunk data)\n");
+    fprintf(stderr, "   -v  operate verbosely (print tokens)\n");
 #ifdef USE_ZLIB
-    fprintf(stderr, "   -vv test very verbosely (decode & print line filters)\n");
+    fprintf(stderr, "   -vv operate very verbosely\n");
 #endif
-    fprintf(stderr, "   -q  test quietly (only output errors)\n");
+    fprintf(stderr, "   -q  operate quietly (only output errors when decompiling)\n");
     fprintf(stderr, "   -t  print contents of tEXt chunks (can be used with -q)\n");
     fprintf(stderr, "   -7  print contents of tEXt chunks, escape chars >=128 (for 7-bit terminals)\n");
     fprintf(stderr, "   -p  print contents of PLTE, tRNS, hIST, sPLT and PPLT (can be used with -q)\n");
