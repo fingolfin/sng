@@ -390,6 +390,7 @@ static void dump_cHRM(FILE *fpout)
 
 
 #ifdef PNG_FLOATING_POINT_SUPPORTED
+#ifndef MNG_INTERFACE
     wx = info_ptr->x_white;
     wy = info_ptr->y_white;
     rx = info_ptr->x_red;
@@ -399,7 +400,18 @@ static void dump_cHRM(FILE *fpout)
     bx = info_ptr->x_blue;
     by = info_ptr->y_blue;
 #else
+    wx = info_ptr->chrm.x_white;
+    wy = info_ptr->chrm.y_white;
+    rx = info_ptr->chrm.x_red;
+    ry = info_ptr->chrm.y_red;
+    gx = info_ptr->chrm.x_green;
+    gy = info_ptr->chrm.y_green;
+    bx = info_ptr->chrm.x_blue;
+    by = info_ptr->chrm.y_blue;
+#endif /* MNG_INTERFACE */
+#else
 #ifdef PNG_FIXED_POINT_SUPPORTED
+#ifndef MNG_INTERFACE
     wx = FIXED_TO_FLOAT(info_ptr->int_x_white);
     wy = FIXED_TO_FLOAT(info_ptr->int_y_white);
     rx = FIXED_TO_FLOAT(info_ptr->int_x_red);
@@ -408,6 +420,16 @@ static void dump_cHRM(FILE *fpout)
     gy = FIXED_TO_FLOAT(info_ptr->int_y_green);
     bx = FIXED_TO_FLOAT(info_ptr->int_x_blue);
     by = FIXED_TO_FLOAT(info_ptr->int_y_blue);
+#else
+    wx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_white);
+    wy = FIXED_TO_FLOAT(info_ptr->chrm.int_y_white);
+    rx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_red);
+    ry = FIXED_TO_FLOAT(info_ptr->chrm.int_y_red);
+    gx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_green);
+    gy = FIXED_TO_FLOAT(info_ptr->chrm.int_y_green);
+    bx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_blue);
+    by = FIXED_TO_FLOAT(info_ptr->chrm.int_y_blue);
+#endif /* MNG_INTERFACE */
 #endif
 #endif
 
@@ -436,11 +458,19 @@ static void dump_gAMA(FILE *fpout)
     if (info_ptr->valid & PNG_INFO_gAMA) {
 #ifdef PNG_FLOATING_POINT_SUPPORTED
         fprintf(fpout, "gAMA {%#0.5g}\n",
+#ifndef MNG_INTERFACE
 		info_ptr->gamma);
+#else
+		info_ptr->gamma.float_gamma);
+#endif /* MNG_INTERFACE */
 #else
 #ifdef PNG_FIXED_POINT_SUPPORTED
         fprintf(fpout, "gAMA {%#0.5g}\n",
+#ifndef MNG_INTERFACE
 		FIXED_TO_FLOAT(info_ptr->int_gamma));
+#else
+		FIXED_TO_FLOAT(info_ptr->gamma.int_gamma));
+#endif /* MNG_INTERFACE */
 #endif
 #endif
     }
@@ -463,9 +493,17 @@ static void dump_iCCP(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_iCCP) {
 	fprintf(fpout, "iCCP {\n");
+#ifndef MNG_INTERFACE
 	fprintf(fpout, "    name: \"%s\"\n", safeprint(info_ptr->iccp_name));
+#else
+	fprintf(fpout, "    name: \"%s\"\n", safeprint(info_ptr->iccp.name));
+#endif /* MNG_INTERFACE */
 	dump_data(fpout, "    profile: ", 
+#ifndef MNG_INTERFACE
 		  info_ptr->iccp_proflen, info_ptr->iccp_profile);
+#else
+		  info_ptr->iccp.proflen, info_ptr->iccp.profile);
+#endif /* MNG_INTERFACE */
 	fprintf(fpout, "}\n");
     }
 }
@@ -474,27 +512,50 @@ static void dump_oFFs(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_oFFs) {
         fprintf(fpout, "oFFs {xoffset: %ld; yoffset: %ld;",
+#ifndef MNG_INTERFACE
 	       info_ptr->x_offset, info_ptr->y_offset);
 	if (info_ptr->offset_unit_type == PNG_OFFSET_PIXEL)
+#else
+	       info_ptr->offset.x, info_ptr->offset.y);
+	if (info_ptr->offset.unit_type == PNG_OFFSET_PIXEL)
+#endif /* MNG_INTERFACE */
 	    fprintf(fpout, " unit: pixels");
+#ifndef MNG_INTERFACE
 	else if (info_ptr->offset_unit_type == PNG_OFFSET_MICROMETER)
+#else
+	else if (info_ptr->offset.unit_type == PNG_OFFSET_MICROMETER)
+#endif /* MNG_INTERFACE */
 	    fprintf(fpout, " unit: micrometers");
 	fprintf(fpout, ";}\n");
     }
 }
 static void dump_pHYs(FILE *fpout)
 {
+#ifndef MNG_INTERFACE
     if (info_ptr->phys_unit_type > 1)
+#else
+    if (info_ptr->phys.unit_type > 1)
+#endif /* MNG_INTERFACE */
         printerr(1, "invalid pHYs unit");
     else if (info_ptr->valid & PNG_INFO_pHYs) {
 	fprintf(fpout, "");
         fprintf(fpout, "pHYs {xpixels: %lu; ypixels: %lu;",
+#ifndef MNG_INTERFACE
 	       info_ptr->x_pixels_per_unit, info_ptr->y_pixels_per_unit);
 	if (info_ptr->phys_unit_type == PNG_RESOLUTION_METER)
+#else
+	       info_ptr->phys.x_pixels_per_unit, info_ptr->phys.y_pixels_per_unit);
+	if (info_ptr->phys.unit_type == PNG_RESOLUTION_METER)
+#endif /* MNG_INTERFACE */
 	    fprintf(fpout, " per: meter;");
         fprintf(fpout, "}");
+#ifndef MNG_INTERFACE
         if (info_ptr->phys_unit_type == 1 && info_ptr->x_pixels_per_unit == info_ptr->y_pixels_per_unit)
 	    fprintf(fpout, "  # (%lu dpi)\n", (long)(info_ptr->x_pixels_per_unit*0.0254 + 0.5));
+#else
+        if (info_ptr->phys.unit_type == 1 && info_ptr->phys.x_pixels_per_unit == info_ptr->phys.y_pixels_per_unit)
+	    fprintf(fpout, "  # (%lu dpi)\n", (long)(info_ptr->phys.x_pixels_per_unit*0.0254 + 0.5));
+#endif /* MNG_INTERFACE */
 	else
 	    fputc('\n', fpout);
     }
@@ -574,23 +635,44 @@ static void dump_pCAL(FILE *fpout)
 	"linear", "euler", "exponential", "hyperbolic"
     }; 
 
+#ifndef MNG_INTERFACE
     if (info_ptr->pcal_type >= PNG_EQUATION_LAST)
+#else
+    if (info_ptr->pcal.type >= PNG_EQUATION_LAST)
+#endif /* MNG_INTERFACE */
 	    printerr(1, "invalid equation type in pCAL");
     else if (info_ptr->valid & PNG_INFO_pCAL) {
 	int	i;
 
 	fprintf(fpout, "pCAL {\n");
+#ifndef MNG_INTERFACE
 	fprintf(fpout, "    name: \"%s\";\n", safeprint(info_ptr->pcal_purpose));
 	fprintf(fpout, "    x0: %ld;\n", info_ptr->pcal_X0);
 	fprintf(fpout, "    x1: %ld;\n", info_ptr->pcal_X1);
+#else
+	fprintf(fpout, "    name: \"%s\";\n", safeprint(info_ptr->pcal.purpose));
+	fprintf(fpout, "    x0: %ld;\n", info_ptr->pcal.X0);
+	fprintf(fpout, "    x1: %ld;\n", info_ptr->pcal.X1);
+#endif /* MNG_INTERFACE */
 	fprintf(fpout, "    mapping: %s;        # equation type %u\n", 
+#ifndef MNG_INTERFACE
 	       mapping_type[info_ptr->pcal_type], info_ptr->pcal_type);
 	fprintf(fpout, "    unit: \"%s\"\n", safeprint(info_ptr->pcal_units));
 	if (info_ptr->pcal_nparams)
+#else
+	       mapping_type[info_ptr->pcal.type], info_ptr->pcal.type);
+	fprintf(fpout, "    unit: \"%s\"\n", safeprint(info_ptr->pcal.units));
+	if (info_ptr->pcal.nparams)
+#endif /* MNG_INTERFACE */
 	{
 	    fprintf(fpout, "    parameters:");
+#ifndef MNG_INTERFACE
 	    for (i = 0; i < info_ptr->pcal_nparams; i++)
 		fprintf(fpout, " %s", safeprint(info_ptr->pcal_params[i]));
+#else
+	    for (i = 0; i < info_ptr->pcal.nparams; i++)
+		fprintf(fpout, " %s", safeprint(info_ptr->pcal.params[i]));
+#endif /* MNG_INTERFACE */
 	    fprintf(fpout, ";\n");
 	}
 	fprintf(fpout, "}\n");
@@ -601,7 +683,11 @@ static void dump_sCAL(FILE *fpout)
 {
     if (info_ptr->valid & PNG_INFO_sCAL) {
 	fprintf(fpout, "sCAL {\n");
+#ifndef MNG_INTERFACE
 	switch (info_ptr->scal_unit)
+#else
+	switch (info_ptr->scal.unit)
+#endif /* MNG_INTERFACE */
 	{
 	case PNG_SCALE_METER:
 	    fprintf(fpout, "    unit:   meter\n");
@@ -614,12 +700,22 @@ static void dump_sCAL(FILE *fpout)
 	    break;
 	}
 #ifdef PNG_FLOATING_POINT_SUPPORTED
+#ifndef MNG_INTERFACE
 	fprintf(fpout, "    width:  %g\n", info_ptr->scal_pixel_width);
 	fprintf(fpout, "    height: %g\n", info_ptr->scal_pixel_height);
 #else
+	fprintf(fpout, "    width:  %g\n", info_ptr->scal.pixel_width);
+	fprintf(fpout, "    height: %g\n", info_ptr->scal.pixel_height);
+#endif /* MNG_INTERFACE */
+#else
 #ifdef PNG_FIXED_POINT_SUPPORTED
+#ifndef MNG_INTERFACE
 	fprintf(fpout, "    width:  %s\n", info_ptr->scal_s_width);
 	fprintf(fpout, "    height: %s\n", info_ptr->scal_s_height);
+#else
+	fprintf(fpout, "    width:  %s\n", info_ptr->scal.s_width);
+	fprintf(fpout, "    height: %s\n", info_ptr->scal.s_height);
+#endif /* MNG_INTERFACE */
 #endif
 #endif
 	fprintf(fpout, "}\n");
@@ -696,13 +792,22 @@ static void dump_tRNS(FILE *fpout)
 
 static void dump_sRGB(FILE *fpout)
 {
+#ifndef MNG_INTERFACE
     if (info_ptr->srgb_intent) {
+#else
+    if (info_ptr->srgb.intent) {
+#endif /* MNG_INTERFACE */
         printerr(1, "sRGB invalid rendering intent");
     }
     if (info_ptr->valid & PNG_INFO_sRGB) {
         fprintf(fpout, "sRGB {intent: %u;}             # %s\n", 
+#ifndef MNG_INTERFACE
 	       info_ptr->srgb_intent, 
 	       rendering_intent[info_ptr->srgb_intent]);
+#else
+	       info_ptr->srgb.intent, 
+	       rendering_intent[info_ptr->srgb.intent]);
+#endif /* MNG_INTERFACE */
     }
 }
 
@@ -741,36 +846,68 @@ static void dump_text(FILE *fpout)
 {
     int	i;
 
+#ifndef MNG_INTERFACE
     for (i = 0; i < info_ptr->num_text; i++)
+#else
+    for (i = 0; i < info_ptr->annotations.num_text; i++)
+#endif /* MNG_INTERFACE */
     {
+#ifndef MNG_INTERFACE
 	switch (info_ptr->text[i].compression)
+#else
+	switch (info_ptr->annotations.text[i].compression)
+#endif /* MNG_INTERFACE */
 	{
 	case PNG_TEXT_COMPRESSION_NONE:
 	    fprintf(fpout, "tEXt {\n");
 	    fprintf(fpout, "    keyword: \"%s\";\n", 
+#ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].key));
+#else
+		    safeprint(info_ptr->annotations.text[i].key));
+#endif /* MNG_INTERFACE */
 	    break;
 
 	case PNG_TEXT_COMPRESSION_zTXt:
 	    fprintf(fpout, "zTXt {\n");
 	    fprintf(fpout, "    keyword: \"%s\";\n", 
+#ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].key));
+#else
+		    safeprint(info_ptr->annotations.text[i].key));
+#endif /* MNG_INTERFACE */
 	    break;
 
 	case PNG_ITXT_COMPRESSION_NONE:
 	case PNG_ITXT_COMPRESSION_zTXt:
 	    fprintf(fpout, "iTXt {\n");
 	    fprintf(fpout, "    language: \"%s\";\n", 
+#ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].lang));
+#else
+		    safeprint(info_ptr->annotations.text[i].lang));
+#endif /* MNG_INTERFACE */
 	    fprintf(fpout, "    keyword: \"%s\";\n", 
+#ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].key));
+#else
+		    safeprint(info_ptr->annotations.text[i].key));
+#endif /* MNG_INTERFACE */
 	    fprintf(fpout, "    translated: \"%s\";\n", 
+#ifndef MNG_INTERFACE
 		    safeprint(info_ptr->text[i].lang_key));
+#else
+		    safeprint(info_ptr->annotations.text[i].lang_key));
+#endif /* MNG_INTERFACE */
 	    break;
 	}
 
 	fprintf(fpout, "    text: \"%s\";\n", 
+#ifndef MNG_INTERFACE
 		safeprint(info_ptr->text[i].text));
+#else
+		safeprint(info_ptr->annotations.text[i].text));
+#endif /* MNG_INTERFACE */
 	fprintf(fpout, "}\n");
     }
 }
@@ -842,8 +979,13 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
     dump_hIST(fpout);
     dump_tRNS(fpout);
     dump_pHYs(fpout);
+#ifndef MNG_INTERFACE
     for (i = 0; i < info_ptr->splt_palettes_num; i++)
 	dump_sPLT(info_ptr->splt_palettes + i, fpout);
+#else
+    for (i = 0; i < info_ptr->splt.palettes_num; i++)
+	dump_sPLT(info_ptr->splt.palettes + i, fpout);
+#endif /* MNG_INTERFACE */
 
     dump_unknown_chunks(FALSE, fpout);
 
