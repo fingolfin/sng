@@ -399,18 +399,19 @@ static int keyword_validate(bool token_ok, char *stash)
     }
 }
 
-static void collect_data(int pixperchar, int *pnbits, char **pbits)
+static void collect_data(int *pnbits, char **pbits)
 /* collect data in either bitmap format */
 {
     /*
      * A data segment consists of a byte stream. 
-     * There are two possible formats:
+     * There are presently two formats:
      *
-     * 1. One character per byte; values are
-     * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
-     * up to 62 values per pixel.
+     * base64: 
+     *   One character per byte; values are
+     * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%$
      *
-     * 2. Two hex digits per byte.
+     * hex: 
+     *   Two hex digits per byte.
      *
      * In either format, whitespace is ignored.
      */
@@ -419,10 +420,17 @@ static void collect_data(int pixperchar, int *pnbits, char **pbits)
     int	nbits = 0;
     int ocount = 0;
     int c;
+    bool pixperchar;
 
-    if (yydebug)
-	fprintf(stderr, "collecting data in %s format\n", 
-		pixperchar ? "pixel-per-character" : "hex");
+    if (!get_inner_token())
+	fatal("missing format type in data segment");
+    else if (token_equals("base64"))
+	pixperchar = TRUE;
+    else if (token_equals("hex"))
+	pixperchar = FALSE;
+    else
+	fatal("unknown data format");
+
     while ((c = fgetc(yyin)))
 	if (feof(yyin))
 	    fatal("unexpected EOF in data segment");
@@ -558,7 +566,7 @@ static void compile_IDAT(void)
     /*
      * Collect raw hex data and write it out as a chunk.
      */
-    collect_data(FALSE, &nbits, &bits);
+    collect_data(&nbits, &bits);
     png_write_chunk(png_ptr, "IDAT", bits, nbits);
     free(bits);
 }
@@ -878,18 +886,11 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     png_byte	**rowpointers;
-    int	i;
-
-    /*
-     * We know we can use format 1 if
-     * (a) The image is paletted and the palette has 62 or fewer values.
-     * (b) Bit depth is 4 or less.
-     * These cover a lot of common cases.
-     */
-    bool	sample_per_char;
-    int		nbits;
+    int		i, nbits, sample_size;
     char	*bits;
-    int 	sample_size;
+
+    /* collect the data */
+    collect_data(&nbits, &bits);
 
     /* input sample size in bits */
     switch (info_ptr->color_type)
@@ -917,15 +918,6 @@ static void compile_IMAGE(void)
     default:	/* should never happen */
 	fatal("unknown color type");
     }
-
-    /* can we fit a sample in one base-62 character? */
-    sample_per_char =
-	sample_size <= 5
-	|| ((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) 
-	 			&& info_ptr->num_palette <= 62);
-
-    /* collect the data */
-    collect_data(sample_per_char, &nbits, &bits);
 
     if (nbits != info_ptr->width * info_ptr->height * (sample_size / 8))
 	fatal("size of IMAGE doesn't match height * width in IHDR");

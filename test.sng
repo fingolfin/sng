@@ -49,18 +49,20 @@ bKGD {
 
 hIST {23, 55, 0}
 
-tRNS {
-   2
+# tRNS processing doesn't seem to work
+#tRNS {
+#   10 10 10
    # red 70 
    # green 70
    # blue 70
-}
+#}
 
 pHYs {
    resolution (500, 400) per meter
 }
 
 IMAGE {
+   base64
 0000001111100000
 0000011111110000
 0000111001111000
