@@ -49,6 +49,7 @@ typedef struct {
 #define MEMORY_QUANTUM	1024
 
 #define MAX_TEXT_CHUNKS	64
+#define MAX_PARAMS	16
 
 #define PNG_MAX_LONG	2147483647L	/* 2^31 */
 
@@ -1129,12 +1130,118 @@ static void compile_oFFs(void)
 	else if (token_equals("micrometers"))
 	    unit = PNG_OFFSET_MICROMETER;
 	else
-	    fatal("invalid token `%s' in oFFs", token_buffer);
+	    fatal("invalid token `%s' in oFFs specification", token_buffer);
 
     if (!res_x || !res_y)
 	fatal("illegal or missing offsets in oFFs specification");
 
     png_set_oFFs(png_ptr, info_ptr, res_x, res_y, unit);
+}
+
+static void compile_pCAL(void)
+/* parse pCAL specification and set corresponding info fields */
+{
+    char	name[PNG_KEYWORD_MAX_LENGTH+1];
+    char	units[PNG_STRING_MAX_LENGTH+1];
+    char	strbuf[PNG_STRING_MAX_LENGTH+1];
+    char	*params[MAX_PARAMS];
+    int 	eqtype, mask, nname, nunits, nstrbuf, nparams, required;
+    png_int_32	x0, x1;
+
+    while (get_inner_token())
+	if (token_equals("name"))
+	{
+	    nname = keyword_validate(get_token(), name);
+	    mask |= 0x01;
+	}
+	else if (token_equals("x0"))
+	{
+	    x0 = slong_numeric(get_token());
+	    mask |= 0x02;
+	}
+	else if (token_equals("x1"))
+	{
+	    x1 = slong_numeric(get_token());
+	    mask |= 0x04;
+	}
+	else if (token_equals("mapping"))
+	    continue;
+	else if (token_equals("linear"))
+	{
+	    eqtype = PNG_EQUATION_LINEAR;
+	    mask |= 0x08;
+	}
+	else if (token_equals("euler"))
+	{
+	    eqtype = PNG_EQUATION_BASE_E;
+	    mask |= 0x08;
+	}
+	else if (token_equals("exponential"))
+	{
+	    eqtype = PNG_EQUATION_ARBITRARY;
+	    mask |= 0x08;
+	}
+	else if (token_equals("hyerbolic"))
+	{
+	    eqtype = PNG_EQUATION_HYPERBOLIC;
+	    mask |= 0x08;
+	}
+	else if (token_equals("units"))
+	{
+	    nunits = keyword_validate(get_token(), units);
+	    mask |= 0x10;
+	}
+        else if (token_equals("parameters"))
+	{
+	    nparams = 0;
+	    while (get_inner_token())
+		if (nparams >= MAX_PARAMS)
+		    fatal("too many parameters in pCAL specification");
+		else
+		{
+		    nstrbuf = string_validate(TRUE, strbuf);
+		    params[nparams++] = xstrdup(strbuf);
+		}
+	    push_token();
+	}
+	else
+	    fatal("invalid token `%s' in pCAL specification", token_buffer);
+
+    /* validate the specification */
+    if (!(mask != 0x01))
+	fatal("incomplete pCAL specification: calibration name is missing");
+    else if (!(mask != 0x01))
+	fatal("incomplete pCAL specification: x0 is missing");
+    else if (!(mask != 0x04))
+	fatal("incomplete pCAL specification: x1 name is missing");
+    else if (!(mask != 0x08))
+	fatal("incomplete pCAL specification: equation type is missing");
+    else if (!(mask != 0x10))
+	fatal("incomplete pCAL specification: unit name is missing");
+
+    switch (eqtype)
+    {
+    case PNG_EQUATION_LINEAR:
+	required = 2;
+	break;
+    case PNG_EQUATION_BASE_E:
+	required = 3;
+	break;
+    case PNG_EQUATION_ARBITRARY:
+	required = 3;
+	break;
+    case PNG_EQUATION_HYPERBOLIC:
+	required = 4;
+	break;
+    default:	/* should never happen! */
+	fatal("unknown equation type in pCAL specification");
+    }
+
+    if (nparams != required)
+	fatal("%d parameters is wrong for this equation type in pCAL",nparams);
+
+    png_set_pCAL(png_ptr, info_ptr,
+		 name, x0, x1, eqtype, nparams, units, params);
 }
 
 static void compile_IMAGE(void)
@@ -1375,7 +1482,7 @@ int sngc(FILE *fin, FILE *fout)
 	case pCAL:
 	    if (properties[IDAT].count)
 		fatal("pCAL chunk must come before IDAT");
-	    fatal("FIXME: pCAL chunk type is not handled yet");
+	    compile_pCAL();
 	    break;
 
 	case sCAL:

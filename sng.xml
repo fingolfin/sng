@@ -141,6 +141,21 @@ sOFFs {
   offset(<slong>, <slong>) [pixels|meters]*
 }
 
+sPLT {
+   name <keyword>
+   depth <byte>
+   [(<short>, <short>, <short>, <short>, <short>)]*
+}
+
+pCAL {
+   name <keyword>
+   x0 <slong>
+   x1 <slong>
+   linear|euler|exponential|hyperbolic mapping
+   unit <string>
+   [parameters <string>*] 
+}
+
 IMAGE {<data>}
 .fi
 
