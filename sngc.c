@@ -658,6 +658,7 @@ static void compile_sBIT(void)
 {
     png_color_8	sigbits;
     bool color = (info_ptr->color_type & (PNG_COLOR_MASK_PALETTE | PNG_COLOR_MASK_COLOR));
+    int sample_depth = ((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) ? 8 : info_ptr->bit_depth);
 
     while (get_inner_token())
 	if (token_equals("red"))
@@ -665,36 +666,44 @@ static void compile_sBIT(void)
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.red = byte_numeric(get_token());
+	    if (sigbits.red >= sample_depth)
+		fatal("red sample depth out of range");
 	}
 	else if (token_equals("green"))
 	{
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.green = byte_numeric(get_token());
+	    if (sigbits.green >= sample_depth)
+		fatal("red sample depth out of range");
 	}
 	else if (token_equals("blue"))
 	{
 	    if (!color)
 		fatal("No color channels in this image type");
 	    sigbits.blue = byte_numeric(get_token());
+	    if (sigbits.blue >= sample_depth)
+		fatal("red sample depth out of range");
 	}
 	else if (token_equals("gray"))
 	{
 	    if (color)
 		fatal("No gray channel in this image type");
 	    sigbits.gray = byte_numeric(get_token());
+	    if (sigbits.gray >= sample_depth)
+		fatal("gray sample depth out of range");
 	}
 	else if (token_equals("alpha"))
 	{
 	    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
 		fatal("No alpha channel in this image type");
 	    sigbits.alpha = byte_numeric(get_token());
+	    if (sigbits.alpha >= sample_depth)
+		fatal("alpha sample depth out of range");
 	}
 	else 
 	    fatal("invalid channel name `%s' in sBIT specification",
 		  token_buffer);
-
-    /* FIXME: validate the depths -- see 4.2.4.3 'graph 7 */
 
     png_set_sBIT(png_ptr, info_ptr, &sigbits);
 }
@@ -767,7 +776,6 @@ static void compile_tRNS(void)
 
     memset(&tRNSbits, '0', sizeof(tRNSbits));
 
-    /* input sample size in bits */
     switch (info_ptr->color_type)
     {
     case PNG_COLOR_TYPE_GRAY:
@@ -965,7 +973,7 @@ static void compile_IMAGE(void)
     /* collect the data */
     collect_data(&nbits, &bits);
 
-    /* input sample size in bits */
+    /* compute input sample size in bits */
     switch (info_ptr->color_type)
     {
     case PNG_COLOR_TYPE_GRAY:
@@ -1161,7 +1169,7 @@ int sngc(FILE *fin, FILE *fout)
 	case sPLT:
 	    if (properties[IDAT].count)
 		fatal("sPLT chunk must come before IDAT");
-	    fatal("FIXME: sPLT chunk type is not handled yet in libpng 1.0.5");
+	    fatal("sPLT chunk type is not handled yet in libpng 1.0.5");
 	    break;
 
 	case tIME:
@@ -1211,7 +1219,7 @@ int sngc(FILE *fin, FILE *fout)
 	    break;
 
 	case fRAc:
-	    fatal("FIXME: fRAc chunk type is not handled yet");
+	    fatal("fRAc chunk type is not defined yet");
 	    break;
 
 	case IMAGE:
