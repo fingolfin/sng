@@ -5,6 +5,7 @@
 #define VERSION "0.1"
 
 int verbose;
+int idat;
 int sng_error;
 
 int main(int argc, char *argv[])
@@ -26,6 +27,10 @@ int main(int argc, char *argv[])
 	    break;
 	case 'v':
 	    ++verbose;
+	    i++;
+	    break;
+	case 'i':
+	    ++idat;
 	    i++;
 	    break;
 	case 'h':
