@@ -694,6 +694,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    png_bytepp row_pointers;
 
    current_file = name;
+   sng_error = 0;
 
    /* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
