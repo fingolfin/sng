@@ -28,6 +28,7 @@ static char *rendering_intent[] = {
 };
 
 static char *current_file;
+static int rowsize;
 
 char *safeprint(const char *buf)
 /* visibilize a given string -- inverse of sngc.c:escapes() */
@@ -283,7 +284,7 @@ static void dump_image(png_infop info_ptr, png_bytepp rows, FILE *fpout)
     {
 	fprintf(fpout, "IMAGE {\n");
 	multi_dump(fpout, "    ", 
-		   info_ptr->width,  info_ptr->height,
+		   rowsize,  info_ptr->height,
 		   rows);
 	fprintf(fpout, "}\n");
     }
@@ -808,10 +809,6 @@ int sngd(FILE *fp, char *name, FILE *fpout)
        /* turn off IDAT chunk processing */;
 #endif /* __UNUSED__ */
 
-    /* unpack images with small bit depths into bytes */
-    if (info_ptr->bit_depth < 8)
-	png_set_packing(png_ptr);
-
    /* The call to png_read_info() gives us all of the information from the
     * PNG file before the first IDAT (image data chunk).  REQUIRED
     */
@@ -829,9 +826,11 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    if (!idat)		/* read and dump as a sequence of IDATs */
    {
 #endif /* __UNUSED__ */
+       rowsize = png_get_rowbytes(png_ptr, info_ptr);
+
        row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
        for (row = 0; row < height; row++)
-	   row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
+	   row_pointers[row] = malloc(rowsize);
 
        png_read_image(png_ptr, row_pointers);
 #ifdef __UNUSED__
