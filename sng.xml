@@ -102,7 +102,7 @@ An <rgb> element may be expanded to:
 .fi
 
 That is, it is either a paren-enclosed list of RGB values or a string
-naming a color bamed in the X RGB database.  Note that color names are
+naming a color named in the X RGB database.  Note that color names are
 not necessarily portable between hosts or even displays, due to
 different screen gammas and colorimetric biases.  For this
 reason, the SNG decompiler generates color names in comments.

@@ -10,7 +10,7 @@ NAME
 #include <unistd.h>
 #include <ctype.h>
 #define PNG_INTERNAL
-#include <png.h>
+#include "png.h"
 
 #include "sng.h"
 
@@ -333,11 +333,10 @@ static int get_inner_token(void)
 {
     if (!get_token())
 	fatal("unexpected EOF");
-    else
-	return(!token_equals("}"));	/* do we see end delimiter? */
+    return(!token_equals("}"));	/* do we see end delimiter? */
 }
 
-static int push_token(void)
+static void push_token(void)
 /* push back a token; must always be followed immediately by get_token */
 {
     if (verbose > 1)
@@ -429,7 +428,7 @@ static int string_validate(bool token_ok, char *stash)
 {
     if (!token_ok)
 	fatal("EOF while expecting string constant");
-    else
+    /* else */
     {
 	int	len = strlen(token_buffer);
 
@@ -445,7 +444,7 @@ static int keyword_validate(bool token_ok, char *stash)
 {
     if (!token_ok)
 	fatal("EOF while expecting PNG keyword");
-    else
+    /* else */
     {
 	int	len = strlen(token_buffer);
 	unsigned char	*cp;
@@ -455,7 +454,7 @@ static int keyword_validate(bool token_ok, char *stash)
 	strncpy(stash, token_buffer, PNG_KEYWORD_MAX_LENGTH);
 	if (isspace(stash[0]) || isspace(stash[len-1]))
 	    fatal("keywords may not contain leading or trailing spaces");
-	for (cp = stash; *cp; cp++)
+	for (cp = (unsigned char *)stash; *cp; cp++)
 	    if (*cp < 32 || (*cp > 126 && *cp < 161))
 		fatal("keywords must contain Latin-1 characters only");
 	    else if (isspace(cp[0]) && isspace(cp[1]))
@@ -493,12 +492,12 @@ static void collect_data(int *pnbytes, char **pbytes)
     int quanta = 1;
     int	nbytes = 0;
     int ocount = 0;
-    int c, maxval;
+    int c, maxval = 0;
 #define BASE64_FMT	0
 #define HEX_FMT		1
 #define P1_FMT		2
 #define P3_FMT		3
-    int fmt;
+    int fmt = 0;
 
     if (!get_inner_token())
 	fatal("missing format type in data segment");
@@ -572,7 +571,7 @@ static void collect_data(int *pnbytes, char **pbytes)
 	}
 	else 
         {
-	    unsigned char	value;
+	    unsigned char	value = 0;
 
 	    if (nbytes >= quanta * MEMORY_QUANTUM)
 		bytes = xrealloc(bytes, MEMORY_QUANTUM * ++quanta);
@@ -652,7 +651,7 @@ static void collect_data(int *pnbytes, char **pbytes)
 static void compile_IHDR(void)
 /* parse IHDR specification, set corresponding bits in info_ptr */
 {
-    int chunktype, d;
+    int d = 0;
 
     /* read IHDR data */
     info_ptr->bit_depth = 8;
@@ -775,12 +774,10 @@ static void compile_cHRM(void)
 /* parse cHRM specification, set corresponding bits in info_ptr */
 {
     char	cmask = 0;
-    float	wx, wy, rx, ry, gx, gy, bx, by;
+    float	wx = 0, wy = 0, rx = 0, ry = 0, gx = 0, gy = 0, bx = 0, by = 0;
 
     while (get_inner_token())
     {
-	float	*cvx = NULL, *cvy = NULL;
-
 	if (token_equals("white"))
 	{
 	    require_or_die("(");
@@ -863,8 +860,8 @@ static void compile_gAMA(void)
 static void compile_iCCP(void)
 /* compile and emit an iCCP chunk */
 {
-    int nname, data_len;
-    char *cp, name[PNG_KEYWORD_MAX_LENGTH+1], *data;
+    int nname = 0, data_len = 0;
+    char name[PNG_KEYWORD_MAX_LENGTH+1], *data;
 
     while (get_inner_token())
 	if (token_equals("name"))
@@ -1050,7 +1047,7 @@ static void compile_pHYs(void)
 /* compile a pHYs chunk, put data in info structure */
 {
     png_byte	unit = PNG_RESOLUTION_UNKNOWN;
-    png_uint_32	res_x, res_y;
+    png_uint_32	res_x = 0, res_y = 0;
 
     while (get_inner_token())
 	if (token_equals("xpixels"))
@@ -1308,7 +1305,7 @@ static void compile_oFFs(void)
 /* parse oFFs specification and set corresponding info fields */
 {
     png_byte	unit = PNG_OFFSET_PIXEL;	/* default to pixels */
-    png_int_32	res_x, res_y;
+    png_int_32	res_x = 0, res_y = 0;
 
     while (get_inner_token())
 	if (token_equals("xoffset"))
@@ -1337,8 +1334,9 @@ static void compile_pCAL(void)
     char	unit[PNG_STRING_MAX_LENGTH+1];
     char	strbuf[PNG_STRING_MAX_LENGTH+1];
     char	*params[MAX_PARAMS];
-    int 	eqtype, mask, nname, nunit, nstrbuf, nparams, required;
-    png_int_32	x0, x1;
+    int 	eqtype = 0, mask = 0, nname = 0, nunit = 0;
+    int		nstrbuf = 0, nparams = 0, required = 0;
+    png_int_32	x0 = 0, x1 = 0;
 
     while (get_inner_token())
 	if (token_equals("name"))
@@ -1440,9 +1438,9 @@ static void compile_sCAL(void)
 /* parse sCAL specification and emit corresponding bits */
 {
     char	unit[PNG_STRING_MAX_LENGTH+1];
-    double	width, height;
-    int 	nunit;
-    png_byte	unitbyte;
+    double	width = 0, height = 0;
+    int 	nunit = 0;
+    png_byte	unitbyte = 0;
 #if !defined(FLOATING_POINT_SUPPORTED) && defined(FIXED_POINT_SUPPORTED)
     char	width_s[BUFSIZ], height_s[BUFSIZ];
 #endif
@@ -1562,8 +1560,7 @@ static void compile_gIFx(void)
 static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
-    png_byte	**row_pointers;
-    int		i, nbytes, bytes_per_sample, nsamples, input_width;
+    int		i, nbytes, bytes_per_sample = 0, nsamples, input_width;
     char	*bytes;
     int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
 
@@ -1711,7 +1708,7 @@ static void compile_private(char *name)
 int sngc(FILE *fin, char *name, FILE *fout)
 /* compile SNG on fin to PNG on fout */
 {
-    int	prevchunk, errtype, i;
+    int	prevchunk, errtype;
     char buf[BUFSIZ];
 
     yyin = fin;

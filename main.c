@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "png.h"
 #include "sng.h"
 #include "config.h"
@@ -152,7 +153,6 @@ void initialize_hash(int hashfunc(color_item *),
 
 int main(int argc, char *argv[])
 {
-    FILE *fp;
     int i = 1;
 
 #ifdef __EMX__

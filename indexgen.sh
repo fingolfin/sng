@@ -39,11 +39,9 @@ generated or modified using only text tools.<P>
 SNG is implemented by a compiler/decompiler called sng that losslessly
 translates between SNG and PNG.<P>
 
-The current version is ${version}. The program is now in beta release.
-It is quite functional, and has been tested on all 155 of the non-broken
-images in the png test suite, but the design of SNG is not yet frozen.
-The syntax of the language may change (possibly radically) before a
-production release.<p>
+The current version is ${version}.  This is a production release, and
+has been tested on all 155 of the non-broken images in the png test
+suite.<P>
 
 Downloads are available from SNG's <a
 href="https://sourceforge.net/projects/sng/">SourceForge page</a>.<P>
