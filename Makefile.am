@@ -19,9 +19,4 @@ zip: $(DISTFILES)
 
 # Regression-test sng.  Passes if no differences show up.
 regress:
-	sng test.sng
-	sng <test.png >foo.sng	# Make a canonicalized version of the test file
-	sng foo.sng		
-	sng <foo.png >bar.sng	# Regenerate canonicalized version from its PNG
-	diff -c foo.sng bar.sng
-	rm foo.[ps]ng bar.[ps]ng 
+	sng_regress test.sng
