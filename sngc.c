@@ -656,7 +656,7 @@ static void compile_IHDR(void)
 
     /* read IHDR data */
     info_ptr->bit_depth = 8;
-    info_ptr->color_type = 0;
+    info_ptr->color_type = PNG_COLOR_TYPE_GRAY;
     info_ptr->interlace_type = PNG_INTERLACE_NONE;
     while (get_inner_token())
 	if (token_equals("height"))
