@@ -1513,7 +1513,7 @@ int sngc(FILE *fin, char *name, FILE *fout)
 	    fprintf(stderr, "%s:%d: libpng croaked\n", file, linenum);
 	free(png_ptr);
 	free(info_ptr);
-	return 2-errtype;
+	return errtype;
     }
 
     /* set up the output control if you are using standard C streams */

@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
 	    ungetc(c, stdin);
 
 	    if (isprint(c))
-		sngc(stdin, "stdin", stdout);
+		exit(sngc(stdin, "stdin", stdout));
 	    else
-		sngd(stdin, "stdin", stdout);
+		exit(sngd(stdin, "stdin", stdout));
 	}
     } 
     else

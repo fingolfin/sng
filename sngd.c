@@ -765,7 +765,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    {
       fclose(fp);
       sng_error = 1;
-      return(FAIL);
+      return(1);
    }
 
    /* Allocate/initialize the memory for image information.  REQUIRED. */
@@ -789,7 +789,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
       fclose(fp);
       /* If we get here, we had a problem reading the file */
       sng_error = 1;
-      return(FAIL);
+      return(1);
    }
 
    /* keep all unknown chunks, we'll dump them later */
@@ -845,7 +845,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    fclose(fp);
 
    /* that's it */
-   return(SUCCEED);
+   return(0);
 }
 
 /* sngd.c ends here */
