@@ -173,7 +173,7 @@ void *xrealloc(void *p, unsigned long s)
  *
  ************************************************************************/
 
-static char token_buffer[81];
+static char token_buffer[BUFSIZ];
 static bool pushed;
 
 static int get_token(void)
@@ -339,6 +339,17 @@ static double double_numeric(bool token_ok)
     if (*vp || result < 0)
 	fatal("invalid or out of range double-precision constant");
     return(result);
+}
+
+static char *string_validate(bool token_ok)
+/* validate current token as a string */
+{
+    double result;
+    char *vp;
+
+    if (!token_ok)
+	fatal("EOF while expecting double-precision constant");
+    return(token_buffer);
 }
 
 static void collect_data(int pixperchar, int *pnbits, char **pbits)
@@ -609,6 +620,25 @@ static void compile_IMAGE(void)
     free(bits);
 }
 
+static void compile_iCCP(void)
+/* compile and emit an iCCP chunk */
+{
+    int slen;
+    char *cp;
+
+    get_token();	/* fill token buffer with string */
+    slen = strlen(token_buffer);
+    if (slen > 79)
+	fatal("profile name too long");
+    cp = token_buffer + strlen(token_buffer);
+    *cp++ = 0;		/* null separator */
+    *cp++ = 0;		/* compression method */
+    if (!get_token() || !token_equals("}"))
+	fatal("bad token in iCCP specification");
+
+    /* FIXME: actually emit the chunk */
+}
+
 static int pngc(FILE *fin, FILE *fout)
 /* compile PPNG on fin to PNG on fout */
 {
@@ -718,7 +748,7 @@ static int pngc(FILE *fin, FILE *fout)
 	case iCCP:
 	    if (properties[PLTE].count || properties[IDAT].count)
 		fatal("iCCP chunk must come before PLTE and IDAT");
-	    fatal("FIXME: iCCP chunk type is not handled yet");
+	    compile_iCCP();
 	    break;
 
 	case sBIT:
