@@ -2,11 +2,15 @@
 .SH NAME
 sng -- compiler/decompiler for Scriptable Network Graphics
 .SH SYNOPSIS
-sng [-iv] [file...]
+sng [-ivV] [file...]
 .SH DESCRIPTION
 The sng program translates between PNG (Portable Network Graphics)
-format and SNG (Scriptable Network Graphics) format.  SNG is a printable and
-editable minilanguage for describing PNG files.
+format and SNG (Scriptable Network Graphics) format.  SNG is a
+printable and editable minilanguage for describing PNG files.  With
+sng, it is easy to view and edit exotic PNG chunks not supported by
+graphics editors; also, since SNG is easy to generate from scripts,
+sng may be useful at the end of a pipeline that programmatically
+generates PNG images.
 
 An SNG description consists of a series of chunk specifications in a
 simple editable text format.  These generally correspond one-for-one
@@ -26,9 +30,10 @@ to the file extension (.png or .sng).  The result file has the same
 name left of the dot as the original, but the opposite extension and
 type.
 
-There are two options.  The -i option causes IDAT chunks in a PNG to
-be dumped in raw form as IDAT chanks rather than as a reassembled
-IMAGE.  The -v option makes sng report on what files it is converting.
+The -V option maskes sng identify itself and its version, then exit.
+The -i option causes IDAT chunks in a PNG to be dumped in raw form as
+IDAT chanks rather than as a reassembled IMAGE.
+The -v option makes sng report on what files it is converting.
 .SH SNG LANGUAGE SYNTAX
 In general, the SNG language is token-oriented with tokens separated
 by whitespace.  Anywhere that whitespace may appear, a `#' comment
@@ -70,7 +75,7 @@ is RFC2045 base-64 encoding, with decimal digits representing values
 0-9, followed by A-Z for 10-35, followed by a-z for 36-61, followed by
 + for 62 and / for 63.  Base64 format can be used if the image either
 has total (color plus alpha) bit depth of four or less, or it is a
-paletted image with 64 or fewer colors.  Whitespace is ignored.
+spaletted image with 64 or fewer colors.  Whitespace is ignored.
 
 3. \fBhex\fR format is signaled by the leading token `hex'. In hex
 format, each byte is specified by two hex digits (0123456789abcdef),

@@ -175,6 +175,9 @@ int main(int argc, char *argv[])
 	    ++idat;
 	    i++;
 	    break;
+	case 'V':
+	    fprintf(stdout, "sng version " VERSION " by Eric S. Raymond.\n");
+	    exit(0);
 	case 'h':
 	default:
 	    fprintf(stderr, "sng: unknown option %c\n", argv[1][i]);
