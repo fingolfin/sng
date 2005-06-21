@@ -1,11 +1,16 @@
 #!/bin/sh
+set -x
 
 version=`sed -n '/VERSION *= *\(.*\)/s//\1/p' <Makefile`
 echo "Uploading sng version ${version}"
 
+make dist
+buildrpms ${version}.tar.gz
+indexgen.sh >index.html
+
 echo "Uploading to SourceForge"
 FTP=upload.sourceforge.net
-#HTML=esr@shell.sourceforge.net:/home/groups/s/sn/sng/htdocs
+HTML=esr@shell.sourceforge.net:/home/groups/s/sn/sng/htdocs
 # First, copy to SourceForge website
 lftp <<EOF
 open -u anonymous,esr@snark.thyrsus.com $FTP
@@ -15,8 +20,20 @@ put sng-${version}.zip $FTP
 put sng-${version}-1.i386.rpm $FTP
 put sng-${version}-1.src.rpm $FTP
 put index.html $HTML
-#put NEWS $FTP
+put NEWS $FTP
 EOF
 echo "Upload to SourceForge complete"
+echo "Updating Freshmeat"
+freshmeat-submit <<EOF
+Project:  sng
+Version: $version
+Release-Focus: Code cleanup
+Hide: N
+Home-Page-URL: http://sng.sourceforge.net/
+Gzipped-Tar-URL: http://download.sourceforge.net/sng/sng-${version}.tar.gz
+
+See the NEWS file for recent developments.
+EOF
+echo "Done"
 
 

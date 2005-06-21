@@ -1014,6 +1014,9 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
     for (i = 0; i < info_ptr->splt.palettes_num; i++)
 	dump_sPLT(info_ptr->splt.palettes + i, fpout);
 #endif /* MNG_INTERFACE */
+    dump_oFFs(fpout);
+    dump_pCAL(fpout);
+    dump_sCAL(fpout);
 
     dump_unknown_chunks(FALSE, fpout);
 
