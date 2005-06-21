@@ -5,7 +5,7 @@ version=`sed -n '/VERSION *= *\(.*\)/s//\1/p' <Makefile`
 echo "Uploading sng version ${version}"
 
 make dist
-buildrpms ${version}.tar.gz
+buildrpms sng-${version}.tar.gz
 indexgen.sh >index.html
 
 echo "Uploading to SourceForge"
