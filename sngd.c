@@ -12,6 +12,9 @@ NAME
 #include "png.h"
 #include "sng.h"
 
+png_structp png_ptr;
+png_infop info_ptr;
+
 static char *image_type[] = {
     "grayscale",
     "undefined type",
@@ -30,8 +33,6 @@ static char *rendering_intent[] = {
 };
 
 static char *current_file;
-static png_structp png_ptr;
-static png_infop info_ptr;
 
 /*****************************************************************************
  *
