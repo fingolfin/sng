@@ -1,3 +1,5 @@
+sng
+*.o
 .deps/
 Makefile
 Makefile.in

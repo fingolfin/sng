@@ -62,7 +62,7 @@ else
    AC_ERROR([$with_rgbtxt isn't there.])
 fi
 
-AC_OUTPUT(Makefile sng.spec)
+AC_OUTPUT(Makefile)
 
 dnl Local Variables:
 dnl comment-start: "dnl "
