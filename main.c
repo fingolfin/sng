@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 	    ++verbose;
 	    i++;
 	    break;
-	case 'i':
+	case 'i':    /* dump raw IDAT chunks - unimplemented, undocumented */
 	    ++idat;
 	    i++;
 	    break;

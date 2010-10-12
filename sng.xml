@@ -15,8 +15,7 @@
 <refsynopsisdiv id='synopsis'>
 
 <cmdsynopsis>
-  <!--  sng  [-ivV] [file ...]  -->
-  <command>sng</command>  <arg choice='opt'>-ivV </arg>
+  <command>sng</command>  <arg choice='opt'>-vV </arg>
   <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
 </cmdsynopsis>
 
@@ -52,9 +51,9 @@ result file has the same name left of the dot as the original, but the
 opposite extension and type.</para>
 
 <para>The -V option makes <command>sng</command> identify itself and
-its version, then exit.  The -i option causes IDAT chunks in a PNG to
-be dumped in raw form as IDAT chanks rather than as a reassembled
-IMAGE.  The -v option makes <command>sng</command> report on what
+its version, then exit.  <!-- The -i option causes IDAT chunks in a PNG to
+be dumped in raw form as IDAT chunks rather than as a reassembled
+IMAGE. -->  The -v option makes <command>sng</command> report on what
 files it is converting.</para> </refsect1>
 
 <refsect1 id='sng_language_syntax'><title>SNG LANGUAGE SYNTAX</title>
