@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 	    if ((fpout = fopen(outfile, "w")) == NULL)
 	    {
 		fprintf(stderr,
-			"sng: couldn't open for output %s (%d)\n",
+			"sng: couldn't open %s for output (%d)\n",
 			outfile, errno);
 		continue;
 	    }
