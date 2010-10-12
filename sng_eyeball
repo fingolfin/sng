@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# sng_eyeball -- visual sanity check for decompilation/compilation
+#
+
+trap "rm -f /tmp/*$$.[ps]ng" 0 1 2 15 
+
+for file in $*
+do
+    echo $file.
+    sng <$file | sng >recompiled.png && display recompiled.png
+done
+
+# sng_eyeball ends here
+
+
+
