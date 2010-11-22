@@ -1,7 +1,8 @@
 				History
 
 1.0.5:
-	* Adapts to newer locations of rgb.txt file.
+	* Finds newer locations of the rgb.txt file.
+	* Adapted for altered extension handling in recent libpng versions.
 
 1.0.4:
 	* Minor bug fix to canonicalization code, by Antoine Mathys 
