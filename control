@@ -3,7 +3,7 @@
 
 Package: sng
 
-Destinations: ~,sourceforge
+Destinations: ~,sourceforge,freshmeat
 
 Description: enable lossless editing of PNGs via a textual representation
  SNG (Scriptable Network Graphics) is a minilanguage designed
