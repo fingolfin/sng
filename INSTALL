@@ -21,6 +21,12 @@ be helpful to specify the --with-png option; type
 
 for details.
 
+If you are building from a repository snapshot, 
+
+        autogen.sh
+
+will perform the required bootstrapping before running configure.  
+
 Installation Details
 ====================
 
