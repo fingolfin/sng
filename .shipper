@@ -1,0 +1,34 @@
+# Set defaults for shipper(1)
+
+# Index page template.  A variable resourcetable will be supplied.
+# Other available shell variables include package, version, description,
+# and date.
+indextemplate = """
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN'
+    'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>
+<html>
+<head>
+<link rev='made' href='mailto:esr@snark.thyrsus.com' />
+<meta name='description' content='Resource page for %(package)s' />
+<meta name='generator' content='shipper' />
+<meta name='MSSmartTagsPreventParsing' content='TRUE' />
+<meta name='description' content="%(summary)s"/>
+<title>Resource page for %(package)s %(version)s</title>
+</head>
+<body>
+<h1>SNG -- Textual editing of PNG image metadata</h1>
+
+%(description)s
+
+<p>Source code downloads are available on the SourceForge project page.</p>
+
+<br />
+%(resourcetable)s
+<br />
+
+%(extralines)s
+
+</body>
+</html>
+"""

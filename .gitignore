@@ -1,6 +1,8 @@
 sng
 *.o
 sng.1
+*.html
+*.tar.gz
 .deps/
 Makefile
 Makefile.in
