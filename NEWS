@@ -1,6 +1,7 @@
 				History
 
-		See the file ChangeLog for the gory details.
+1.0.5:
+	* Adapts to newer locations of rgb.txt file.
 
 1.0.4:
 	* Minor bug fix to canonicalization code, by Antoine Mathys 

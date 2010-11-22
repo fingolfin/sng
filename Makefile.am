@@ -5,9 +5,13 @@ sng_SOURCES = main.c sngc.c sngd.c sng.h
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
 EXTRA_DIST = Makefile sng.xml sng.1 sng_regress indexgen.sh test.sng
+EXTRA_CLEAN = sng.html SHIPPER.*
 
 sng.1: sng.xml
 	xmlto man sng.xml
+
+sng.html: sng.xml
+	xmlto html-nochunks sng.xml
 
 zip: $(DISTFILES)
 	zip @PACKAGE@-@VERSION@.zip $(DISTFILES)
@@ -16,3 +20,6 @@ zip: $(DISTFILES)
 # Assumes we have a copy of Willem van Schaik's PNG test suite under pngsuite
 regress:
 	sng_regress test.sng -s pngsuite/[a-wyz]*.png
+
+release: sng-$(VERSION).tar.gz sng.html
+	shipper -u -m -t; make clean
