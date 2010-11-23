@@ -4,7 +4,7 @@ bin_PROGRAMS = sng
 sng_SOURCES = main.c sngc.c sngd.c sng.h
 man_MANS = sng.1
 # The man pages and script are here because automake has a bug
-EXTRA_DIST = Makefile sng.xml sng.1 sng_regress test.sng
+EXTRA_DIST = Makefile sng.xml sng.1 sng_regress test.sng control .shipper
 EXTRA_CLEAN = sng.html SHIPPER.*
 
 sng.1: sng.xml
