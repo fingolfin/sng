@@ -19,7 +19,7 @@ indextemplate = """
 <table width='100%%' cellpadding='0' summary='Canned page header' bgcolor="#ddd">
 <tr>
 <td><h2>Resource page for %(package)s %(version)s</h2></td>
-<td align="center"><img src="snglogo.png/"></td>
+<td align="center"><img src="snglogo.png"/></td>
 <td align='right'><h2>%(date)s</h2></td>
 </tr>
 </table>
