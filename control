@@ -27,4 +27,6 @@ Description: enable lossless editing of PNGs via a textual representation
  information on the PNG format and associated tools, see the official
  <a href="http://www.libpng.org/pub/png/">PNG website</a>)
 
+XBS-Logo: snglogo.png
+
 XBS-Project-Tag-List: PNG, graphics
