@@ -113,7 +113,8 @@ void initialize_hash(int hashfunc(color_item *),
 
 	    for (;;)
 	    {
-		fgets(line, sizeof(line) - 1, fp);
+		if (fgets(line, sizeof(line) - 1, fp) == NULL)
+		    break;
 		st = sscanf(line, "%d %d %d %[^\n]\n", 
 			     &red, &green, &blue, namebuf);
 		if (feof(fp))
