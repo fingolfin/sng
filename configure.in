@@ -44,7 +44,7 @@ if test -n "$with_rgbtxt"
 then
     AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt", [Location of X color database])
 else
-    for dir in /etc/X11/ /usr/share/X11/rgb.txt /usr/X11R6/lib/X11 /usr/lib/X11 /usr/openwin/lib
+    for dir in /etc/X11/ /usr/share/X11 /usr/X11R6/lib/X11 /usr/lib/X11 /usr/openwin/lib
     do
 	if test -f ${dir}/rgb.txt
 	then
