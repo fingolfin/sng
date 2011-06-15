@@ -18,9 +18,6 @@ NAME
   #define TRANS_COLOR trans_values
   #define TRANS_ALPHA trans
   #endif
-  #if PNG_LIBPNG_VER_MINOR == 3
-    #error Not yet ported to 1.3
-  #endif
   #if PNG_LIBPNG_VER_MINOR >= 4
   #define TRANS_COLOR trans_color
   #define TRANS_ALPHA trans_alpha
