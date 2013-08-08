@@ -1,5 +1,15 @@
 				History
 
+1.1.0:
+	* Compatible with libpng 1.2.x and newer (tested with 1.2.50, 1.4.12, 1.5.17 and 1.6.3)
+	* Fix locating X color database on Mac OS X
+	* Fix sCAL handling (converting sng to png incorrectly swapped width and height)
+	* Fix several bugs in base64 handling
+	* Fix validation of sRGB intent value
+	* Fix handling of iTXt when 'translated' contained non-latin-1 data (it can contain
+	  arbitrary UTF-8 data)
+	* Fix support for long text blocks
+
 1.0.5:
 	* Finds newer locations of the rgb.txt file.
 	* Adapted for altered extension handling in recent libpng versions.
