@@ -779,6 +779,7 @@ static void compile_IDAT(void)
     chunk.data = bits;
     chunk.size = nbits;
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
+// TODO: also use png_set_unknown_chunk_location if libpng before 1.6.0
     png_free(png_ptr, bits);
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
@@ -1513,6 +1514,8 @@ static void compile_gIFg(void)
     strcpy(chunk.name, "gIFg");
     chunk.data = chunkdata;
     chunk.size = 4;
+//    chunk.location = TODO; PNG_HAVE_IHDR or PNG_HAVE_PLTE or PNG_AFTER_IDAT
+    chunk.location = PNG_HAVE_IHDR; // FIXME
 
     while (get_inner_token())
 	if (token_equals("disposal"))
@@ -1529,6 +1532,7 @@ static void compile_gIFg(void)
 	    fatal("invalid token `%s' in gIFg specification", token_buffer);
 
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
+// TODO: also use png_set_unknown_chunk_location if libpng before 1.6.0
 }
 
 static void compile_gIFx(void)
@@ -1541,6 +1545,8 @@ static void compile_gIFx(void)
     memset(chunkdata, '\0', sizeof(chunkdata));
     strcpy(chunk.name, "gIFx");
     chunk.data = chunkdata;
+//    chunk.location = TODO; PNG_HAVE_IHDR or PNG_HAVE_PLTE or PNG_AFTER_IDAT
+    chunk.location = PNG_HAVE_IHDR; // FIXME
 
     while (get_inner_token())
 	if (token_equals("identifier"))
@@ -1572,6 +1578,7 @@ static void compile_gIFx(void)
     chunk.size = 11 + strlen(chunkdata + 11);
 
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
+// TODO: also use png_set_unknown_chunk_location if libpng before 1.6.0
 }
 
 static void compile_IMAGE(void)
@@ -1722,7 +1729,10 @@ static void compile_private(char *name)
 
     chunk.data = bytes;
     chunk.size = nbytes;
+//    chunk.location = TODO; PNG_HAVE_IHDR or PNG_HAVE_PLTE or PNG_AFTER_IDAT
+    chunk.location = PNG_HAVE_IHDR; // FIXME
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
+// TODO: also use png_set_unknown_chunk_location if libpng before 1.6.0
     png_free(png_ptr, bytes);
 }
 
