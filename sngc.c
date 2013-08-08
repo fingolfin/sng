@@ -481,6 +481,9 @@ static void collect_data(int *pnbytes, char **pbytes)
      * base64: 
      *   One character per byte; values are as per RFC2045 base64:
      * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/
+     * FIXME: But the encoding we use is NOT compatible with RFC2045 -> should not call it base64!
+     *     for example, no padding character '=' are generated. Also, this mapping is used:
+     * ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
      *
      * hex: 
      *   Two hex digits per byte.
@@ -584,18 +587,20 @@ static void collect_data(int *pnbytes, char **pbytes)
 	    switch(fmt)
 	    {
 	    case BASE64_FMT:
-		if (!isalpha(c) && !isdigit(c))
-		    fatal("bad character %02x in data block", c);
-		else if (isdigit(c))
+		// NOTE: The mapping below differs from base64, which uses this mapping:
+		// ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+		if (isdigit(c))
 		    value = c - '0';
-		else if (isupper(c))
+		else if (isalpha(c) && isupper(c))
 		    value = (c - 'A') + 10;
-		else if (islower(c))
+		else if (isalpha(c) && islower(c))
 		    value = (c - 'a') + 36;
 		else if (c == '+')
 		    value = 62;
-		else /* if (c == '/') */
+		else if (c == '/')
 		    value = 63;
+		else
+		    fatal("bad character %02x in data block", c);
 		bytes[nbytes++] = value;
 		break;
 

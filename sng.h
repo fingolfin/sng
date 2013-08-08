@@ -40,8 +40,13 @@ extern png_info *info_ptr;
 #define TRUE	1
 #define FALSE	0
 
-/* RFC2045 encoding */
-#define BASE64	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+/* Fake "base64" encoding. This is INCOMPATIBLE with RFC2045 base64 encoding,
+ * which instead uses the mapping
+ *  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+ *
+ * TODO: Switch to proper encoding?
+ */
+#define BASE64	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/"
 
 /*
  * Maximum string size -- the size of an IDAT buffer minus the minimum overhead
