@@ -5,6 +5,8 @@
 #viewer="xv -cmap"
 viewer=display
 
+SNG=./sng
+#SNG=sng
 stop_on_error=0
 eyeball_test=0
 for file in $*
@@ -27,32 +29,32 @@ do
 	if [ "$eyeball_test" = "1" ]
 	then
 	    echo $file.
-	    sng <$file | sng >/tmp/recompiled$$.png && $viewer $file /tmp/recompiled$$.png
+	    $SNG <$file | $SNG >/tmp/recompiled$$.png && $viewer $file /tmp/recompiled$$.png
 	fi
 
         # echo "Regression-testing against PNG file \`$file'"
-        if sng <${file} >/tmp/decompiled$$.sng
+        if $SNG <${file} >/tmp/decompiled$$.sng
         then
 	    :
 	else
             echo "$file: decompilation of the test PNG failed.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
         fi
-        if sng </tmp/decompiled$$.sng >/tmp/decompiled$$.png
+        if $SNG </tmp/decompiled$$.sng >/tmp/decompiled$$.png
         then
 	    :
 	else
             echo "$file: recompilation of the decompiled form failed.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
         fi
-        if sng </tmp/decompiled$$.png >/tmp/canonicalized$$.sng
+        if $SNG </tmp/decompiled$$.png >/tmp/canonicalized$$.sng
         then
 	    :
 	else
             echo "$file: generation of the canonicalized form failed.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
         fi
-        if sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
+        if $SNG </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
         then
 	    :
 	else
@@ -72,28 +74,28 @@ do
         # Make a canonicalized version of the test file
         # Regenerate canonicalized version from its PNG
         # Diff the two
-        if sng <${file} >/tmp/test$$.png
+        if $SNG <${file} >/tmp/test$$.png
         then
 	    :
 	else
             echo "$file: compilation of the test SNG failed.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
         fi
-        if sng </tmp/test$$.png >/tmp/canonicalized$$.sng
+        if $SNG </tmp/test$$.png >/tmp/canonicalized$$.sng
         then
 	    :
 	else
             echo "$file: generation of the canonicalized form failed.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
         fi
-        if sng </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
+        if $SNG </tmp/canonicalized$$.sng >/tmp/canonicalized$$.png
         then
 	    :
 	else
             echo "$file: recompilation of the canonicalized form failed.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
         fi
-        if sng </tmp/canonicalized$$.png >/tmp/decompiled$$.sng
+        if $SNG </tmp/canonicalized$$.png >/tmp/decompiled$$.sng
         then
 	    :
 	else
