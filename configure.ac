@@ -4,9 +4,10 @@ dnl
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(sng.h)		dnl A distinctive file to look for in srcdir. 
+AC_INIT([sng], [1.0.5])
+AC_CONFIG_SRCDIR([sng.h])  dnl A distinctive file to look for in srcdir. 
+AM_INIT_AUTOMAKE
 
-AM_INIT_AUTOMAKE(sng, 1.0.5)
 AM_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
