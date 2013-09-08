@@ -881,7 +881,7 @@ static void compile_iCCP(void)
     if (!nname || !data_len)
 	fatal("incomplete iCCP specification");
 
-    png_set_iCCP(png_ptr, info_ptr, name, PNG_TEXT_COMPRESSION_NONE, 
+    png_set_iCCP(png_ptr, info_ptr, name, PNG_COMPRESSION_TYPE_BASE,
 		 data, data_len);
     free(data);
 }
