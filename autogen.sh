@@ -11,6 +11,6 @@ automake --add-missing
 autoconf
 automake
 
-configure $*
+./configure $*
 
 exit 0
