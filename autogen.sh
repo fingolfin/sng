@@ -5,11 +5,7 @@
 echo "Warning: This script will run configure for you -- if you need to pass"
 echo "  arguments to configure, please give them as arguments to this script."
 
-aclocal
-autoheader
-automake --add-missing
-autoconf
-automake
+autoreconf -f -i
 
 ./configure $*
 
