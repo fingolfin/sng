@@ -481,7 +481,11 @@ static void dump_iCCP(FILE *fpout)
 {
     png_charp name;
     int compression_type;
+#if PNG_LIBPNG_VER_MAJOR < 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR <= 4)
+    png_charp profile;
+#else
     png_bytep profile;
+#endif
     png_uint_32 proflen;
 
     if (png_get_iCCP(png_ptr, info_ptr, &name, &compression_type, &profile, &proflen)) {
