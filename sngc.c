@@ -9,7 +9,6 @@ NAME
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
-#define PNG_INTERNAL
 #include "png.h"
 
 #include "sng.h"

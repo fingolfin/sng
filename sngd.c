@@ -8,7 +8,6 @@ NAME
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
-#define PNG_INTERNAL
 #include "config.h"	/* for RGBTXT */
 #include "png.h"
 #include "sng.h"
