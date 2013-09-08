@@ -531,7 +531,7 @@ static void collect_data(int *pnbytes, char **pbytes)
 	int width = short_numeric(get_token());
 	int height = short_numeric(get_token());
 
-	if (width != info_ptr->width && height != info_ptr->height)
+	if (width != png_get_image_width(png_ptr, info_ptr) && height != png_get_image_height(png_ptr, info_ptr))
 	    fatal("pbm image dimensions don't mastch IHDR");
 	fmt = P1_FMT;
     }
@@ -542,7 +542,7 @@ static void collect_data(int *pnbytes, char **pbytes)
 
 	maxval = short_numeric(get_token());
 
-	if (width != info_ptr->width && height != info_ptr->height)
+	if (width != png_get_image_width(png_ptr, info_ptr) && height != png_get_image_height(png_ptr, info_ptr))
 	    fatal("ppm image dimensions don't match IHDR");
 	fmt = P3_FMT;
     }
@@ -657,17 +657,18 @@ static void collect_data(int *pnbytes, char **pbytes)
 static void compile_IHDR(void)
 /* parse IHDR specification, set corresponding bits in info_ptr */
 {
-    int d = 0;
+    int d = 8;
+    png_uint_32 width = 0;
+    png_uint_32 height = 0;
+    int color_type = PNG_COLOR_TYPE_GRAY;
+    int interlace_type = PNG_INTERLACE_NONE;
 
     /* read IHDR data */
-    info_ptr->bit_depth = 8;
-    info_ptr->color_type = PNG_COLOR_TYPE_GRAY;
-    info_ptr->interlace_type = PNG_INTERLACE_NONE;
     while (get_inner_token())
 	if (token_equals("height"))
-	    info_ptr->height = long_numeric(get_token());
+	    height = long_numeric(get_token());
 	else if (token_equals("width"))
-	    info_ptr->width = long_numeric(get_token());
+	    width = long_numeric(get_token());
 	else if (token_equals("bitdepth"))
 	    d = byte_numeric(get_token());
         else if (token_equals("using"))
@@ -675,33 +676,35 @@ static void compile_IHDR(void)
         else if (token_equals("grayscale"))
 	    continue;			/* so is grayscale */
         else if (token_equals("palette"))
-	    info_ptr->color_type |= PNG_COLOR_MASK_PALETTE;
+	    color_type |= PNG_COLOR_MASK_PALETTE;
         else if (token_equals("color"))
-	    info_ptr->color_type |= PNG_COLOR_MASK_COLOR;
+	    color_type |= PNG_COLOR_MASK_COLOR;
         else if (token_equals("alpha"))
-	    info_ptr->color_type |= PNG_COLOR_MASK_ALPHA;
+	    color_type |= PNG_COLOR_MASK_ALPHA;
         else if (token_equals("with"))
 	    continue;			/* `with' is just syntactic sugar */
         else if (token_equals("interlace"))
-	    info_ptr->interlace_type = PNG_INTERLACE_ADAM7;
+	    interlace_type = PNG_INTERLACE_ADAM7;
 	else
 	    fatal("bad token `%s' in IHDR specification", token_buffer);
 
     /* IHDR sanity checks */
-    if (!info_ptr->height)
+    if (!height)
 	fatal("image height is zero or nonexistent");
-    else if (!info_ptr->width)
+    else if (!width)
 	fatal("image width is zero or nonexistent");
     else if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16)
 	fatal("illegal bit depth %d in IHDR", d);
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+    else if (color_type == PNG_COLOR_TYPE_PALETTE)
     {
 	if (d > 8)
 	    fatal("bit depth of paletted images must be 1, 2, 4, or 8");
     }
-    else if ((info_ptr->color_type != PNG_COLOR_TYPE_GRAY) && d!=8 && d!=16)
+    else if ((color_type != PNG_COLOR_TYPE_GRAY) && d!=8 && d!=16)
 	fatal("bit depth of RGB- and alpha-using images must be 8 or 16");
-    info_ptr->bit_depth = d;
+
+    png_set_IHDR(png_ptr, info_ptr, width, height, d, color_type,
+                 interlace_type, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 }
 
 static void compile_PLTE(void)
@@ -887,8 +890,10 @@ static void compile_sBIT(void)
 /* compile an sBIT chunk, set corresponding bits in info_ptr */
 {
     png_color_8	sigbits;
-    bool color = (info_ptr->color_type & (PNG_COLOR_MASK_PALETTE | PNG_COLOR_MASK_COLOR));
-    int sample_depth = ((info_ptr->color_type & PNG_COLOR_MASK_PALETTE) ? 8 : info_ptr->bit_depth);
+    png_byte	color_type = png_get_color_type(png_ptr, info_ptr);
+    png_byte	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    bool	color = (color_type & (PNG_COLOR_MASK_PALETTE | PNG_COLOR_MASK_COLOR));
+    int		sample_depth = ((color_type & PNG_COLOR_MASK_PALETTE) ? 8 : bit_depth);
 
     while (get_inner_token())
 	if (token_equals("red"))
@@ -925,7 +930,7 @@ static void compile_sBIT(void)
 	}
 	else if (token_equals("alpha"))
 	{
-	    if (info_ptr->color_type & PNG_COLOR_MASK_ALPHA)
+	    if (color_type & PNG_COLOR_MASK_ALPHA)
 		fatal("No alpha channel in this image type");
 	    sigbits.alpha = byte_numeric(get_token());
 	    if (sigbits.alpha > sample_depth)
@@ -942,35 +947,36 @@ static void compile_bKGD(void)
 /* compile a bKGD chunk, put data in info structure */
 {
     png_color_16	bkgbits;
+    png_byte		color_type = png_get_color_type(png_ptr, info_ptr);
 
     while (get_inner_token())
 	if (token_equals("red"))
 	{
-	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
+	    if (!(color_type & PNG_COLOR_MASK_COLOR))
 		fatal("Can't use color background with this image type");
 	    bkgbits.red = short_numeric(get_token());
 	}
 	else if (token_equals("green"))
 	{
-	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
+	    if (!(color_type & PNG_COLOR_MASK_COLOR))
 		fatal("Can't use color background with this image type");
 	    bkgbits.green = short_numeric(get_token());
 	}
 	else if (token_equals("blue"))
 	{
-	    if (!(info_ptr->color_type & PNG_COLOR_MASK_COLOR))
+	    if (!(color_type & PNG_COLOR_MASK_COLOR))
 		fatal("Can't use color background with this image type");
 	    bkgbits.blue = short_numeric(get_token());
 	}
 	else if (token_equals("gray"))
 	{
-	    if (info_ptr->color_type & (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE))
+	    if (color_type & (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE))
 		fatal("Can't use color background with this image type");
 	    bkgbits.gray = short_numeric(get_token());
 	}
 	else if (token_equals("index"))
 	{
-	    if (!(info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
+	    if (!(color_type & PNG_COLOR_MASK_PALETTE))
 		fatal("Can't use index background with a non-palette image");
 	    bkgbits.index = byte_numeric(get_token());
 	}
@@ -986,18 +992,17 @@ static void compile_hIST(void)
 {
     png_uint_16	hist[256];
     int		nhist = 0;
+    png_colorp	palette;
+    int		num_palette;
+
+    png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette);
 
     while (get_inner_token())
 	/* comma */
 	hist[nhist++] = short_numeric(TRUE);
 
-#ifndef MNG_INTERFACE
-    if (nhist != info_ptr->num_palette)
-	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, info_ptr->num_palette);
-#else
-    if (nhist != info_ptr->palette.size)
-	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, info_ptr->palette.size);
-#endif /* GUG */
+    if (nhist != num_palette)
+	fatal("number of hIST values (%d) for palette doesn't match palette size (%d)", nhist, num_palette);
 
     png_set_hIST(png_ptr, info_ptr, hist);
 }
@@ -1007,11 +1012,13 @@ static void compile_tRNS(void)
 {
     png_byte	trans[256];
     int		ntrans = 0;
+    png_byte	color_type;
     png_color_16	tRNSbits;
 
     memset(&tRNSbits, '0', sizeof(tRNSbits));
+    color_type = png_get_color_type(png_ptr, info_ptr);
 
-    switch (info_ptr->color_type)
+    switch (color_type)
     {
     case PNG_COLOR_TYPE_GRAY:
 	require_or_die("gray");
@@ -1568,7 +1575,12 @@ static void compile_IMAGE(void)
 {
     int		i, nbytes, bytes_per_sample = 0, nsamples, input_width;
     char	*bytes;
-    int		doublewidth = info_ptr->bit_depth == 16 ? 2 : 1;
+    png_byte	color_type = png_get_color_type(png_ptr, info_ptr);
+    png_byte	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    int		doublewidth = bit_depth == 16 ? 2 : 1;
+    png_bytepp	row_pointers = 0;
+    int		width = png_get_image_width(png_ptr, info_ptr);
+    int		height = png_get_image_height(png_ptr, info_ptr);
 
     write_transform_options = 0;
     while (get_inner_token())
@@ -1601,7 +1613,7 @@ static void compile_IMAGE(void)
 	    fatal("invalid token `%s' in IMAGE specification", token_buffer);
 
     /* compute input sample size in bits */
-    switch (info_ptr->color_type)
+    switch (color_type)
     {
     case PNG_COLOR_TYPE_GRAY:
 	bytes_per_sample = doublewidth;
@@ -1630,12 +1642,12 @@ static void compile_IMAGE(void)
     /*
      * Compute the actual size of the image in samples.
      */
-    input_width = nbytes / info_ptr->height;
-    if (info_ptr->bit_depth >= 8)
+    input_width = nbytes / height;
+    if (bit_depth >= 8)
 	nsamples = nbytes / bytes_per_sample;
     else
     {
-	int samples_per_byte = (8 / info_ptr->bit_depth);
+	int samples_per_byte = (8 / bit_depth);
 
 	nsamples = nbytes * samples_per_byte;
 
@@ -1644,17 +1656,17 @@ static void compile_IMAGE(void)
 	 * byte corresponding to the last pixel(s) in a row when the
 	 * width is not a multiple of 8.  Correct for this.
 	 */
-	if (info_ptr->width % 8)
+	if (width % 8)
 	{
-	    int excess_samples_per_line = (info_ptr->width % samples_per_byte);
+	    int excess_samples_per_line = (width % samples_per_byte);
 
 	    if (excess_samples_per_line)
-		nsamples -= info_ptr->height * (samples_per_byte - excess_samples_per_line);
+		nsamples -= height * (samples_per_byte - excess_samples_per_line);
 	}
     }
-    if (nsamples != info_ptr->width * info_ptr->height)
+    if (nsamples != width * height)
 	fatal("sample count (%d) doesn't match width*height (%d*%d) in IHDR",
-	      nsamples, info_ptr->width, info_ptr->height);
+	      nsamples, width, height);
 
 #ifdef PNG_DEBUG
 #if (PNG_DEBUG >= 6)
@@ -1673,19 +1685,18 @@ static void compile_IMAGE(void)
 #endif
 #endif
 
+    row_pointers = (png_byte **)xalloc(sizeof(png_bytep) * height);
+    for (i = 0; i < height; i++)
+	row_pointers[i] = &bytes[i * input_width];
+
 #ifndef PNG_INFO_IMAGE_SUPPORTED
     /* got the bits; now write them out */
-    row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
-    for (i = 0; i < info_ptr->height; i++)
-	row_pointers[i] = &bytes[i * input_width];
     png_write_image(png_ptr, row_pointers);
     free(bytes);
+    free(row_pointers);
 #else
     /* got the bits; attach them to the info structure */
-    info_ptr->row_pointers = (png_byte **)xalloc(sizeof(char *) * info_ptr->height);
-    for (i = 0; i < info_ptr->height; i++)
-	info_ptr->row_pointers[i] = &bytes[i * input_width];
-    info_ptr->valid |= PNG_INFO_IDAT;
+    png_set_rows(png_ptr, info_ptr, row_pointers);
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
 }
 
@@ -1805,7 +1816,7 @@ int sngc(FILE *fin, char *name, FILE *fout)
 		fatal("PLTE chunk encountered after bKGD");
 	    else if (properties[tRNS].count)
 		fatal("PLTE chunk encountered after tRNS");
-	    else if (!(info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
+	    else if (!(png_get_color_type(png_ptr, info_ptr) & PNG_COLOR_MASK_PALETTE))
 		fatal("PLTE chunk specified for non-palette image type");
 #ifndef PNG_INFO_IMAGE_SUPPORTED
 	    png_write_info_before_PLTE(png_ptr, info_ptr);
@@ -1964,7 +1975,7 @@ int sngc(FILE *fin, char *name, FILE *fout)
 
     /* end-of-file sanity checks */
     linenum = EOF;
-    if (!properties[PLTE].count && (info_ptr->color_type & PNG_COLOR_MASK_PALETTE))
+    if (!properties[PLTE].count && (png_get_color_type(png_ptr, info_ptr) & PNG_COLOR_MASK_PALETTE))
 	fatal("palette property set, but no PLTE chunk found");
     if (!properties[IDAT].count)
 	fatal("no image data");
