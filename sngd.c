@@ -13,18 +13,6 @@ NAME
 #include "png.h"
 #include "sng.h"
 
-/* cope with API issues */
-#if PNG_LIBPNG_VER_MAJOR == 1
-  #if PNG_LIBPNG_VER_MINOR <= 2
-  #define TRANS_COLOR trans_values
-  #define TRANS_ALPHA trans
-  #endif
-  #if PNG_LIBPNG_VER_MINOR >= 4
-  #define TRANS_COLOR trans_color
-  #define TRANS_ALPHA trans_alpha
-  #endif
-#endif
-
 static char *image_type[] = {
     "grayscale",
     "undefined type",
