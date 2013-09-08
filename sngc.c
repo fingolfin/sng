@@ -1223,7 +1223,7 @@ static void compile_iTXt(void)
 {
     char	language[PNG_KEYWORD_MAX_LENGTH+1];
     char	keyword[PNG_KEYWORD_MAX_LENGTH+1]; 
-    char	transkey[PNG_KEYWORD_MAX_LENGTH+1]; 
+    char	transkey[PNG_STRING_MAX_LENGTH+1]; 
     char	text[PNG_STRING_MAX_LENGTH+1];
     int		nlanguage = 0, nkeyword = 0, ntranskey = 0, ntext = 0;
     int		compression = PNG_TEXT_COMPRESSION_NONE;
@@ -1236,7 +1236,7 @@ static void compile_iTXt(void)
 	else if (token_equals("keyword"))
 	    nkeyword = keyword_validate(get_token(), keyword);
  	else if (token_equals("translated"))
-	    ntranskey = keyword_validate(get_token(), transkey);
+	    ntranskey = string_validate(get_token(), transkey);
 	else if (token_equals("text"))
 	    ntext = string_validate(get_token(), text);
 	else if (token_equals("compressed"))
