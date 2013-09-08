@@ -17,7 +17,7 @@ cHRM {
    white: (0.31270, 0.32900);
    red:   (0.6400,  0.3300);
    green: (0.3000,  0.6000);
-   blue:  (0.1500,  0.600);
+   blue:  (0.1500,  0.0600);
 }
 
 # This cannot coexist with the iCCP chunk.
