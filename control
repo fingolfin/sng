@@ -32,3 +32,5 @@ XBS-Logo: snglogo.png
 XBS-Freecode-Tags: PNG, graphics
 
 XBS-VC-Tag-Template: %(version)s
+
+XBS-Validate: make regress
