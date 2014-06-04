@@ -4,6 +4,7 @@ sng.1
 *.html
 *.tar.gz
 .deps/
+compile
 Makefile
 Makefile.in
 aclocal.m4
