@@ -29,7 +29,7 @@ test.sng	Test file exercising all chunk types
 TODO		unfinished business
 sng_regress	regression-test harness for sng
 
-The sng code has been tested on all 155 of the non-broken images in the PNG 
+The sng code has been tested on all of the non-broken images in the PNG 
 test suite at <http://www.cdrom.com/pub/png/pngsuite.html> using sng_regress.
 
 						Eric S. Raymond
