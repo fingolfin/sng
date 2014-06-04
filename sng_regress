@@ -61,7 +61,8 @@ do
         fi
         if cmp -s /tmp/decompiled$$.png /tmp/canonicalized$$.png
         then
-	    echo "$file: regression test passed."
+	    :
+	    #echo "$file: regression test passed."
 	else
             echo "$file: decompiled and canonicalized versions differ.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
@@ -102,7 +103,8 @@ do
         fi
         if diff -c /tmp/canonicalized$$.sng /tmp/decompiled$$.sng
         then
-	    echo "$file: regression test passed."
+	    :
+	    #echo "$file: regression test passed."
 	else
             echo "$file: decompiled and canonicalized versions differ.";
             case $stop_on_error in 1) exit 1;; 0) continue;; esac
