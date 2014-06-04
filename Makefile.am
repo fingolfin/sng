@@ -22,5 +22,5 @@ zip: $(DISTFILES)
 regress:
 	sng_regress test.sng -s pngsuite/[a-wyz]*.png
 
-release: sng-$(VERSION).tar.gz sng.html
-	shipper -t version=$(VERSION) | sh -e -x
+release: dist sng.html
+	shipper version=$(VERSION) | sh -e -x
