@@ -1464,14 +1464,14 @@ static void compile_sCAL(void)
 	}
 	else if (token_equals("width"))
 	{
-	    height = double_numeric(get_token());
+	    width = double_numeric(get_token());
 #if !defined(FLOATING_POINT_SUPPORTED) && defined(FIXED_POINT_SUPPORTED)
 	    strcpy(width_s, token_buffer);
 #endif
 	}
 	else if (token_equals("height"))
 	{
-	    width = double_numeric(get_token());
+	    height = double_numeric(get_token());
 #if !defined(FLOATING_POINT_SUPPORTED) && defined(FIXED_POINT_SUPPORTED)
 	    strcpy(height_s, token_buffer);
 #endif

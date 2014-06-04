@@ -2,6 +2,7 @@
 
 Repository head:
 	* Forward-ported to libpng 1.4.
+	* Width and height fields were reversed in sCAL chunk.
 
 1.0.5:
 	* Finds newer locations of the rgb.txt file.
