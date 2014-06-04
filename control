@@ -15,9 +15,6 @@ Description: enable lossless editing of PNGs via a textual representation
  SNG is implemented by a compiler/decompiler called sng that losslessly
  translates between SNG and PNG.
 .
- sng is production-ready, and has been tested on all 155 of the
- non-broken images in the png test suite.
-.
  Downloads are available from SNG's <a
  href="https://sourceforge.net/projects/sng/">SourceForge page</a>.
 .
