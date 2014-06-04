@@ -1,5 +1,8 @@
 				History
 
+Repository head:
+	* Forward-ported to libpng 1.4.
+
 1.0.5:
 	* Finds newer locations of the rgb.txt file.
 	* Adapted for altered extension handling in recent libpng versions.
