@@ -46,6 +46,9 @@ static char *rendering_intent[] = {
 
 static char *current_file;
 
+/* Error status for the file being processed; reset to 0 at the top of sngd() */
+static int sng_error;
+
 /*****************************************************************************
  *
  * Interface to RGB database
@@ -1077,7 +1080,6 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    if (png_ptr == NULL)
    {
       fclose(fp);
-      sng_error = 1;
       return(1);
    }
 
@@ -1087,8 +1089,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    {
       fclose(fp);
       png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
-      sng_error = 1;
-      return(FAIL);
+      return 1;
    }
 
    /* Set error handling if you are using the setjmp/longjmp method (this is
@@ -1101,7 +1102,6 @@ int sngd(FILE *fp, char *name, FILE *fpout)
       png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
       fclose(fp);
       /* If we get here, we had a problem reading the file */
-      sng_error = 1;
       return(1);
    }
 
@@ -1162,8 +1162,8 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* close the file */
    fclose(fp);
 
-   /* that's it */
-   return(0);
+   /* that's it; return this file's error status */
+   return sng_error;
 }
 
 /* sngd.c ends here */

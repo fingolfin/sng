@@ -25,7 +25,6 @@ extern void initialize_hash(int hashfunc(color_item *),
 
 extern int verbose;
 extern int idat;
-extern int sng_error;
 
 extern int linenum;
 extern char *file;

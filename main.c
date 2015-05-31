@@ -9,7 +9,6 @@
 #include "config.h"
 
 int verbose;
-int sng_error;
 int idat;
 
 png_struct *png_ptr;
@@ -153,9 +152,15 @@ void initialize_hash(int hashfunc(color_item *),
  *
  ************************************************************************/
 
+static int max(int x, int y)
+{
+    return x > y ? x : y;
+}
+
 int main(int argc, char *argv[])
 {
     int i = 1;
+    int error_status = 0;
 
 #ifdef __EMX__
     _wildcard(&argc, &argv);   /* Unix-like globbing for OS/2 and DOS */
@@ -214,6 +219,7 @@ int main(int argc, char *argv[])
 	    if (argv[i][dot] != '.')
 	    {
 		fprintf(stderr, "sng: %s is neither SNG nor PNG\n", argv[i]);
+		error_status = max(error_status, 1);
 		continue;
 	    }
 	    else if (strcmp(argv[i] + dot, ".sng") == 0)
@@ -233,6 +239,7 @@ int main(int argc, char *argv[])
 	    else
 	    {
 		fprintf(stderr, "sng: %s is neither SNG nor PNG\n", argv[i]);
+		error_status = max(error_status, 1);
 		continue;
 	    }
 
@@ -244,6 +251,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr,
 			"sng: couldn't open %s for input (%d)\n",
 			argv[i], errno);
+		error_status = max(error_status, 1);
 		continue;
 	    }
 	    if ((fpout = fopen(outfile, "w")) == NULL)
@@ -251,17 +259,16 @@ int main(int argc, char *argv[])
 		fprintf(stderr,
 			"sng: couldn't open %s for output (%d)\n",
 			outfile, errno);
+		error_status = max(error_status, 1);
 		continue;
 	    }
 
 	    if (sng2png)
-		sngc(fpin, argv[i], fpout);
+		error_status = max(error_status, sngc(fpin, argv[i], fpout));
 	    else
-		sngd(fpin, argv[i], fpout);
+		error_status = max(error_status, sngd(fpin, argv[i], fpout));
 	}
     }
 
-    /* This only returns the error on the last file.  Works OK if you are only
-     * checking the status of a single file. */
-    return sng_error;
+    return error_status;
 }
