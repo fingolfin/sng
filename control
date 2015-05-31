@@ -3,9 +3,7 @@
 
 Package: sng
 
-Destinations: ~,sourceforge,freecode
-
-Description: enable lossless editing of PNGs via a textual representation
+Description: Enable lossless editing of PNGs via a textual representation.
  SNG (Scriptable Network Graphics) is a minilanguage designed
  specifically to represent the entire contents of a PNG (Portable
  Network Graphics) file in an editable form.  Thus, SNGs representing
@@ -24,9 +22,11 @@ Description: enable lossless editing of PNGs via a textual representation
  information on the PNG format and associated tools, see the official
  <a href="http://www.libpng.org/pub/png/">PNG website</a>)
 
+XBS-Destinations: ~,sourceforge
+
 XBS-Logo: snglogo.png
 
-XBS-Freecode-Tags: PNG, graphics
+#XBS-Project-Tags: PNG, graphics
 
 XBS-VC-Tag-Template: %(version)s
 
