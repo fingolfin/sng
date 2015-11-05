@@ -922,8 +922,6 @@ static void dump_unknown_chunks(int after_idat, FILE *fpout)
 void sngdump(png_byte *row_pointers[], FILE *fpout)
 /* dump a canonicalized SNG form of a PNG file */
 {
-    int	i;
-
     fprintf(fpout, "#SNG: from %s\n", current_file);
 
     dump_IHDR(fpout);			/* first critical chunk */
@@ -968,8 +966,8 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 #ifndef PNG_INFO_IMAGE_SUPPORTED
     png_bytepp row_pointers;
     png_uint_32 row;
-#endif
     png_uint_32 height;
+#endif
 
    current_file = name;
    sng_error = 0;
