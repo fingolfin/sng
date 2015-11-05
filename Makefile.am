@@ -20,7 +20,7 @@ zip: $(DISTFILES)
 # Regression-test sng.  Passes if no differences show up.
 # Assumes we have a copy of Willem van Schaik's PNG test suite under pngsuite
 regress:
-	sng_regress test.sng -s pngsuite/[a-wyz]*.png
+	./sng_regress test.sng -s pngsuite/[a-wyz]*.png
 
 release: dist sng.html
 	shipper version=$(VERSION) | sh -e -x
