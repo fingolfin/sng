@@ -151,7 +151,7 @@ static color_item *find_by_cname(char *name)
  *
  ************************************************************************/
 
-static char token_buffer[BUFSIZ];
+static char token_buffer[16384];
 static int token_class;
 #define STRING_TOKEN	1
 #define PUNCT_TOKEN	2
