@@ -21,15 +21,18 @@ cHRM {
 }
 
 # This cannot coexist with the iCCP chunk.
-# sRGB {1}	# This value conveys `relative colorimetric' intent.
+sRGB {1}	# This value conveys `relative colorimetric' intent.
 
 # This cannot coexist with the sRGB chunk.
 # First four bytes of profile must be the big-endian length of the remainder. 
 # Real profiles at <http://pmt.sourceforge.net/iccp/>.
-iCCP {
-   name: "dummy profile";
-   profile: hex 00 00 00 05 01 02 03 04 05;
-}
+# Note that newer libpng versions perform validations, and in particular
+# reject obviously bogus profiles (e.g. ones that are shorter than
+# 132 bytes).
+# iCCP {
+#    name: "dummy profile";
+#    profile: hex 00 00 00 05 01 02 03 04 05;
+# }
 
 # Sample bit depth chunk
 sBIT: {
