@@ -134,7 +134,7 @@ static void multi_dump(FILE *fpout, char *leader,
 	{
 	    if (!isprint(*cp) && !isspace(*cp))
 		all_printable = 0;
-	    if (*cp > 64)
+	    if (*cp >= 64)
 		base64 = 0;
 	}
 
@@ -177,8 +177,11 @@ static void multi_dump(FILE *fpout, char *leader,
 		else
 		    fprintf(fpout, "\n");
 	    }
-	    for (cp = data[i]; cp < data[i] + width; cp++)
+	    for (cp = data[i]; cp < data[i] + width; cp++) {
+	        if (*cp >= 64)
+		   fatal("invalid base64 data (%d)", *cp);
 		fputc(BASE64[*cp], fpout);
+	    }
 	    if (height == 1)
 		fprintf(fpout, ";\n");
 	    else
