@@ -892,13 +892,13 @@ static void dump_unknown_chunks(int after_idat, FILE *fpout)
 #define SH(p) ((unsigned short)((p)[1]) | (((p)[0]) << 8))
 #define LG(p) ((unsigned long)(SH((p)+2)) | ((ulg)(SH(p)) << 16))
 
-	if (!strcmp(up->name, "gIFg"))
+	if (!memcmp(up->name, "gIFg", 5))
 	{
 	  fprintf(fpout, "gIFg {\n");
 	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n",
 		    up->data[0], up->data[1], (float)(.01 * SH(up->data+2)));
 	}
-	else if (!strcmp(up->name, "gIFx"))
+	else if (!memcmp(up->name, "gIFx", 5))
 	{
 	    fprintf(fpout, "gIFx {\n");
 	    fprintf(fpout, "    identifier: \"%.*s\"; code: \"%c%c%c\"\n",
@@ -1020,7 +1020,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* treat IDAT as unknown so it gets passed through raw */
    if (idat)
    {
-       png_set_keep_unknown_chunks(png_ptr, 2, "IDAT", 1);
+       png_set_keep_unknown_chunks(png_ptr, 2, (png_byte *)"IDAT", 1);
    }
 
 

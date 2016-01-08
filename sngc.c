@@ -468,7 +468,7 @@ static int keyword_validate(bool token_ok, char *stash)
     }
 }
 
-static void collect_data(int *pnbytes, char **pbytes)
+static void collect_data(int *pnbytes, png_byte **pbytes)
 /* collect data in either bitmap format */
 {
     /*
@@ -502,7 +502,7 @@ static void collect_data(int *pnbytes, char **pbytes)
      *
      * In either format, whitespace is ignored.
      */
-    char *bytes = xalloc(MEMORY_QUANTUM);
+    png_byte *bytes = xalloc(MEMORY_QUANTUM);
     int quanta = 1;
     int	nbytes = 0;
     int ocount = 0;
@@ -766,8 +766,8 @@ static void compile_PLTE(void)
 static void compile_IDAT(void)
 /* parse IDAT specification and emit corresponding bits */
 {
-    int		nbits;
-    char	*bits;
+    int			nbits;
+    png_byte	*bits;
 #ifdef PNG_INFO_IMAGE_SUPPORTED
     png_unknown_chunk	chunk;
 #endif /* PNG_INFO_IMAGE_SUPPORTED */
@@ -781,7 +781,7 @@ static void compile_IDAT(void)
     png_write_chunk(png_ptr, "IDAT", bits, nbits);
     free(bits);
 #else
-    strcpy(chunk.name, "IDAT");
+    memcpy(chunk.name, "IDAT", sizeof(chunk.name));
     chunk.data = bits;
     chunk.size = nbits;
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
@@ -881,7 +881,8 @@ static void compile_iCCP(void)
 /* compile and emit an iCCP chunk */
 {
     int nname = 0, data_len = 0;
-    char name[PNG_KEYWORD_MAX_LENGTH+1], *data;
+    char name[PNG_KEYWORD_MAX_LENGTH+1];
+    png_byte *data;
 
     while (get_inner_token())
 	if (token_equals("name"))
@@ -1517,7 +1518,7 @@ static void compile_gIFg(void)
 
     memset(&chunk, '\0', sizeof(chunk));
     memset(chunkdata, '\0', sizeof(chunkdata));
-    strcpy(chunk.name, "gIFg");
+    memcpy(chunk.name, "gIFg", sizeof(chunk.name));
     chunk.data = chunkdata;
     chunk.size = 4;
 //    chunk.location = TODO; PNG_HAVE_IHDR or PNG_HAVE_PLTE or PNG_AFTER_IDAT
@@ -1544,12 +1545,13 @@ static void compile_gIFg(void)
 static void compile_gIFx(void)
 /* parse gIFx specification and queue up the corresponding chunk */
 {
-    png_byte chunkdata[PNG_STRING_MAX_LENGTH], buf[PNG_STRING_MAX_LENGTH];
+    png_byte chunkdata[PNG_STRING_MAX_LENGTH];
+    char buf[PNG_STRING_MAX_LENGTH];
     png_unknown_chunk chunk;
 
     memset(&chunk, '\0', sizeof(chunk));
     memset(chunkdata, '\0', sizeof(chunkdata));
-    strcpy(chunk.name, "gIFx");
+    memcpy(chunk.name, "gIFx", sizeof(chunk.name));
     chunk.data = chunkdata;
 //    chunk.location = TODO; PNG_HAVE_IHDR or PNG_HAVE_PLTE or PNG_AFTER_IDAT
     chunk.location = PNG_HAVE_IHDR; // FIXME
@@ -1572,7 +1574,7 @@ static void compile_gIFx(void)
 	else if (token_equals("data"))
 	{
 	    int datalen;
-	    char *data;
+	    png_byte *data;
 
 	    collect_data(&datalen, &data);
 	    memcpy(chunkdata + 11, data, datalen);
@@ -1581,7 +1583,7 @@ static void compile_gIFx(void)
 	else
 	    fatal("invalid token `%s' in gIFx specification", token_buffer);
 
-    chunk.size = 11 + strlen(chunkdata + 11);
+    chunk.size = 11 + strlen((char *)chunkdata + 11);
 
     png_set_unknown_chunks(png_ptr, info_ptr, &chunk, 1);
 // TODO: also use png_set_unknown_chunk_location if libpng before 1.6.0
@@ -1591,7 +1593,7 @@ static void compile_IMAGE(void)
 /* parse IMAGE specification and emit corresponding bits */
 {
     int		i, nbytes, bytes_per_sample = 0, nsamples, input_width;
-    char	*bytes;
+    png_byte	*bytes;
     png_byte	color_type = png_get_color_type(png_ptr, info_ptr);
     png_byte	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
     int		doublewidth = bit_depth == 16 ? 2 : 1;
@@ -1721,13 +1723,13 @@ static void compile_private(char *name)
 /* compile a private chunk */
 {
     int			nbytes;
-    char		*bytes;
+    png_byte		*bytes;
     png_unknown_chunk	chunk;
 
     if (strlen(name) != 4)
 	fatal("wrong length for chunk name %s", token_buffer);
     else
-	strcpy(chunk.name, name);
+	memcpy(chunk.name, name, sizeof(chunk.name));
 
     require_or_die("{");
     collect_data(&nbytes, &bytes);
