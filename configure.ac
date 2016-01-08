@@ -4,9 +4,10 @@ dnl
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(sng, 1.0.6)
+AC_INIT([sng], [1.1.0])
+AC_CONFIG_SRCDIR([sng.h])  dnl A distinctive file to look for in srcdir.
+AM_INIT_AUTOMAKE([-Wall foreign])
 
-AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
@@ -44,7 +45,7 @@ if test -n "$with_rgbtxt"
 then
     AC_DEFINE_UNQUOTED(RGBTXT, "$with_rgbtxt", [Location of X color database])
 else
-    for dir in /etc/X11/ /usr/share/X11 /usr/X11R6/lib/X11 /usr/lib/X11 /usr/openwin/lib
+    for dir in /etc/X11/ /usr/share/X11 /usr/X11R6/lib/X11 /usr/lib/X11 /usr/openwin/lib /usr/X11/share/X11
     do
 	if test -f ${dir}/rgb.txt
 	then

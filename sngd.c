@@ -5,27 +5,12 @@ NAME
 
 *****************************************************************************/
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
-#define PNG_INTERNAL
 #include "config.h"	/* for RGBTXT */
 #include "png.h"
 #include "sng.h"
-
-/* cope with API issues */
-#if PNG_LIBPNG_VER_MAJOR == 1
-  #if PNG_LIBPNG_VER_MINOR <= 2
-  #define TRANS_COLOR trans_values
-  #define TRANS_ALPHA trans
-  #endif
-  #if PNG_LIBPNG_VER_MINOR >= 4
-  #define TRANS_COLOR trans_color
-  #define TRANS_ALPHA trans_alpha
-  #endif
-#endif
-
-png_structp png_ptr;
-png_infop info_ptr;
 
 static char *image_type[] = {
     "grayscale",
@@ -142,6 +127,8 @@ static void multi_dump(FILE *fpout, char *leader,
 {
     unsigned char *cp;
     int i, all_printable = 1, base64 = 1;
+    png_byte	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    png_byte	channels = png_get_channels(png_ptr, info_ptr);
 
 #define SHORT_DATA	50
 
@@ -150,7 +137,7 @@ static void multi_dump(FILE *fpout, char *leader,
 	{
 	    if (!isprint(*cp) && !isspace(*cp))
 		all_printable = 0;
-	    if (*cp > 64)
+	    if (*cp >= 64)
 		base64 = 0;
 	}
 
@@ -193,8 +180,11 @@ static void multi_dump(FILE *fpout, char *leader,
 		else
 		    fprintf(fpout, "\n");
 	    }
-	    for (cp = data[i]; cp < data[i] + width; cp++)
+	    for (cp = data[i]; cp < data[i] + width; cp++) {
+	        if (*cp >= 64)
+		   fatal("invalid base64 data (%d)", *cp);
 		fputc(BASE64[*cp], fpout);
+	    }
 	    if (height == 1)
 		fprintf(fpout, ";\n");
 	    else
@@ -215,13 +205,13 @@ static void multi_dump(FILE *fpout, char *leader,
 		fprintf(fpout, "%02x", *cp & 0xff);
 
 		/* only insert spacers for 8-bit images if > 1 channel */
-		if (png_ptr->bit_depth == 8 && info_ptr->channels > 1)
+		if (bit_depth == 8 && channels > 1)
 		{
-		    if (((cp - data[i]) % info_ptr->channels) == info_ptr->channels - 1)
+		    if (((cp - data[i]) % channels) == channels - 1)
 			fputc(' ', fpout);
 		}
-		else if (png_ptr->bit_depth == 16)
-		    if (((cp - data[i]) % (info_ptr->channels*2)) == info_ptr->channels*2-1)
+		else if (bit_depth == 16)
+		    if (((cp - data[i]) % (channels*2)) == channels*2-1)
 			fputc(' ', fpout);
 	    }
 	    if (height == 1)
@@ -266,24 +256,29 @@ static void printerr(int err, const char *fmt, ... )
 
 static void dump_IHDR(FILE *fpout)
 {
+    png_uint_32 width;
+    png_uint_32 height;
+    int bit_depth;
     int ityp;
+    int interlace_type;
 
-    if (info_ptr->width == 0 || info_ptr->height == 0) {
+    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &ityp, &interlace_type, 0, 0);
+
+    if (width == 0 || height == 0) {
 	printerr(1, "invalid IHDR image dimensions (%lux%lu)",
-		 info_ptr->width, info_ptr->height);
+		 width, height);
     }
 
-    ityp = info_ptr->color_type;
     if (ityp > sizeof(image_type)/sizeof(char*)) {
 	ityp = 1; /* avoid out of range array index */
     }
-    switch (info_ptr->bit_depth) {
+    switch (bit_depth) {
     case 1:
     case 2:
     case 4:
 	if (ityp == 2 || ityp == 4 || ityp == 6) {/* RGB or GA or RGBA */
 	    printerr(1, "invalid IHDR bit depth (%u) for %s image",
-		     png_ptr->bit_depth, image_type[ityp]);
+		     bit_depth, image_type[ityp]);
 	}
 	break;
     case 8:
@@ -291,17 +286,17 @@ static void dump_IHDR(FILE *fpout)
     case 16:
 	if (ityp == 3) { /* palette */
 	    printerr(1, "invalid IHDR bit depth (%u) for %s image",
-		     png_ptr->bit_depth, image_type[ityp]);
+		     bit_depth, image_type[ityp]);
 	}
 	break;
     default:
-	printerr(1, "invalid IHDR bit depth (%u)", info_ptr->bit_depth);
+	printerr(1, "invalid IHDR bit depth (%u)", bit_depth);
 	break;
     }
 
     fprintf(fpout, "IHDR {\n");
-    fprintf(fpout, "    width: %lu; height: %lu; bitdepth: %u;\n", 
-	    info_ptr->width, info_ptr->height, png_ptr->bit_depth);
+    fprintf(fpout, "    width: %u; height: %u; bitdepth: %u;\n", 
+	    width, height, bit_depth);
     fprintf(fpout, "    using");
     if (ityp & PNG_COLOR_MASK_COLOR)
 	fprintf(fpout, " color");
@@ -312,7 +307,7 @@ static void dump_IHDR(FILE *fpout)
     if (ityp & PNG_COLOR_MASK_ALPHA)
 	fprintf(fpout, " alpha");
     fprintf(fpout, ";\n");
-    if (info_ptr->interlace_type)
+    if (interlace_type)
 	fprintf(fpout, "    with interlace;        # type adam7 assumed\n");
     fprintf(fpout, "}\n");
 }
@@ -320,48 +315,34 @@ static void dump_IHDR(FILE *fpout)
 static void dump_PLTE(FILE *fpout)
 {
     int i;
+    png_byte	color_type = png_get_color_type(png_ptr, info_ptr);
+    png_colorp	palette;
+    int		num_palette;
+
+    png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette);
 
     initialize_hash(hash_by_rgb, rgb_hashbuckets, &rgb_initialized);
 
-    if (info_ptr->color_type & PNG_COLOR_MASK_PALETTE)
+    if (color_type & PNG_COLOR_MASK_PALETTE)
     {
 	fprintf(fpout, "PLTE {\n");
-#ifndef MNG_INTERFACE
-	for (i = 0;  i < info_ptr->num_palette;  i++)
-#else
-	for (i = 0;  i < info_ptr->palette.size;  i++)
-#endif /* GUG */
+	for (i = 0;  i < num_palette;  i++)
 	{
 	    char	*name = NULL;
 
 	    fprintf(fpout, 
 		    "    (%3u,%3u,%3u)     # rgb = (0x%02x,0x%02x,0x%02x)",
-#ifndef MNG_INTERFACE
-		    info_ptr->palette[i].red,
-		    info_ptr->palette[i].green,
-		    info_ptr->palette[i].blue,
-		    info_ptr->palette[i].red,
-		    info_ptr->palette[i].green,
-		    info_ptr->palette[i].blue);
-#else
-		    info_ptr->palette.colors[i].red,
-		    info_ptr->palette.colors[i].green,
-		    info_ptr->palette.colors[i].blue,
-		    info_ptr->palette.colors[i].red,
-		    info_ptr->palette.colors[i].green,
-		    info_ptr->palette.colors[i].blue);
-#endif /* GUG */
+		    palette[i].red,
+		    palette[i].green,
+		    palette[i].blue,
+		    palette[i].red,
+		    palette[i].green,
+		    palette[i].blue);
 
 	    if (rgb_initialized)
-#ifndef MNG_INTERFACE
-		name = find_by_rgb(info_ptr->palette[i].red,
-				   info_ptr->palette[i].green,
-				   info_ptr->palette[i].blue);
-#else
-		name = find_by_rgb(info_ptr->palette.colors[i].red,
-				   info_ptr->palette.colors[i].green,
-				   info_ptr->palette.colors[i].blue);
-#endif /* GUG */
+		name = find_by_rgb(palette[i].red,
+				   palette[i].green,
+				   palette[i].blue);
 	    if (name)
 		fprintf(fpout, " %s", name);
 	    fputc('\n', fpout);
@@ -387,7 +368,7 @@ static void dump_image(png_bytepp rows, FILE *fpout)
     {
 	fprintf(fpout, "IMAGE {\n");
 	multi_dump(fpout, "    pixels ", 
-		   png_get_rowbytes(png_ptr, info_ptr),  info_ptr->height,
+		   png_get_rowbytes(png_ptr, info_ptr),  png_get_image_height(png_ptr, info_ptr),
 		   rows);
 	fprintf(fpout, "}\n");
     }
@@ -395,23 +376,26 @@ static void dump_image(png_bytepp rows, FILE *fpout)
 
 static void dump_bKGD(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_bKGD)
+    png_color_16p	background;
+    if (png_get_bKGD(png_ptr, info_ptr, &background))
     {
+        png_byte	color_type = png_get_color_type(png_ptr, info_ptr);
+
 	fprintf(fpout, "bKGD {");
-	switch (info_ptr->color_type) {
+	switch (color_type) {
 	case PNG_COLOR_TYPE_GRAY:
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
-	    fprintf(fpout, "gray: %u;", info_ptr->background.gray);
+	    fprintf(fpout, "gray: %u;", background->gray);
 	    break;
 	case PNG_COLOR_TYPE_RGB:
 	case PNG_COLOR_TYPE_RGB_ALPHA:
 	    fprintf(fpout, "red: %u;  green: %u;  blue: %u;",
-			info_ptr->background.red,
-			info_ptr->background.green,
-			info_ptr->background.blue);
+			background->red,
+			background->green,
+			background->blue);
 	    break;
 	case PNG_COLOR_TYPE_PALETTE:
-	    fprintf(fpout, "index: %u", info_ptr->background.index);
+	    fprintf(fpout, "index: %u", background->index);
 	    break;
 	default:
 	    printerr(1, "unknown image type");
@@ -424,48 +408,23 @@ static void dump_cHRM(FILE *fpout)
 {
     double wx, wy, rx, ry, gx, gy, bx, by;
 
+    if (!png_get_valid(png_ptr, info_ptr, PNG_INFO_cHRM))
+	return;
 
 #ifdef PNG_FLOATING_POINT_SUPPORTED
-#ifndef MNG_INTERFACE
-    wx = info_ptr->x_white;
-    wy = info_ptr->y_white;
-    rx = info_ptr->x_red;
-    ry = info_ptr->y_red;
-    gx = info_ptr->x_green;
-    gy = info_ptr->y_green;
-    bx = info_ptr->x_blue;
-    by = info_ptr->y_blue;
-#else
-    wx = info_ptr->chrm.x_white;
-    wy = info_ptr->chrm.y_white;
-    rx = info_ptr->chrm.x_red;
-    ry = info_ptr->chrm.y_red;
-    gx = info_ptr->chrm.x_green;
-    gy = info_ptr->chrm.y_green;
-    bx = info_ptr->chrm.x_blue;
-    by = info_ptr->chrm.y_blue;
-#endif /* MNG_INTERFACE */
+    png_get_cHRM(png_ptr, info_ptr, &wx, &wy, &rx, &ry, &gx, &gy, &bx, &by);
 #else
 #ifdef PNG_FIXED_POINT_SUPPORTED
-#ifndef MNG_INTERFACE
-    wx = FIXED_TO_FLOAT(info_ptr->int_x_white);
-    wy = FIXED_TO_FLOAT(info_ptr->int_y_white);
-    rx = FIXED_TO_FLOAT(info_ptr->int_x_red);
-    ry = FIXED_TO_FLOAT(info_ptr->int_y_red);
-    gx = FIXED_TO_FLOAT(info_ptr->int_x_green);
-    gy = FIXED_TO_FLOAT(info_ptr->int_y_green);
-    bx = FIXED_TO_FLOAT(info_ptr->int_x_blue);
-    by = FIXED_TO_FLOAT(info_ptr->int_y_blue);
-#else
-    wx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_white);
-    wy = FIXED_TO_FLOAT(info_ptr->chrm.int_y_white);
-    rx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_red);
-    ry = FIXED_TO_FLOAT(info_ptr->chrm.int_y_red);
-    gx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_green);
-    gy = FIXED_TO_FLOAT(info_ptr->chrm.int_y_green);
-    bx = FIXED_TO_FLOAT(info_ptr->chrm.int_x_blue);
-    by = FIXED_TO_FLOAT(info_ptr->chrm.int_y_blue);
-#endif /* MNG_INTERFACE */
+    png_fixed_point wx_f, wy_f, rx_f, ry_f, gx_f, gy_f, bx_f, by_f;
+    png_get_cHRM_fixed(png_ptr, info_ptr, &wx_f, &wy_f, &rx_f, &ry_f, &gx_f, &gy_f, &bx_f, &by_f);
+    wx = FIXED_TO_FLOAT(wx_f);
+    wy = FIXED_TO_FLOAT(wy_f);
+    rx = FIXED_TO_FLOAT(rx_f);
+    ry = FIXED_TO_FLOAT(ry_f);
+    gx = FIXED_TO_FLOAT(gx_f);
+    gy = FIXED_TO_FLOAT(gy_f);
+    bx = FIXED_TO_FLOAT(bx_f);
+    by = FIXED_TO_FLOAT(by_f);
 #endif
 #endif
 
@@ -479,34 +438,26 @@ static void dump_cHRM(FILE *fpout)
 	printerr(1, "invalid cHRM blue point %0g %0g", bx, by);
     }
 
-    if (info_ptr->valid & PNG_INFO_cHRM) {
-	fprintf(fpout, "cHRM {\n");
-	fprintf(fpout, "    white: (%0g, %0g);\n", wx, wy);
-	fprintf(fpout, "    red:   (%0g, %0g);\n", rx, ry);
-	fprintf(fpout, "    green: (%0g, %0g);\n", gx, gy);
-	fprintf(fpout, "    blue:  (%0g, %0g);\n", bx, by);
-	fprintf(fpout, "}\n");
-    }
+    fprintf(fpout, "cHRM {\n");
+    fprintf(fpout, "    white: (%0g, %0g);\n", wx, wy);
+    fprintf(fpout, "    red:   (%0g, %0g);\n", rx, ry);
+    fprintf(fpout, "    green: (%0g, %0g);\n", gx, gy);
+    fprintf(fpout, "    blue:  (%0g, %0g);\n", bx, by);
+    fprintf(fpout, "}\n");
 }
 
 static void dump_gAMA(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_gAMA) {
+    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_gAMA)) {
 #ifdef PNG_FLOATING_POINT_SUPPORTED
-        fprintf(fpout, "gAMA {%#0.5g}\n",
-#ifndef MNG_INTERFACE
-		info_ptr->gamma);
-#else
-		info_ptr->gamma.float_gamma);
-#endif /* MNG_INTERFACE */
+        double gamma;
+        png_get_gAMA(png_ptr, info_ptr, &gamma);
+        fprintf(fpout, "gAMA {%#0.5g}\n", gamma);
 #else
 #ifdef PNG_FIXED_POINT_SUPPORTED
-        fprintf(fpout, "gAMA {%#0.5g}\n",
-#ifndef MNG_INTERFACE
-		FIXED_TO_FLOAT(info_ptr->int_gamma));
-#else
-		FIXED_TO_FLOAT(info_ptr->gamma.int_gamma));
-#endif /* MNG_INTERFACE */
+        png_fixed_point int_gamma;
+        png_get_gAMA_fixed(png_ptr, info_ptr, &int_gamma);
+        fprintf(fpout, "gAMA {%#0.5g}\n", FIXED_TO_FLOAT(int_gamma));
 #endif
 #endif
     }
@@ -514,154 +465,145 @@ static void dump_gAMA(FILE *fpout)
 
 static void dump_hIST(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_hIST) {
+    png_uint_16p	hist;
+
+    if (png_get_hIST(png_ptr, info_ptr, &hist)) {
 	int	j;
+	png_colorp	palette;
+	int		num_palette;
+
+	png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette);
 
 	fprintf(fpout, "hIST {\n");
 	fprintf(fpout, "   ");
-#ifndef MNG_INTERFACE
-	for (j = 0; j < info_ptr->num_palette;  j++)
-	    fprintf(fpout, " %3u", info_ptr->hist[j]);
-#else
-	for (j = 0; j < info_ptr->palette.size;  j++)
-	    fprintf(fpout, " %3u", info_ptr->hist.frequencies[j]);
-#endif /* GUG */
+	for (j = 0; j < num_palette;  j++)
+	    fprintf(fpout, " %3u", hist[j]);
 	fprintf(fpout, ";\n}\n");
     }
 }
 
 static void dump_iCCP(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_iCCP) {
+    png_charp name;
+    int compression_type;
+#if PNG_LIBPNG_VER_MAJOR < 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR <= 4)
+    png_charp profile;
+#else
+    png_bytep profile;
+#endif
+    png_uint_32 proflen;
+
+    if (png_get_iCCP(png_ptr, info_ptr, &name, &compression_type, &profile, &proflen)) {
 	fprintf(fpout, "iCCP {\n");
-#ifndef MNG_INTERFACE
-	fprintf(fpout, "    name: \"%s\"\n", safeprint(info_ptr->iccp_name));
-#else
-	fprintf(fpout, "    name: \"%s\"\n", safeprint(info_ptr->iccp.name));
-#endif /* MNG_INTERFACE */
-	dump_data(fpout, "    profile: ", 
-#ifndef MNG_INTERFACE
-		  info_ptr->iccp_proflen, info_ptr->iccp_profile);
-#else
-		  info_ptr->iccp.proflen, info_ptr->iccp.profile);
-#endif /* MNG_INTERFACE */
+	fprintf(fpout, "    name: \"%s\"\n", safeprint(name));
+	dump_data(fpout, "    profile: ", proflen, profile);
 	fprintf(fpout, "}\n");
     }
 }
 
 static void dump_oFFs(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_oFFs) {
-        fprintf(fpout, "oFFs {xoffset: %ld; yoffset: %ld;",
-#ifndef MNG_INTERFACE
-	       info_ptr->x_offset, info_ptr->y_offset);
-	if (info_ptr->offset_unit_type == PNG_OFFSET_PIXEL)
-#else
-	       info_ptr->offset.x, info_ptr->offset.y);
-	if (info_ptr->offset.unit_type == PNG_OFFSET_PIXEL)
-#endif /* MNG_INTERFACE */
+    png_int_32 offset_x;
+    png_int_32 offset_y;
+    int unit_type;
+
+    if (png_get_oFFs(png_ptr, info_ptr, &offset_x, &offset_y, &unit_type)) {
+	fprintf(fpout, "oFFs {xoffset: %d; yoffset: %d;",
+	       offset_x, offset_y);
+	if (unit_type == PNG_OFFSET_PIXEL)
 	    fprintf(fpout, " unit: pixels");
-#ifndef MNG_INTERFACE
-	else if (info_ptr->offset_unit_type == PNG_OFFSET_MICROMETER)
-#else
-	else if (info_ptr->offset.unit_type == PNG_OFFSET_MICROMETER)
-#endif /* MNG_INTERFACE */
+	else if (unit_type == PNG_OFFSET_MICROMETER)
 	    fprintf(fpout, " unit: micrometers");
 	fprintf(fpout, ";}\n");
     }
 }
 static void dump_pHYs(FILE *fpout)
 {
-#ifndef MNG_INTERFACE
-    if (info_ptr->phys_unit_type > 1)
-#else
-    if (info_ptr->phys.unit_type > 1)
-#endif /* MNG_INTERFACE */
-        printerr(1, "invalid pHYs unit");
-    else if (info_ptr->valid & PNG_INFO_pHYs) {
-        fprintf(fpout, "pHYs {xpixels: %lu; ypixels: %lu;",
-#ifndef MNG_INTERFACE
-	       info_ptr->x_pixels_per_unit, info_ptr->y_pixels_per_unit);
-	if (info_ptr->phys_unit_type == PNG_RESOLUTION_METER)
-#else
-	       info_ptr->phys.x_pixels_per_unit, info_ptr->phys.y_pixels_per_unit);
-	if (info_ptr->phys.unit_type == PNG_RESOLUTION_METER)
-#endif /* MNG_INTERFACE */
-	    fprintf(fpout, " per: meter;");
-        fprintf(fpout, "}");
-#ifndef MNG_INTERFACE
-        if (info_ptr->phys_unit_type == 1 && info_ptr->x_pixels_per_unit == info_ptr->y_pixels_per_unit)
-	    fprintf(fpout, "  # (%lu dpi)\n", (long)(info_ptr->x_pixels_per_unit*0.0254 + 0.5));
-#else
-        if (info_ptr->phys.unit_type == 1 && info_ptr->phys.x_pixels_per_unit == info_ptr->phys.y_pixels_per_unit)
-	    fprintf(fpout, "  # (%lu dpi)\n", (long)(info_ptr->phys.x_pixels_per_unit*0.0254 + 0.5));
-#endif /* MNG_INTERFACE */
-	else
-	    fputc('\n', fpout);
+    png_uint_32 res_x;
+    png_uint_32 res_y;
+    int unit_type;
+
+    if (png_get_pHYs(png_ptr, info_ptr, &res_x, &res_y, &unit_type)) {
+	if (unit_type > 1)
+	    printerr(1, "invalid pHYs unit");
+	else {
+	    fprintf(fpout, "pHYs {xpixels: %u; ypixels: %u;",
+		   res_x, res_y);
+	    if (unit_type == PNG_RESOLUTION_METER)
+		fprintf(fpout, " per: meter;");
+	    fprintf(fpout, "}");
+	    if (unit_type == 1 && res_x == res_y)
+		fprintf(fpout, "  # (%lu dpi)\n", (long)(res_x*0.0254 + 0.5));
+	    else
+		fputc('\n', fpout);
+	}
     }
 }
 
 static void dump_sBIT(FILE *fpout)
 {
-    int maxbits = (info_ptr->color_type == 3)? 8 : info_ptr->bit_depth;
+    png_byte color_type = png_get_color_type(png_ptr, info_ptr);
+    png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    png_color_8p sig_bit;
+    int	maxbits = (color_type == 3)? 8 : bit_depth;
 
-    if (info_ptr->valid & PNG_INFO_sBIT) {
+    if (png_get_sBIT(png_ptr, info_ptr, &sig_bit)) {
 	fprintf(fpout, "sBIT {\n");
-	switch (info_ptr->color_type) {
+	switch (color_type) {
 	case PNG_COLOR_TYPE_GRAY:
-	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
+	    if (sig_bit->gray == 0 || sig_bit->gray > maxbits) {
 		printerr(1, "%u sBIT gray bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.gray, maxbits);
+			 sig_bit->gray, maxbits);
 	    } else {
-		fprintf(fpout, "    gray: %u;\n", info_ptr->sig_bit.gray);
+		fprintf(fpout, "    gray: %u;\n", sig_bit->gray);
 	    }
 	    break;
 	case PNG_COLOR_TYPE_RGB:
 	case PNG_COLOR_TYPE_PALETTE:
-	    if (info_ptr->sig_bit.red == 0 || info_ptr->sig_bit.red > maxbits) {
+	    if (sig_bit->red == 0 || sig_bit->red > maxbits) {
 		printerr(1, "%u sBIT red bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.red, maxbits);
-	    } else if (info_ptr->sig_bit.green == 0 || info_ptr->sig_bit.green > maxbits) {
+			 sig_bit->red, maxbits);
+	    } else if (sig_bit->green == 0 || sig_bit->green > maxbits) {
 		printerr(1, "%u sBIT green bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.green, maxbits);
-	    } else if (info_ptr->sig_bit.blue == 0 || info_ptr->sig_bit.blue > maxbits) {
+			 sig_bit->green, maxbits);
+	    } else if (sig_bit->blue == 0 || sig_bit->blue > maxbits) {
 		printerr(1, "%u sBIT blue bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.blue, maxbits);
+			 sig_bit->blue, maxbits);
 	    } else {
 		fprintf(fpout, "    red: %u; green: %u; blue: %u;\n",
-			info_ptr->sig_bit.red, info_ptr->sig_bit.green, info_ptr->sig_bit.blue);
+			sig_bit->red, sig_bit->green, sig_bit->blue);
 	    }
 	    break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
-	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
+	    if (sig_bit->gray == 0 || sig_bit->gray > maxbits) {
 		printerr(2, "%u sBIT gray bits not valid for %ubit/sample image\n",
-			 info_ptr->sig_bit.gray, maxbits);
-	    } else if (info_ptr->sig_bit.alpha == 0 || info_ptr->sig_bit.alpha > maxbits) {
+			 sig_bit->gray, maxbits);
+	    } else if (sig_bit->alpha == 0 || sig_bit->alpha > maxbits) {
 		printerr(2, "%u sBIT alpha bits(tm) not valid for %ubit/sample image\n",
-			 info_ptr->sig_bit.alpha, maxbits);
+			 sig_bit->alpha, maxbits);
 	    } else {
-		fprintf(fpout, "    gray: %u; alpha: %u\n", info_ptr->sig_bit.gray, info_ptr->sig_bit.alpha);
+		fprintf(fpout, "    gray: %u; alpha: %u\n", sig_bit->gray, sig_bit->alpha);
 	    }
 	    break;
 	case PNG_COLOR_TYPE_RGB_ALPHA:
-	    if (info_ptr->sig_bit.gray == 0 || info_ptr->sig_bit.gray > maxbits) {
+	    if (sig_bit->gray == 0 || sig_bit->gray > maxbits) {
 		printerr(1, "%u sBIT red bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.gray, maxbits);
-	    } else if (info_ptr->sig_bit.green == 0 || info_ptr->sig_bit.green > maxbits) {
+			 sig_bit->gray, maxbits);
+	    } else if (sig_bit->green == 0 || sig_bit->green > maxbits) {
 		printerr(1, "%u sBIT green bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.green, maxbits);
-	    } else if (info_ptr->sig_bit.blue == 0 || info_ptr->sig_bit.blue > maxbits) {
+			 sig_bit->green, maxbits);
+	    } else if (sig_bit->blue == 0 || sig_bit->blue > maxbits) {
 		printerr(1, "%u sBIT blue bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.blue, maxbits);
-	    } else if (info_ptr->sig_bit.alpha == 0 || info_ptr->sig_bit.alpha > maxbits) {
+			 sig_bit->blue, maxbits);
+	    } else if (sig_bit->alpha == 0 || sig_bit->alpha > maxbits) {
 		printerr(1, "%u sBIT alpha bits not valid for %ubit/sample image",
-			 info_ptr->sig_bit.alpha, maxbits);
+			 sig_bit->alpha, maxbits);
 	    } else {
 		fprintf(fpout, "    red: %u; green: %u; blue: %u; alpha: %u;\n",
-			info_ptr->sig_bit.red, 
-			info_ptr->sig_bit.green,
-			info_ptr->sig_bit.blue,
-			info_ptr->sig_bit.alpha);
+			sig_bit->red, 
+			sig_bit->green,
+			sig_bit->blue,
+			sig_bit->alpha);
 	    }
 	    break;
 	}
@@ -673,61 +615,60 @@ static void dump_pCAL(FILE *fpout)
 {
     static char *mapping_type[] = {
 	"linear", "euler", "exponential", "hyperbolic"
-    }; 
+    };
+    
+    png_charp purpose;
+    png_int_32 X0;
+    png_int_32 X1;
+    int type;
+    int nparams;
+    png_charp units;
+    png_charpp params;
 
-#ifndef MNG_INTERFACE
-    if (info_ptr->pcal_type >= PNG_EQUATION_LAST)
-#else
-    if (info_ptr->pcal.type >= PNG_EQUATION_LAST)
-#endif /* MNG_INTERFACE */
+    if (png_get_pCAL(png_ptr, info_ptr, &purpose, &X0, &X1, &type, &nparams, &units, &params)) {
+
+	if (type >= PNG_EQUATION_LAST)
 	    printerr(1, "invalid equation type in pCAL");
-    else if (info_ptr->valid & PNG_INFO_pCAL) {
-	int	i;
+	else {
+	    int	i;
 
-	fprintf(fpout, "pCAL {\n");
-#ifndef MNG_INTERFACE
-	fprintf(fpout, "    name: \"%s\";\n", safeprint(info_ptr->pcal_purpose));
-	fprintf(fpout, "    x0: %ld;\n", info_ptr->pcal_X0);
-	fprintf(fpout, "    x1: %ld;\n", info_ptr->pcal_X1);
-#else
-	fprintf(fpout, "    name: \"%s\";\n", safeprint(info_ptr->pcal.purpose));
-	fprintf(fpout, "    x0: %ld;\n", info_ptr->pcal.X0);
-	fprintf(fpout, "    x1: %ld;\n", info_ptr->pcal.X1);
-#endif /* MNG_INTERFACE */
-	fprintf(fpout, "    mapping: %s;        # equation type %u\n", 
-#ifndef MNG_INTERFACE
-	       mapping_type[info_ptr->pcal_type], info_ptr->pcal_type);
-	fprintf(fpout, "    unit: \"%s\"\n", safeprint(info_ptr->pcal_units));
-	if (info_ptr->pcal_nparams)
-#else
-	       mapping_type[info_ptr->pcal.type], info_ptr->pcal.type);
-	fprintf(fpout, "    unit: \"%s\"\n", safeprint(info_ptr->pcal.units));
-	if (info_ptr->pcal.nparams)
-#endif /* MNG_INTERFACE */
-	{
-	    fprintf(fpout, "    parameters:");
-#ifndef MNG_INTERFACE
-	    for (i = 0; i < info_ptr->pcal_nparams; i++)
-		fprintf(fpout, " %s", safeprint(info_ptr->pcal_params[i]));
-#else
-	    for (i = 0; i < info_ptr->pcal.nparams; i++)
-		fprintf(fpout, " %s", safeprint(info_ptr->pcal.params[i]));
-#endif /* MNG_INTERFACE */
-	    fprintf(fpout, ";\n");
+	    fprintf(fpout, "pCAL {\n");
+	    fprintf(fpout, "    name: \"%s\";\n", safeprint(purpose));
+	    fprintf(fpout, "    x0: %d;\n", X0);
+	    fprintf(fpout, "    x1: %d;\n", X1);
+	    fprintf(fpout, "    mapping: %s;        # equation type %u\n", 
+		   mapping_type[type], type);
+	    fprintf(fpout, "    unit: \"%s\"\n", safeprint(units));
+	    if (nparams) {
+		fprintf(fpout, "    parameters:");
+		for (i = 0; i < nparams; i++)
+		    fprintf(fpout, " %s", safeprint(params[i]));
+		fprintf(fpout, ";\n");
+	    }
+	    fprintf(fpout, "}\n");
 	}
-	fprintf(fpout, "}\n");
     }
 }
 
 static void dump_sCAL(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_sCAL) {
-	fprintf(fpout, "sCAL {\n");
-#ifndef MNG_INTERFACE
-	switch (info_ptr->scal_unit)
+#ifdef PNG_FLOATING_POINT_SUPPORTED
+    int unit;
+    double width;
+    double height;
+
+    if (png_get_sCAL(png_ptr, info_ptr, &unit, &width, &height)) {
 #else
-	switch (info_ptr->scal.unit)
-#endif /* MNG_INTERFACE */
+#ifdef PNG_FIXED_POINT_SUPPORTED
+    int unit;
+    png_charp swidth;
+    png_charp sheight;
+
+    if (png_get_sCAL_s(png_ptr, info_ptr, &unit, &swidth, &sheight)) {
+#endif
+#endif
+	fprintf(fpout, "sCAL {\n");
+	switch (unit)
 	{
 	case PNG_SCALE_METER:
 	    fprintf(fpout, "    unit:   meter\n");
@@ -740,86 +681,95 @@ static void dump_sCAL(FILE *fpout)
 	    break;
 	}
 #ifdef PNG_FLOATING_POINT_SUPPORTED
-#ifndef MNG_INTERFACE
-	fprintf(fpout, "    width:  %g\n", info_ptr->scal_pixel_width);
-	fprintf(fpout, "    height: %g\n", info_ptr->scal_pixel_height);
-#else
-	fprintf(fpout, "    width:  %g\n", info_ptr->scal.pixel_width);
-	fprintf(fpout, "    height: %g\n", info_ptr->scal.pixel_height);
-#endif /* MNG_INTERFACE */
+	fprintf(fpout, "    width:  %g\n", width);
+	fprintf(fpout, "    height: %g\n", height);
 #else
 #ifdef PNG_FIXED_POINT_SUPPORTED
-#ifndef MNG_INTERFACE
-	fprintf(fpout, "    width:  %s\n", info_ptr->scal_s_width);
-	fprintf(fpout, "    height: %s\n", info_ptr->scal_s_height);
-#else
-	fprintf(fpout, "    width:  %s\n", info_ptr->scal.s_width);
-	fprintf(fpout, "    height: %s\n", info_ptr->scal.s_height);
-#endif /* MNG_INTERFACE */
+	fprintf(fpout, "    width:  %s\n", swidth);
+	fprintf(fpout, "    height: %s\n", sheight);
 #endif
 #endif
 	fprintf(fpout, "}\n");
     }
 }
 
-static void dump_sPLT(png_sPLT_tp ep, FILE *fpout)
+static void dump_sPLT(FILE *fpout)
 {
-    long i;
+/*
+    for (i = 0; i < info_ptr->splt_palettes_num; i++)
+	dump_sPLT(info_ptr->splt_palettes + i, fpout);
+*/
+    int i, j;
+    int num_spalettes;
+    png_sPLT_tp entries;
 
-    initialize_hash(hash_by_rgb, rgb_hashbuckets, &rgb_initialized);
-
-    fprintf(fpout, "sPLT {\n");
-    fprintf(fpout, "    name: \"%s\";\n", safeprint(ep->name));
-    fprintf(fpout, "    depth: %u;\n", ep->depth);
-
-    for (i = 0;  i < ep->nentries;  i++)
+    num_spalettes = png_get_sPLT(png_ptr, info_ptr, &entries);
+    
+    for (j = 0; j < num_spalettes; j++)
     {
-	char *name = 0;
+	png_sPLT_tp ep = entries + j;
 
-	fprintf(fpout, "    (%3u,%3u,%3u), %3u, %3u "
-		"    # rgba = [0x%02x,0x%02x,0x%02x,0x%02x]",
-		ep->entries[i].red,
-		ep->entries[i].green,
-		ep->entries[i].blue,
-		ep->entries[i].alpha,
-		ep->entries[i].frequency,
-		ep->entries[i].red,
-		ep->entries[i].green,
-		ep->entries[i].blue,
-		ep->entries[i].alpha);
+	initialize_hash(hash_by_rgb, rgb_hashbuckets, &rgb_initialized);
 
-	if (rgb_initialized)
-	    name = find_by_rgb(ep->entries[i].red,
-			       ep->entries[i].green,
-			       ep->entries[i].blue);
-	if (name)
-	    fprintf(fpout, ", name = %s", name);
+	fprintf(fpout, "sPLT {\n");
+	fprintf(fpout, "    name: \"%s\";\n", safeprint(ep->name));
+	fprintf(fpout, "    depth: %u;\n", ep->depth);
 
-	fprintf(fpout, ", freq = %u\n", ep->entries[i].frequency);
+	for (i = 0;  i < ep->nentries;  i++)
+	{
+	    char *name = 0;
+
+	    fprintf(fpout, "    (%3u,%3u,%3u), %3u, %3u "
+		    "    # rgba = [0x%02x,0x%02x,0x%02x,0x%02x]",
+		    ep->entries[i].red,
+		    ep->entries[i].green,
+		    ep->entries[i].blue,
+		    ep->entries[i].alpha,
+		    ep->entries[i].frequency,
+		    ep->entries[i].red,
+		    ep->entries[i].green,
+		    ep->entries[i].blue,
+		    ep->entries[i].alpha);
+
+	    if (rgb_initialized)
+		name = find_by_rgb(ep->entries[i].red,
+				   ep->entries[i].green,
+				   ep->entries[i].blue);
+	    if (name)
+		fprintf(fpout, ", name = %s", name);
+
+	    fprintf(fpout, ", freq = %u\n", ep->entries[i].frequency);
+	}
+
+	fprintf(fpout, "}\n");
+
     }
-
-    fprintf(fpout, "}\n");
 }
 
 static void dump_tRNS(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_tRNS) {
+    png_byte color_type = png_get_color_type(png_ptr, info_ptr);
+    png_bytep trans;
+    int num_trans;
+    png_color_16p trans_values;
+
+    if (png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, &trans_values)) {
 	int	i;
 
 	fprintf(fpout, "tRNS {\n");
-	switch (info_ptr->color_type) {
+	switch (color_type) {
 	case PNG_COLOR_TYPE_GRAY:
-	    fprintf(fpout, "    gray: %u;\n", info_ptr->TRANS_COLOR.gray);
+	    fprintf(fpout, "    gray: %u;\n", trans_values->gray);
 	    break;
 	case PNG_COLOR_TYPE_RGB:
 	    fprintf(fpout, "    red: %u; green: %u; blue: %u;\n",
-		    info_ptr->TRANS_COLOR.red,
-		    info_ptr->TRANS_COLOR.green,
-		    info_ptr->TRANS_COLOR.blue);
+		    trans_values->red,
+		    trans_values->green,
+		    trans_values->blue);
 	    break;
 	case PNG_COLOR_TYPE_PALETTE:
-	    for (i = 0; i < info_ptr->num_trans; i++)
-		fprintf(fpout, " %u", info_ptr->TRANS_ALPHA[i]);
+	    for (i = 0; i < num_trans; i++)
+		fprintf(fpout, " %u", trans[i]);
 	    break;
 	case PNG_COLOR_TYPE_GRAY_ALPHA:
 	case PNG_COLOR_TYPE_RGB_ALPHA:
@@ -832,153 +782,126 @@ static void dump_tRNS(FILE *fpout)
 
 static void dump_sRGB(FILE *fpout)
 {
-#ifndef MNG_INTERFACE
-    if (info_ptr->srgb_intent) {
-#else
-    if (info_ptr->srgb.intent) {
-#endif /* MNG_INTERFACE */
-        printerr(1, "sRGB invalid rendering intent");
-    }
-    if (info_ptr->valid & PNG_INFO_sRGB) {
-        fprintf(fpout, "sRGB {intent: %u;}             # %s\n", 
-#ifndef MNG_INTERFACE
-	       info_ptr->srgb_intent, 
-	       rendering_intent[info_ptr->srgb_intent]);
-#else
-	       info_ptr->srgb.intent, 
-	       rendering_intent[info_ptr->srgb.intent]);
-#endif /* MNG_INTERFACE */
+    int intent;
+
+    if (png_get_sRGB(png_ptr, info_ptr, &intent)) {
+	if (0 < intent || intent > 3) {
+	    printerr(1, "sRGB invalid rendering intent");
+	} else {
+	    fprintf(fpout, "sRGB {intent: %u;}             # %s\n", 
+		   intent, 
+		   rendering_intent[intent]);
+	}
     }
 }
 
 static void dump_tIME(FILE *fpout)
 {
-    if (info_ptr->valid & PNG_INFO_tIME) {
+    png_timep mod_time;
+
+    if (png_get_tIME(png_ptr, info_ptr, &mod_time)) {
 	static char *months[] =
 	{"(undefined)", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	char *month;
 
-	if (info_ptr->mod_time.month < 1 || info_ptr->mod_time.month > 12)
+	if (mod_time->month < 1 || mod_time->month > 12)
 	    month = months[0];
 	else
-	    month = months[info_ptr->mod_time.month];
+	    month = months[mod_time->month];
 
 	fprintf(fpout, "tIME {\n");
 	fprintf(fpout, "    # %2d %s %4d %02d:%02d:%02d GMT\n", 
-		info_ptr->mod_time.day,
+		mod_time->day,
 		month,
-		info_ptr->mod_time.year,
-		info_ptr->mod_time.hour,
-		info_ptr->mod_time.minute,
-		info_ptr->mod_time.second);
-	fprintf(fpout, "    year:   %u\n", info_ptr->mod_time.year);
-	fprintf(fpout, "    month:  %u\n", info_ptr->mod_time.month);
-	fprintf(fpout, "    day:    %u\n", info_ptr->mod_time.day);
-	fprintf(fpout, "    hour:   %u\n", info_ptr->mod_time.hour);
-	fprintf(fpout, "    minute: %u\n", info_ptr->mod_time.minute);
-	fprintf(fpout, "    second: %u\n", info_ptr->mod_time.second);
+		mod_time->year,
+		mod_time->hour,
+		mod_time->minute,
+		mod_time->second);
+	fprintf(fpout, "    year:   %u\n", mod_time->year);
+	fprintf(fpout, "    month:  %u\n", mod_time->month);
+	fprintf(fpout, "    day:    %u\n", mod_time->day);
+	fprintf(fpout, "    hour:   %u\n", mod_time->hour);
+	fprintf(fpout, "    minute: %u\n", mod_time->minute);
+	fprintf(fpout, "    second: %u\n", mod_time->second);
 	fprintf(fpout, "}\n");
     }
 }
 
 static void dump_text(FILE *fpout)
 {
-    int	i;
+    png_textp text_ptr;
+    int num_text;
 
-#ifndef MNG_INTERFACE
-    for (i = 0; i < info_ptr->num_text; i++)
-#else
-    for (i = 0; i < info_ptr->annotations.num_text; i++)
-#endif /* MNG_INTERFACE */
-    {
-#ifndef MNG_INTERFACE
-	switch (info_ptr->text[i].compression)
-#else
-	switch (info_ptr->annotations.text[i].compression)
-#endif /* MNG_INTERFACE */
+    if (png_get_text(png_ptr, info_ptr, &text_ptr, &num_text)) {
+	int	i;
+
+	for (i = 0; i < num_text; i++)
 	{
-	case PNG_TEXT_COMPRESSION_NONE:
-	    fprintf(fpout, "tEXt {\n");
-	    fprintf(fpout, "    keyword: \"%s\";\n", 
-#ifndef MNG_INTERFACE
-		    safeprint(info_ptr->text[i].key));
-#else
-		    safeprint(info_ptr->annotations.text[i].key));
-#endif /* MNG_INTERFACE */
-	    break;
+	    switch (text_ptr[i].compression)
+	    {
+	    case PNG_TEXT_COMPRESSION_NONE:
+		fprintf(fpout, "tEXt {\n");
+		fprintf(fpout, "    keyword: \"%s\";\n", 
+			safeprint(text_ptr[i].key));
+		break;
 
-	case PNG_TEXT_COMPRESSION_zTXt:
-	    fprintf(fpout, "zTXt {\n");
-	    fprintf(fpout, "    keyword: \"%s\";\n", 
-#ifndef MNG_INTERFACE
-		    safeprint(info_ptr->text[i].key));
-#else
-		    safeprint(info_ptr->annotations.text[i].key));
-#endif /* MNG_INTERFACE */
-	    break;
+	    case PNG_TEXT_COMPRESSION_zTXt:
+		fprintf(fpout, "zTXt {\n");
+		fprintf(fpout, "    keyword: \"%s\";\n", 
+			safeprint(text_ptr[i].key));
+		break;
 
-	case PNG_ITXT_COMPRESSION_NONE:
-	case PNG_ITXT_COMPRESSION_zTXt:
-	    fprintf(fpout, "iTXt {\n");
+	    case PNG_ITXT_COMPRESSION_NONE:
+	    case PNG_ITXT_COMPRESSION_zTXt:
+		fprintf(fpout, "iTXt {\n");
 #ifdef PNG_iTXt_SUPPORTED
-	    fprintf(fpout, "    language: \"%s\";\n", 
-#ifndef MNG_INTERFACE
-		    safeprint(info_ptr->text[i].lang));
-#else
-		    safeprint(info_ptr->annotations.text[i].lang));
-#endif /* MNG_INTERFACE */
+		fprintf(fpout, "    language: \"%s\";\n", 
+			safeprint(text_ptr[i].lang));
 #endif /* PNG_iTXt_SUPPORTED */
-	    fprintf(fpout, "    keyword: \"%s\";\n", 
-#ifndef MNG_INTERFACE
-		    safeprint(info_ptr->text[i].key));
-#else
-		    safeprint(info_ptr->annotations.text[i].key));
-#endif /* MNG_INTERFACE */
+		fprintf(fpout, "    keyword: \"%s\";\n", 
+			safeprint(text_ptr[i].key));
 #ifdef PNG_iTXt_SUPPORTED
-	    fprintf(fpout, "    translated: \"%s\";\n", 
-#ifndef MNG_INTERFACE
-		    safeprint(info_ptr->text[i].lang_key));
-#else
-		    safeprint(info_ptr->annotations.text[i].lang_key));
-#endif /* MNG_INTERFACE */
+		fprintf(fpout, "    translated: \"%s\";\n", 
+			safeprint(text_ptr[i].lang_key));
 #endif /* PNG_iTXt_SUPPORTED */
-	    break;
+		break;
+	    }
+
+	    fprintf(fpout, "    text: \"%s\";\n", 
+		    safeprint(text_ptr[i].text));
+	    fprintf(fpout, "}\n");
 	}
-
-	fprintf(fpout, "    text: \"%s\";\n", 
-#ifndef MNG_INTERFACE
-		safeprint(info_ptr->text[i].text));
-#else
-		safeprint(info_ptr->annotations.text[i].text));
-#endif /* MNG_INTERFACE */
-	fprintf(fpout, "}\n");
     }
 }
 
 static void dump_unknown_chunks(int after_idat, FILE *fpout)
 {
+    png_unknown_chunkp entries;
+    int num_unknown_chunks;
     int	i;
 
-    for (i = 0; i < info_ptr->unknown_chunks_num; i++)
+    num_unknown_chunks = png_get_unknown_chunks(png_ptr, info_ptr, &entries);
+
+    for (i = 0; i < num_unknown_chunks; i++)
     {
-	png_unknown_chunk	*up = info_ptr->unknown_chunks + i;
+	png_unknown_chunk	*up = entries + i;
 
 	/* are we before or after the IDAT part? */
-	if (after_idat != !!(up->location & PNG_HAVE_IDAT))
+	if (after_idat != !!(up->location & PNG_AFTER_IDAT))
 	    continue;
 
 /* macros to extract big-endian short and long ints */
 #define SH(p) ((unsigned short)((p)[1]) | (((p)[0]) << 8))
 #define LG(p) ((unsigned long)(SH((p)+2)) | ((ulg)(SH(p)) << 16))
 
-	if (!strcmp(up->name, "gIFg"))
+	if (!memcmp(up->name, "gIFg", 5))
 	{
 	  fprintf(fpout, "gIFg {\n");
 	    fprintf(fpout, "    disposal: %d; input: %d; delay %f;\n",
 		    up->data[0], up->data[1], (float)(.01 * SH(up->data+2)));
 	}
-	else if (!strcmp(up->name, "gIFx"))
+	else if (!memcmp(up->name, "gIFx", 5))
 	{
 	    fprintf(fpout, "gIFx {\n");
 	    fprintf(fpout, "    identifier: \"%.*s\"; code: \"%c%c%c\"\n",
@@ -1005,8 +928,6 @@ static void dump_unknown_chunks(int after_idat, FILE *fpout)
 void sngdump(png_byte *row_pointers[], FILE *fpout)
 /* dump a canonicalized SNG form of a PNG file */
 {
-    int	i;
-
     fprintf(fpout, "#SNG: from %s\n", current_file);
 
     dump_IHDR(fpout);			/* first critical chunk */
@@ -1023,13 +944,7 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
     dump_hIST(fpout);
     dump_tRNS(fpout);
     dump_pHYs(fpout);
-#ifndef MNG_INTERFACE
-    for (i = 0; i < info_ptr->splt_palettes_num; i++)
-	dump_sPLT(info_ptr->splt_palettes + i, fpout);
-#else
-    for (i = 0; i < info_ptr->splt.palettes_num; i++)
-	dump_sPLT(info_ptr->splt.palettes + i, fpout);
-#endif /* MNG_INTERFACE */
+    dump_sPLT(fpout);
     dump_oFFs(fpout);
     dump_pCAL(fpout);
     dump_sCAL(fpout);
@@ -1051,19 +966,13 @@ void sngdump(png_byte *row_pointers[], FILE *fpout)
     dump_unknown_chunks(TRUE, fpout);
 }
 
-static int read_chunk_callback(png_structp ptr, png_unknown_chunkp chunk)
-{
-    /* FIXME: the -i option doesn't work yet, it yields a CRC error */
-    if (memcmp(chunk->name, "IDAT", 4) == 0)
-	png_ptr->mode |= PNG_HAVE_IDAT;
-    return(1);
-}
-
 int sngd(FILE *fp, char *name, FILE *fpout)
 /* read and decompile an SNG image presented on stdin */
 {
 #ifndef PNG_INFO_IMAGE_SUPPORTED
-   png_bytepp row_pointers;
+    png_bytepp row_pointers;
+    png_uint_32 row;
+    png_uint_32 height;
 #endif
 
    current_file = name;
@@ -1111,8 +1020,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    /* treat IDAT as unknown so it gets passed through raw */
    if (idat)
    {
-       png_set_keep_unknown_chunks(png_ptr, 2, "IDAT", 1);
-       png_set_read_user_chunk_fn(png_ptr, NULL, read_chunk_callback);
+       png_set_keep_unknown_chunks(png_ptr, 2, (png_byte *)"IDAT", 1);
    }
 
 
@@ -1132,7 +1040,7 @@ int sngd(FILE *fp, char *name, FILE *fpout)
    png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_PACKING, NULL);
 
    /* dump the image */
-   sngdump(info_ptr->row_pointers, fpout);
+   sngdump(png_get_rows(png_ptr, info_ptr), fpout);
 #else
    png_set_packing(png_ptr);
 
@@ -1143,8 +1051,10 @@ int sngd(FILE *fp, char *name, FILE *fpout)
 
    png_read_update_info(png_ptr, info_ptr);
 
-   row_pointers = (png_bytepp)malloc(info_ptr->height * sizeof(png_bytep));
-   for (row = 0; row < info_ptr->height; row++)
+   height = png_get_image_height(png_ptr, info_ptr);
+
+   row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
+   for (row = 0; row < height; row++)
        row_pointers[row] = malloc(png_get_rowbytes(png_ptr, info_ptr));
 
    png_read_image(png_ptr, row_pointers);
