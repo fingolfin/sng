@@ -9,6 +9,7 @@
 	* Fix handling of iTXt when 'translated' contained non-latin-1 data (it can contain
 	  arbitrary UTF-8 data)
 	* Fix support for long text blocks
+	* Fix validation of iTXt blocks
 
 1.0.6: 2014-06-04
 	* Forward-ported to libpng 1.4.

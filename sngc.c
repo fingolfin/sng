@@ -1256,7 +1256,7 @@ static void compile_iTXt(void)
 	else
 	    fatal("bad token `%s' in iTXt specification", token_buffer);
 
-    if (!language || !keyword || !transkey || !text)
+    if (!nlanguage || !nkeyword || !ntranskey || !ntext)
 	fatal("keyword or text is missing");
 
     textblk.key = keyword;
