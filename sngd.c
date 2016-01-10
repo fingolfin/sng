@@ -785,11 +785,11 @@ static void dump_sRGB(FILE *fpout)
     int intent;
 
     if (png_get_sRGB(png_ptr, info_ptr, &intent)) {
-	if (0 < intent || intent > 3) {
-	    printerr(1, "sRGB invalid rendering intent");
+	if (intent < 0 || intent > 3) {
+	    printerr(1, "sRGB invalid rendering intent %d", intent);
 	} else {
-	    fprintf(fpout, "sRGB {intent: %u;}             # %s\n", 
-		   intent, 
+	    fprintf(fpout, "sRGB {%u;}             # %s\n",
+		   intent,
 		   rendering_intent[intent]);
 	}
     }
