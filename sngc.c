@@ -479,8 +479,8 @@ static void collect_data(int *pnbytes, png_byte **pbytes)
      *    An ASCII string, doublequote-delimited.
      *
      * base64: 
-     *   One character per byte; values are as per RFC2045 base64:
-     * 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/
+     *   One character per byte; values 0-63 are mapped to these characters:
+     * 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/
      *
      * Note: This encoding is NOT compatible with RFC2045 base64.
      * Indeed, RFC2045 uses this mapping for values 0-63:
