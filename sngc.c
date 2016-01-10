@@ -1802,6 +1802,12 @@ int sngc(FILE *fin, char *name, FILE *fout)
 
     write_transform_options = PNG_TRANSFORM_IDENTITY;
 
+    /* initialize per-input-file chunk properties */
+    for (chunkprops *pp = properties;
+             pp < properties + sizeof(properties)/sizeof(chunkprops);
+             pp++)
+        pp->count = 0;
+
     /* interpret the following chunk specifications */
     prevchunk = NONE;
     while (get_token())
