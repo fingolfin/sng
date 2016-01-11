@@ -28,7 +28,7 @@ do
 
 	if [ "$eyeball_test" = "1" ]
 	then
-	    echo $file.
+	    echo $file
 	    $SNG <$file | $SNG >/tmp/recompiled$$.png && $viewer $file /tmp/recompiled$$.png
 	fi
 

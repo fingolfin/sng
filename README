@@ -28,6 +28,7 @@ sng_regress	regression-test harness for sng
 
 The sng code has been tested on all of the non-broken images in the PNG 
 test suite at <http://www.cdrom.com/pub/png/pngsuite.html> using sng_regress.
+You can type 'make check' for a basic regression test.
 
 						Eric S. Raymond
 						esr@thyrsus.com
