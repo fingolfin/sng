@@ -296,7 +296,7 @@ static void dump_IHDR(FILE *fpout)
 
     fprintf(fpout, "IHDR {\n");
     fprintf(fpout, "    width: %u; height: %u; bitdepth: %u;\n", 
-	    width, height, bit_depth);
+	    (unsigned int)width, (unsigned int)height, bit_depth);
     fprintf(fpout, "    using");
     if (ityp & PNG_COLOR_MASK_COLOR)
 	fprintf(fpout, " color");
@@ -509,7 +509,7 @@ static void dump_oFFs(FILE *fpout)
 
     if (png_get_oFFs(png_ptr, info_ptr, &offset_x, &offset_y, &unit_type)) {
 	fprintf(fpout, "oFFs {xoffset: %d; yoffset: %d;",
-	       offset_x, offset_y);
+		(int)offset_x, (int)offset_y);
 	if (unit_type == PNG_OFFSET_PIXEL)
 	    fprintf(fpout, " unit: pixels");
 	else if (unit_type == PNG_OFFSET_MICROMETER)
@@ -528,7 +528,7 @@ static void dump_pHYs(FILE *fpout)
 	    printerr(1, "invalid pHYs unit");
 	else {
 	    fprintf(fpout, "pHYs {xpixels: %u; ypixels: %u;",
-		   res_x, res_y);
+		    (unsigned int)res_x, (unsigned int)res_y);
 	    if (unit_type == PNG_RESOLUTION_METER)
 		fprintf(fpout, " per: meter;");
 	    fprintf(fpout, "}");
@@ -634,8 +634,8 @@ static void dump_pCAL(FILE *fpout)
 
 	    fprintf(fpout, "pCAL {\n");
 	    fprintf(fpout, "    name: \"%s\";\n", safeprint(purpose));
-	    fprintf(fpout, "    x0: %d;\n", X0);
-	    fprintf(fpout, "    x1: %d;\n", X1);
+	    fprintf(fpout, "    x0: %d;\n", (int)X0);
+	    fprintf(fpout, "    x1: %d;\n", (int)X1);
 	    fprintf(fpout, "    mapping: %s;        # equation type %u\n", 
 		   mapping_type[type], type);
 	    fprintf(fpout, "    unit: \"%s\"\n", safeprint(units));
