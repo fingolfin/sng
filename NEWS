@@ -8,11 +8,12 @@
 	  and height)
 	* Fix several bugs in base64 handling, and clarify that it differs from
 	  RFC2045
-	* Fix validation of sRGB intent value
+	* Fix dumping and validation of sRGB intent value.
 	* Fix handling of iTXt when 'translated' contained non-latin-1 data
 	  (it can contain arbitrary UTF-8 data)
 	* Fix support for long text blocks
 	* Fix validation of iTXt blocks
+	* Fix failure when multiple sng files where given on command line.
 
 1.0.6: 2014-06-04
 	* Forward-ported to libpng 1.4.

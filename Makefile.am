@@ -24,4 +24,7 @@ check:
 	@echo "No output is good news."
 
 release: dist sng.html
-	shipper version=$(VERSION) | sh -e -x
+	shipper version=@VERSION@ | sh -e -x
+
+refresh: sng.html
+	shipper -N -w version=@VERSION@ | sh -e -x

@@ -24,6 +24,8 @@ Description: Enable lossless editing of PNGs via a textual representation.
 
 XBS-Destinations: ~,sourceforge
 
+XBS-HTML-Target: index.html
+
 XBS-Logo: snglogo.png
 
 #XBS-Project-Tags: PNG, graphics
