@@ -30,4 +30,4 @@ XBS-Logo: snglogo.png
 
 XBS-VC-Tag-Template: %(version)s
 
-XBS-Validate: make regress
+XBS-Validate: make check
