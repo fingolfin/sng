@@ -98,16 +98,15 @@ are the string contents.</para>
 
 <para>2. <emphasis remap='B'>base64</emphasis> format is signaled by
 the leading token `base64'.  This encoding can only be used when the
-values of all bytes is less than 64. It encodes each byte as a single
-character, with
-decimal digits representing values 0-9, followed by A-Z for 10-35,
-followed by a-z for 36-61, followed by + for 62 and / for 63.  Base64
-format can be used if the image either has total (color plus alpha)
-bit depth of four or less, or it is a spaletted image with 64 or fewer
-colors.  Whitespace is ignored.
-Note that this encoding is only very loosely related to
-RFC2045 base-64 encoding, which uses a different mapping of bytes
-to values, and supports encoding of arbitrary binary data.</para>
+values of all bytes are less than 64. It encodes each byte as a single
+character, with decimal digits representing values 0-9, followed by
+A-Z for 10-35, followed by a-z for 36-61, followed by + for 62 and /
+for 63.  Base64 format can be used if the image either has total
+(color plus alpha) bit depth of four or less, or it is a spaletted
+image with 64 or fewer colors.  Whitespace is ignored.  Note that this
+encoding is only very loosely related to RFC2045 base-64 encoding,
+which uses a different mapping of bytes to values, and supports
+encoding of arbitrary binary data.</para>
 
 <para>3. <emphasis remap='B'>hex</emphasis> format is signaled by the
 leading token `hex'. In hex format, each byte is specified by two hex
@@ -159,7 +158,7 @@ character.  The remainder of the first line is ignored by SNG.</para>
 <para>Comments in the syntax diagram describe intended semantics.  This
 specification should be read in conjunction with the PNG standard.</para>
 
-<literallayout remap='.nf'>
+<literallayout>
 IHDR {
    height &lt;long&gt;
    width &lt;long&gt;
