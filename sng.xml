@@ -117,7 +117,7 @@ ignored.</para>
 <para>4. <emphasis remap='B'>P1</emphasis> format is Portable Bit Map
 (PBM) format P1.  A decimal height and width follow; it is a fatal
 error for them to fail to match the IHDR dimensions.  Following this,
-the only non-whitespace charaters are expected to be `0' and `1', with
+the only non-whitespace characters are expected to be `0' and `1', with
 the obvious values.  Whitespace is ignored.</para>
 
 <para>5. <emphasis remap='B'>P3</emphasis> format is Portable Pixel
