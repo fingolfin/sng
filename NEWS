@@ -1,6 +1,6 @@
 				History
 
-1.1.0: 2015-01-12
+1.1.0: 2016-01-12
 	* Compatible with libpng 1.2.x and newer (tested with 1.2.50, 1.4.12,
 	  1.5.17 and 1.6.3)
 	* Fix locating X color database on Mac OS X
